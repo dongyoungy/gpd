@@ -1,19 +1,20 @@
 package prelim;
 
-import java.util.*;
-import org.apache.spark.sql.*;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
 
 /**
  * Created by Dong Young Yoon on 1/17/17.
  */
-public class TempTest
+public class TempTestCached
 {
   public static void main(String[] args)
   {
     String workload = args[0];
     String dataSize = args[1];
     String execMem = args[2];
-    String applicationName = workload + "_" + dataSize + "_" + execMem;
+    String applicationName = workload + "_" + dataSize + "_cached_" + execMem;
     String inputData = String.format("/data_gen/HiBench/Data/%s/Input", dataSize);
     String outputData = String.format("/data_gen/HiBench/Data/%s/Output", dataSize);
     String warehouseLocation = "file:///spark-warehouse";
@@ -38,6 +39,12 @@ public class TempTest
         // get plan
         Dataset<Row> plan = spark.sql("EXPLAIN EXTENDED INSERT OVERWRITE TABLE uservisits_copy SELECT * FROM uservisits");
         plan.write().mode("overwrite").text(String.format("/query_plans/%s/%s", workload, dataSize));
+
+        // create cache
+        spark.sql("CACHE TABLE uservisits");
+        Dataset<Row> plan_cached = spark.sql("EXPLAIN EXTENDED INSERT OVERWRITE TABLE uservisits_copy SELECT * FROM uservisits");
+        plan_cached.write().mode("overwrite").text(String.format("/query_plans/%s/%s_cached/", workload, dataSize));
+
         // run query
         spark.sql("INSERT OVERWRITE TABLE uservisits_copy SELECT * FROM uservisits");
 
@@ -58,6 +65,13 @@ public class TempTest
         // get plan
         Dataset<Row> plan = spark.sql("EXPLAIN EXTENDED INSERT OVERWRITE TABLE rankings_uservisits_join SELECT sourceIP, avg(pageRank), sum(adRevenue) as totalRevenue FROM rankings R JOIN (SELECT sourceIP, destURL, adRevenue FROM uservisits_copy UV WHERE (datediff(UV.visitDate, '1999-01-01')>=0 AND datediff(UV.visitDate, '2000-01-01')<=0)) NUV ON (R.pageURL = NUV.destURL) group by sourceIP order by totalRevenue DESC");
         plan.write().mode("overwrite").text(String.format("/query_plans/%s/%s", workload, dataSize));
+
+        // create cache
+        spark.sql("CACHE TABLE uservisits_copy");
+        spark.sql("CACHE TABLE rankings");
+        Dataset<Row> plan_cached = spark.sql("EXPLAIN EXTENDED INSERT OVERWRITE TABLE rankings_uservisits_join SELECT sourceIP, avg(pageRank), sum(adRevenue) as totalRevenue FROM rankings R JOIN (SELECT sourceIP, destURL, adRevenue FROM uservisits_copy UV WHERE (datediff(UV.visitDate, '1999-01-01')>=0 AND datediff(UV.visitDate, '2000-01-01')<=0)) NUV ON (R.pageURL = NUV.destURL) group by sourceIP order by totalRevenue DESC");
+        plan_cached.write().mode("overwrite").text(String.format("/query_plans/%s/%s_cached/", workload, dataSize));
+
         // run query
         spark.sql("INSERT OVERWRITE TABLE rankings_uservisits_join SELECT sourceIP, avg(pageRank), sum(adRevenue) as totalRevenue FROM rankings R JOIN (SELECT sourceIP, destURL, adRevenue FROM uservisits_copy UV WHERE (datediff(UV.visitDate, '1999-01-01')>=0 AND datediff(UV.visitDate, '2000-01-01')<=0)) NUV ON (R.pageURL = NUV.destURL) group by sourceIP order by totalRevenue DESC");
         break;
@@ -74,6 +88,11 @@ public class TempTest
         // get plan
         Dataset<Row> plan = spark.sql("EXPLAIN EXTENDED INSERT OVERWRITE TABLE uservisits_aggre SELECT sourceIP, SUM(adRevenue) FROM uservisits GROUP BY sourceIP");
         plan.write().mode("overwrite").text(String.format("/query_plans/%s/%s", workload, dataSize));
+
+        // create cache
+        spark.sql("CACHE TABLE uservisits");
+        Dataset<Row> plan_cached = spark.sql("EXPLAIN EXTENDED INSERT OVERWRITE TABLE uservisits_aggre SELECT sourceIP, SUM(adRevenue) FROM uservisits GROUP BY sourceIP");
+        plan_cached.write().mode("overwrite").text(String.format("/query_plans/%s/%s_cached/", workload, dataSize));
 
         // run query
         spark.sql("INSERT OVERWRITE TABLE uservisits_aggre SELECT sourceIP, SUM(adRevenue) FROM uservisits GROUP BY sourceIP");
