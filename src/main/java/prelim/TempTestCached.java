@@ -38,12 +38,12 @@ public class TempTestCached
 
         // get plan
         Dataset<Row> plan = spark.sql("EXPLAIN EXTENDED INSERT OVERWRITE TABLE uservisits_copy SELECT * FROM uservisits");
-        plan.write().mode("overwrite").text(String.format("/query_plans/%s/%s", workload, dataSize));
+        plan.write().mode("overwrite").text(String.format("/query_plans/%s/%s/mem_%s", workload, dataSize, execMem));
 
         // create cache
         spark.sql("CACHE TABLE uservisits");
         Dataset<Row> plan_cached = spark.sql("EXPLAIN EXTENDED INSERT OVERWRITE TABLE uservisits_copy SELECT * FROM uservisits");
-        plan_cached.write().mode("overwrite").text(String.format("/query_plans/%s/%s_cached/", workload, dataSize));
+        plan_cached.write().mode("overwrite").text(String.format("/query_plans/%s/%s_cached/mem_%s", workload, dataSize, execMem));
 
         // run query
         spark.sql("INSERT OVERWRITE TABLE uservisits_copy SELECT * FROM uservisits");
@@ -64,13 +64,13 @@ public class TempTestCached
 
         // get plan
         Dataset<Row> plan = spark.sql("EXPLAIN EXTENDED INSERT OVERWRITE TABLE rankings_uservisits_join SELECT sourceIP, avg(pageRank), sum(adRevenue) as totalRevenue FROM rankings R JOIN (SELECT sourceIP, destURL, adRevenue FROM uservisits_copy UV WHERE (datediff(UV.visitDate, '1999-01-01')>=0 AND datediff(UV.visitDate, '2000-01-01')<=0)) NUV ON (R.pageURL = NUV.destURL) group by sourceIP order by totalRevenue DESC");
-        plan.write().mode("overwrite").text(String.format("/query_plans/%s/%s", workload, dataSize));
+        plan.write().mode("overwrite").text(String.format("/query_plans/%s/%s/mem_%s", workload, dataSize, execMem));
 
         // create cache
         spark.sql("CACHE TABLE uservisits_copy");
         spark.sql("CACHE TABLE rankings");
         Dataset<Row> plan_cached = spark.sql("EXPLAIN EXTENDED INSERT OVERWRITE TABLE rankings_uservisits_join SELECT sourceIP, avg(pageRank), sum(adRevenue) as totalRevenue FROM rankings R JOIN (SELECT sourceIP, destURL, adRevenue FROM uservisits_copy UV WHERE (datediff(UV.visitDate, '1999-01-01')>=0 AND datediff(UV.visitDate, '2000-01-01')<=0)) NUV ON (R.pageURL = NUV.destURL) group by sourceIP order by totalRevenue DESC");
-        plan_cached.write().mode("overwrite").text(String.format("/query_plans/%s/%s_cached/", workload, dataSize));
+        plan_cached.write().mode("overwrite").text(String.format("/query_plans/%s/%s_cached/mem_%s", workload, dataSize, execMem));
 
         // run query
         spark.sql("INSERT OVERWRITE TABLE rankings_uservisits_join SELECT sourceIP, avg(pageRank), sum(adRevenue) as totalRevenue FROM rankings R JOIN (SELECT sourceIP, destURL, adRevenue FROM uservisits_copy UV WHERE (datediff(UV.visitDate, '1999-01-01')>=0 AND datediff(UV.visitDate, '2000-01-01')<=0)) NUV ON (R.pageURL = NUV.destURL) group by sourceIP order by totalRevenue DESC");
@@ -87,12 +87,12 @@ public class TempTestCached
 
         // get plan
         Dataset<Row> plan = spark.sql("EXPLAIN EXTENDED INSERT OVERWRITE TABLE uservisits_aggre SELECT sourceIP, SUM(adRevenue) FROM uservisits GROUP BY sourceIP");
-        plan.write().mode("overwrite").text(String.format("/query_plans/%s/%s", workload, dataSize));
+        plan.write().mode("overwrite").text(String.format("/query_plans/%s/%s/mem_%s", workload, dataSize, execMem));
 
         // create cache
         spark.sql("CACHE TABLE uservisits");
         Dataset<Row> plan_cached = spark.sql("EXPLAIN EXTENDED INSERT OVERWRITE TABLE uservisits_aggre SELECT sourceIP, SUM(adRevenue) FROM uservisits GROUP BY sourceIP");
-        plan_cached.write().mode("overwrite").text(String.format("/query_plans/%s/%s_cached/", workload, dataSize));
+        plan_cached.write().mode("overwrite").text(String.format("/query_plans/%s/%s_cached/mem_%s", workload, dataSize, execMem));
 
         // run query
         spark.sql("INSERT OVERWRITE TABLE uservisits_aggre SELECT sourceIP, SUM(adRevenue) FROM uservisits GROUP BY sourceIP");
