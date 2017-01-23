@@ -148,6 +148,7 @@ public class HiveTestWithIndex
       }
     }
 
+    buildIndexWriter.close();
     timeWriter.close();
     planWriter.close();
   }
