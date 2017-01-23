@@ -47,6 +47,7 @@ public class HiveTest {
 
     switch (workload) {
       case "Scan": {
+        stmt.execute("DROP INDEX IF EXISTS uservisits_index ON uservisits");
         stmt.execute("DROP TABLE IF EXISTS uservisits");
         stmt.execute(String.format("CREATE EXTERNAL TABLE uservisits (sourceIP STRING,destURL STRING,visitDate STRING,adRevenue DOUBLE,userAgent STRING,countryCode STRING,languageCode STRING,searchWord STRING,duration INT ) ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde' STORED AS  SEQUENCEFILE LOCATION '%s/uservisits'", inputData));
         stmt.execute("DROP TABLE IF EXISTS uservisits_copy");
@@ -67,6 +68,8 @@ public class HiveTest {
         break;
       }
       case "Join": {
+        stmt.execute("DROP INDEX IF EXISTS rankings_index ON rankings");
+        stmt.execute("DROP INDEX IF EXISTS uservisits_copy_index ON uservisits_copy");
         stmt.execute("DROP TABLE IF EXISTS rankings");
         stmt.execute(String.format("CREATE EXTERNAL TABLE rankings (pageURL STRING, pageRank INT, avgDuration INT) ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde' STORED AS  SEQUENCEFILE LOCATION '%s/rankings'", inputData));
         stmt.execute("DROP TABLE IF EXISTS uservisits_copy");
@@ -90,6 +93,7 @@ public class HiveTest {
         break;
       }
       case "Aggregation": {
+        stmt.execute("DROP INDEX IF EXISTS uservisits_index ON uservisits");
         stmt.execute("DROP TABLE IF EXISTS uservisits");
         stmt.execute(String.format("CREATE EXTERNAL TABLE uservisits (sourceIP STRING,destURL STRING,visitDate STRING,adRevenue DOUBLE,userAgent STRING,countryCode STRING,languageCode STRING,searchWord STRING,duration INT ) ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde' STORED AS  SEQUENCEFILE LOCATION '%s/uservisits'", inputData));
         stmt.execute("DROP TABLE IF EXISTS uservisits_aggre");
