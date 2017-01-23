@@ -17,7 +17,7 @@ public class HiveTest {
   {
 
     if (args.length != 4) {
-      System.out.println("USAGE: HiveTest <workload> <data_size> <exec_mem> <log_path>";
+      System.out.println("USAGE: HiveTest <workload> <data_size> <exec_mem> <log_path>");
       System.exit(-1);
     }
 
