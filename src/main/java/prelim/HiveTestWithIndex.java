@@ -58,7 +58,8 @@ public class HiveTestWithIndex
 
         // create index
         Stopwatch watch = Stopwatch.createStarted();
-        stmt.execute("CREATE INDEX uservisits_index ON TABLE uservisits (sourceIP, destURL, visitDate, adRevenue, userAgent, countryCode, languageCode, searchWord, duration) AS 'COMPACT'");
+        stmt.execute("CREATE INDEX uservisits_index ON TABLE uservisits (sourceIP, destURL, visitDate, adRevenue, userAgent, countryCode, languageCode, searchWord, duration) AS 'COMPACT' WITH DEFERRED REBUILD");
+        stmt.execute("ALTER INDEX uservisits_index ON uservisits REBUILD");
         watch.stop();
         long timeTaken = watch.elapsed(TimeUnit.SECONDS);
         buildIndexWriter.println(watch.toString());
@@ -89,8 +90,10 @@ public class HiveTestWithIndex
 
         // create index
         Stopwatch watch = Stopwatch.createStarted();
-        stmt.execute("CREATE INDEX rankings_index ON TABLE rankings (pageURL, pageRank) AS 'COMPACT'");
-        stmt.execute("CREATE INDEX uservisits_copy_index ON TABLE uservisits_copy (sourceIP, destURL, visitDate, adRevenue) AS 'COMPACT'");
+        stmt.execute("CREATE INDEX rankings_index ON TABLE rankings (pageURL, pageRank) AS 'COMPACT' WITH DEFERRED REBUILD");
+        stmt.execute("CREATE INDEX uservisits_copy_index ON TABLE uservisits_copy (sourceIP, destURL, visitDate, adRevenue) AS 'COMPACT' WITH DEFERRED REBUILD");
+        stmt.execute("ALTER INDEX rankings_index ON rankings REBUILD");
+        stmt.execute("ALTER INDEX uservisits_copy_index ON uservisits_copy REBUILD");
         watch.stop();
         long timeTaken = watch.elapsed(TimeUnit.SECONDS);
         buildIndexWriter.println(watch.toString());
@@ -119,7 +122,8 @@ public class HiveTestWithIndex
 
         // create index
         Stopwatch watch = Stopwatch.createStarted();
-        stmt.execute("CREATE INDEX uservisits_index ON TABLE uservisits (sourceIP, adRevenue) AS 'COMPACT'");
+        stmt.execute("CREATE INDEX uservisits_index ON TABLE uservisits (sourceIP, adRevenue) AS 'COMPACT' WITH DEFERRED REBUILD");
+        stmt.execute("ALTER INDEX uservisits_index ON uservisits REBUILD");
         watch.stop();
         long timeTaken = watch.elapsed(TimeUnit.SECONDS);
         buildIndexWriter.println(watch.toString());
