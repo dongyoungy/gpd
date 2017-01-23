@@ -16,16 +16,15 @@ public class HiveTest {
   public static void main(String[] args) throws SQLException
   {
 
-    if (args.length != 4) {
-      System.out.println("USAGE: HiveTest <workload> <data_size> <exec_mem> <log_path>");
+    if (args.length != 3) {
+      System.out.println("USAGE: HiveTest <workload> <data_size> <log_path>");
       System.exit(-1);
     }
 
     String workload = args[0];
     String dataSize = args[1];
-    String execMem = args[2];
-    String logPath = args[3];
-    String applicationName = workload + "_" + dataSize + "_" + execMem;
+    String logPath = args[2];
+    String applicationName = workload + "_" + dataSize;
     String inputData = String.format("/data_gen/HiBench/Data/%s/Input", dataSize);
     String outputData = String.format("/data_gen/HiBench/Data/%s/Output", dataSize);
 
