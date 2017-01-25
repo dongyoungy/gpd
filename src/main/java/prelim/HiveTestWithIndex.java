@@ -72,13 +72,13 @@ public class HiveTestWithIndex
         buildIndexWriter.println(timeTaken);
 
         // get plan
-        ResultSet planRes = stmt.executeQuery("EXPLAIN EXTENDED SELECT * FROM default__uservisits_uservisits_index__");
+        ResultSet planRes = stmt.executeQuery("EXPLAIN EXTENDED SELECT sourceIP, destURL, visitDate, adRevenue, userAgent, countryCode, languageCode, searchWord, duration FROM default__uservisits_uservisits_index__");
         while (planRes.next()) {
           planWriter.println(planRes.getString(1));
         }
         // run query
         watch = Stopwatch.createStarted();
-        stmt.execute("INSERT OVERWRITE TABLE uservisits_copy SELECT * FROM default__uservisits_uservisits_index__");
+        stmt.execute("INSERT OVERWRITE TABLE uservisits_copy SELECT sourceIP, destURL, visitDate, adRevenue, userAgent, countryCode, languageCode, searchWord, duration FROM default__uservisits_uservisits_index__");
         watch.stop();
 
         timeTaken = watch.elapsed(TimeUnit.SECONDS);
