@@ -17,21 +17,28 @@ public class HiveTestWithIndex
   public static void main(String[] args) throws SQLException
   {
 
-    if (args.length != 3) {
-      System.out.println("USAGE: HiveTestWithIndex<workload> <data_size> <log_path>");
+    if (args.length != 4) {
+      System.out.println("USAGE: HiveTestWithIndex <workload> <data_size> <index_type> <log_path>");
       System.exit(-1);
     }
 
     String workload = args[0];
     String dataSize = args[1];
-    String logPath = args[2];
+    String indexType =args[2];
+    String logPath = args[3];
+
+    if (!indexType.equalsIgnoreCase("bitmap") && !indexType.equalsIgnoreCase("compact")) {
+      System.out.println(String.format("Invalid index type: %s, please use 'compact' or 'bitmap'", indexType));
+      System.exit(-1);
+    }
+
     String applicationName = workload + "_" + dataSize;
     String inputData = String.format("/data_gen/HiBench/Data/%s/Input", dataSize);
     String outputData = String.format("/data_gen/HiBench/Data/%s/Output", dataSize);
 
-    File timeTakenFile = new File(logPath + File.separator + applicationName + ".time_with_index");
-    File planFile = new File(logPath + File.separator + applicationName + ".plan_with_index");
-    File buildIndexFile = new File(logPath + File.separator + applicationName + ".build_index_time");
+    File timeTakenFile = new File(logPath + File.separator + applicationName + ".time_with_index_" + indexType);
+    File planFile = new File(logPath + File.separator + applicationName + ".plan_with_index_" + indexType);
+    File buildIndexFile = new File(logPath + File.separator + applicationName + ".build_index_time_" + indexType);
 
     PrintWriter timeWriter = null, planWriter = null, buildIndexWriter = null;
 
@@ -58,24 +65,24 @@ public class HiveTestWithIndex
 
         // create index
         Stopwatch watch = Stopwatch.createStarted();
-        stmt.execute("CREATE INDEX uservisits_index ON TABLE uservisits (sourceIP, destURL, visitDate, adRevenue, userAgent, countryCode, languageCode, searchWord, duration) AS 'COMPACT' WITH DEFERRED REBUILD");
+        stmt.execute(String.format("CREATE INDEX uservisits_index ON TABLE uservisits (sourceIP, destURL, visitDate, adRevenue, userAgent, countryCode, languageCode, searchWord, duration) AS '%s' WITH DEFERRED REBUILD", indexType));
         stmt.execute("ALTER INDEX uservisits_index ON uservisits REBUILD");
         watch.stop();
         long timeTaken = watch.elapsed(TimeUnit.SECONDS);
-        buildIndexWriter.println(watch.toString());
+        buildIndexWriter.println(timeTaken);
 
         // get plan
-        ResultSet planRes = stmt.executeQuery("EXPLAIN EXTENDED SELECT * FROM uservisits");
+        ResultSet planRes = stmt.executeQuery("EXPLAIN EXTENDED SELECT * FROM default__uservisits_uservisits_index__");
         while (planRes.next()) {
           planWriter.println(planRes.getString(1));
         }
         // run query
         watch = Stopwatch.createStarted();
-        stmt.execute("INSERT OVERWRITE TABLE uservisits_copy SELECT * FROM uservisits");
+        stmt.execute("INSERT OVERWRITE TABLE uservisits_copy SELECT * FROM default__uservisits_uservisits_index__");
         watch.stop();
 
         timeTaken = watch.elapsed(TimeUnit.SECONDS);
-        timeWriter.println(watch.toString());
+        timeWriter.println(timeTaken);
         break;
       }
       case "Join": {
@@ -90,27 +97,27 @@ public class HiveTestWithIndex
 
         // create index
         Stopwatch watch = Stopwatch.createStarted();
-        stmt.execute("CREATE INDEX rankings_index ON TABLE rankings (pageURL, pageRank) AS 'COMPACT' WITH DEFERRED REBUILD");
-        stmt.execute("CREATE INDEX uservisits_copy_index ON TABLE uservisits_copy (sourceIP, destURL, visitDate, adRevenue) AS 'COMPACT' WITH DEFERRED REBUILD");
+        stmt.execute(String.format("CREATE INDEX rankings_index ON TABLE rankings (pageURL, pageRank) AS '%s' WITH DEFERRED REBUILD", indexType));
+        stmt.execute(String.format("CREATE INDEX uservisits_copy_index ON TABLE uservisits_copy (sourceIP, destURL, visitDate, adRevenue) AS '%s' WITH DEFERRED REBUILD", indexType));
         stmt.execute("ALTER INDEX rankings_index ON rankings REBUILD");
         stmt.execute("ALTER INDEX uservisits_copy_index ON uservisits_copy REBUILD");
         watch.stop();
         long timeTaken = watch.elapsed(TimeUnit.SECONDS);
-        buildIndexWriter.println(watch.toString());
+        buildIndexWriter.println(timeTaken);
 
         // get plan
-        ResultSet planRes = stmt.executeQuery("EXPLAIN EXTENDED SELECT sourceIP, avg(pageRank), sum(adRevenue) as totalRevenue FROM rankings R JOIN (SELECT sourceIP, destURL, adRevenue FROM uservisits_copy UV WHERE (datediff(UV.visitDate, '1999-01-01')>=0 AND datediff(UV.visitDate, '2000-01-01')<=0)) NUV ON (R.pageURL = NUV.destURL) group by sourceIP order by totalRevenue DESC");
+        ResultSet planRes = stmt.executeQuery("EXPLAIN EXTENDED SELECT sourceIP, avg(pageRank), sum(adRevenue) as totalRevenue FROM default__rankings_rankings_index__ R JOIN (SELECT sourceIP, destURL, adRevenue FROM default__uservisits_copy_uservisits_copy_index__ UV WHERE (datediff(UV.visitDate, '1999-01-01')>=0 AND datediff(UV.visitDate, '2000-01-01')<=0)) NUV ON (R.pageURL = NUV.destURL) group by sourceIP order by totalRevenue DESC");
         while (planRes.next()) {
           planWriter.println(planRes.getString(1));
         }
 
         // run query
         watch = Stopwatch.createStarted();
-        stmt.execute("INSERT OVERWRITE TABLE rankings_uservisits_join SELECT sourceIP, avg(pageRank), sum(adRevenue) as totalRevenue FROM rankings R JOIN (SELECT sourceIP, destURL, adRevenue FROM uservisits_copy UV WHERE (datediff(UV.visitDate, '1999-01-01')>=0 AND datediff(UV.visitDate, '2000-01-01')<=0)) NUV ON (R.pageURL = NUV.destURL) group by sourceIP order by totalRevenue DESC");
+        stmt.execute("INSERT OVERWRITE TABLE rankings_uservisits_join SELECT sourceIP, avg(pageRank), sum(adRevenue) as totalRevenue FROM default__rankings_rankings_index__ R JOIN (SELECT sourceIP, destURL, adRevenue FROM default__uservisits_copy_uservisits_copy_index__ UV WHERE (datediff(UV.visitDate, '1999-01-01')>=0 AND datediff(UV.visitDate, '2000-01-01')<=0)) NUV ON (R.pageURL = NUV.destURL) group by sourceIP order by totalRevenue DESC");
         watch.stop();
 
         timeTaken = watch.elapsed(TimeUnit.SECONDS);
-        timeWriter.println(watch.toString());
+        timeWriter.println(timeTaken);
         break;
       }
       case "Aggregation": {
@@ -122,25 +129,25 @@ public class HiveTestWithIndex
 
         // create index
         Stopwatch watch = Stopwatch.createStarted();
-        stmt.execute("CREATE INDEX uservisits_index ON TABLE uservisits (sourceIP, adRevenue) AS 'COMPACT' WITH DEFERRED REBUILD");
+        stmt.execute(String.format("CREATE INDEX uservisits_index ON TABLE uservisits (sourceIP, adRevenue) AS '%s' WITH DEFERRED REBUILD", indexType));
         stmt.execute("ALTER INDEX uservisits_index ON uservisits REBUILD");
         watch.stop();
         long timeTaken = watch.elapsed(TimeUnit.SECONDS);
-        buildIndexWriter.println(watch.toString());
+        buildIndexWriter.println(timeTaken);
 
         // get plan
-        ResultSet planRes = stmt.executeQuery("EXPLAIN EXTENDED SELECT sourceIP, SUM(adRevenue) FROM uservisits GROUP BY sourceIP");
+        ResultSet planRes = stmt.executeQuery("EXPLAIN EXTENDED SELECT sourceIP, SUM(adRevenue) FROM default__uservisits_uservisits_index__ GROUP BY sourceIP");
         while (planRes.next()) {
           planWriter.println(planRes.getString(1));
         }
 
         // run query
         watch = Stopwatch.createStarted();
-        stmt.execute("INSERT OVERWRITE TABLE uservisits_aggre SELECT sourceIP, SUM(adRevenue) FROM uservisits GROUP BY sourceIP");
+        stmt.execute("INSERT OVERWRITE TABLE uservisits_aggre SELECT sourceIP, SUM(adRevenue) FROM default__uservisits_uservisits_index__ GROUP BY sourceIP");
         watch.stop();
 
         timeTaken = watch.elapsed(TimeUnit.SECONDS);
-        timeWriter.println(watch.toString());
+        timeWriter.println(timeTaken);
         break;
       }
       default: {
