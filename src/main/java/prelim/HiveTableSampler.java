@@ -11,7 +11,7 @@ import java.sql.Statement;
 public class HiveTableSampler
 {
   public static void main(String[] args) throws SQLException {
-    if (args.length != 2) {
+    if (args.length != 1) {
       System.out.println("USAGE: HiveTableSampler <data_dir>");
       System.exit(-1);
     }
@@ -19,9 +19,9 @@ public class HiveTableSampler
     String dataDir = args[0];
 //    String tableName = args[1];
 //    String sampleTableName = args[2];
-    long sampleSize = Long.parseLong(args[2]);
+    //long sampleSize = Long.parseLong(args[2]);
 
-    String applicationName = "HiveTableSampler_" + sampleSize;
+    String applicationName = "HiveTableSampler";
     String uservisitsData = String.format("%s/uservisits", dataDir);
     String rankingsData = String.format("%s/rankings", dataDir);
 
