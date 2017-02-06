@@ -58,6 +58,7 @@ public class HiveTestWithIndexVer2
     switch (workload) {
       case "All": {
         // create index
+        stmt.execute("DROP INDEX IF EXISTS uservisits_index ON uservisits");
         Stopwatch watch = Stopwatch.createStarted();
         stmt.execute(String.format("CREATE INDEX uservisits_index ON TABLE uservisits (sourceIP, destURL, visitDate, adRevenue) AS '%s' WITH DEFERRED REBUILD " +
             "IDXPROPERTIES('hive.index.compact.binary.search'='true') STORED AS ORC " +
