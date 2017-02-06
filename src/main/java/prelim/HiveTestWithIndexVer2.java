@@ -18,7 +18,7 @@ public class HiveTestWithIndexVer2
   {
 
     if (args.length != 4) {
-      System.out.println("USAGE: HiveTestWithIndex <workload> <data_size> <index_type> <log_path>");
+      System.out.println("USAGE: HiveTestWithIndexVer2 <workload> <data_size> <index_type> <log_path>");
       System.exit(-1);
     }
 
@@ -65,7 +65,9 @@ public class HiveTestWithIndexVer2
 
         // create index
         Stopwatch watch = Stopwatch.createStarted();
-        stmt.execute(String.format("CREATE INDEX uservisits_index ON TABLE uservisits (sourceIP, destURL, visitDate, adRevenue) AS '%s' WITH DEFERRED REBUILD", indexType));
+        stmt.execute(String.format("CREATE INDEX uservisits_index ON TABLE uservisits (sourceIP, destURL, visitDate, adRevenue) AS '%s' WITH DEFERRED REBUILD " +
+            "IDXPROPERTIES('hive.index.compact.binary.search'='true') STORED AS ORC " +
+            "TBLPROPERTIES('orc.compress'='SNAPPY', 'orc.create.index'='true')", indexType));
         stmt.execute("ALTER INDEX uservisits_index ON uservisits REBUILD");
         watch.stop();
         long timeTaken = watch.elapsed(TimeUnit.SECONDS);
@@ -97,7 +99,9 @@ public class HiveTestWithIndexVer2
 
         // create index
         Stopwatch watch = Stopwatch.createStarted();
-        stmt.execute(String.format("CREATE INDEX uservisits_copy_index ON TABLE uservisits_copy (sourceIP, destURL, visitDate, adRevenue) AS '%s' WITH DEFERRED REBUILD", indexType));
+        stmt.execute(String.format("CREATE INDEX uservisits_copy_index ON TABLE uservisits_copy (sourceIP, destURL, visitDate, adRevenue) AS '%s' WITH DEFERRED REBUILD " +
+            "IDXPROPERTIES('hive.index.compact.binary.search'='true') STORED AS ORC " +
+            "TBLPROPERTIES('orc.compress'='SNAPPY', 'orc.create.index'='true')", indexType));
         stmt.execute("ALTER INDEX uservisits_copy_index ON uservisits_copy REBUILD");
         watch.stop();
         long timeTaken = watch.elapsed(TimeUnit.SECONDS);
@@ -127,7 +131,9 @@ public class HiveTestWithIndexVer2
 
         // create index
         Stopwatch watch = Stopwatch.createStarted();
-        stmt.execute(String.format("CREATE INDEX uservisits_index ON TABLE uservisits (sourceIP, destURL, visitDate, adRevenue) AS '%s' WITH DEFERRED REBUILD", indexType));
+        stmt.execute(String.format("CREATE INDEX uservisits_index ON TABLE uservisits (sourceIP, destURL, visitDate, adRevenue) AS '%s' WITH DEFERRED REBUILD " +
+            "IDXPROPERTIES('hive.index.compact.binary.search'='true') STORED AS ORC " +
+            "TBLPROPERTIES('orc.compress'='SNAPPY', 'orc.create.index'='true')", indexType));
         stmt.execute("ALTER INDEX uservisits_index ON uservisits REBUILD");
         watch.stop();
         long timeTaken = watch.elapsed(TimeUnit.SECONDS);
