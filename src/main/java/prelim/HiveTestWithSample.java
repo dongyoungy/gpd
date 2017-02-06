@@ -60,8 +60,8 @@ public class HiveTestWithSample {
 
     // create index
     Stopwatch watch = Stopwatch.createStarted();
-    stmt.execute(String.format("CREATE INDEX sample_index ON TABLE %s (sourceIP, destURL, visitDate, adRevenue) AS 'compact' WITH DEFERRED REBUILD" +
-        "IDXPROPERTIES('hive.index.compact.binary.search'='true') STORED AS ORC" +
+    stmt.execute(String.format("CREATE INDEX sample_index ON TABLE %s (sourceIP, destURL, visitDate, adRevenue) AS 'compact' WITH DEFERRED REBUILD " +
+        "IDXPROPERTIES('hive.index.compact.binary.search'='true') STORED AS ORC " +
         "TBLPROPERTIES('orc.compress'='SNAPPY', 'orc.create.index'='true')", uservisitsTable));
     stmt.execute(String.format("ALTER INDEX sample_index ON %s REBUILD", uservisitsTable));
     watch.stop();
