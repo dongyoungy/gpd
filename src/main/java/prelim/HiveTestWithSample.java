@@ -69,8 +69,8 @@ public class HiveTestWithSample {
 
     switch (workload) {
       case "Scan": {
-        stmt.execute("DROP TABLE IF EXISTS uservisits_copy");
-        stmt.execute(String.format("CREATE EXTERNAL TABLE uservisits_copy (sourceIP STRING,destURL STRING,visitDate STRING,adRevenue DOUBLE) ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde' STORED AS  SEQUENCEFILE LOCATION '%s/uservisits_copy'", outputPath));
+        stmt.execute(String.format("DROP TABLE IF EXISTS uservisits_copy_%s", applicationName));
+        stmt.execute(String.format("CREATE EXTERNAL TABLE uservisits_copy_%s (sourceIP STRING,destURL STRING,visitDate STRING,adRevenue DOUBLE) ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde' STORED AS  SEQUENCEFILE LOCATION '%s/uservisits_copy'", applicationName, outputPath));
 
         // get plan
         ResultSet planRes = stmt.executeQuery(String.format("EXPLAIN SELECT sourceIP, destURL, visitDate, adRevenue FROM %s", uservisitsIndex));
@@ -79,7 +79,7 @@ public class HiveTestWithSample {
         }
         // run query
         watch = Stopwatch.createStarted();
-        stmt.execute(String.format("INSERT OVERWRITE TABLE uservisits_copy SELECT sourceIP, destURL, visitDate, adRevenue FROM %s", uservisitsIndex));
+        stmt.execute(String.format("INSERT OVERWRITE TABLE uservisits_copy_%s SELECT sourceIP, destURL, visitDate, adRevenue FROM %s", applicationName, uservisitsIndex));
         watch.stop();
 
         timeTaken = watch.elapsed(TimeUnit.SECONDS);
@@ -87,8 +87,8 @@ public class HiveTestWithSample {
         break;
       }
       case "Join": {
-        stmt.execute("DROP TABLE IF EXISTS rankings_uservisits_join");
-        stmt.execute(String.format("CREATE EXTERNAL TABLE rankings_uservisits_join ( sourceIP STRING, avgPageRank DOUBLE, totalRevenue DOUBLE ) STORED AS  SEQUENCEFILE LOCATION '%s/rankings_uservisits_join'", outputPath));
+        stmt.execute(String.format("DROP TABLE IF EXISTS rankings_uservisits_%s", applicationName));
+        stmt.execute(String.format("CREATE EXTERNAL TABLE rankings_uservisits_%s ( sourceIP STRING, avgPageRank DOUBLE, totalRevenue DOUBLE ) STORED AS  SEQUENCEFILE LOCATION '%s/rankings_uservisits_join'", applicationName, outputPath));
 
         // get plan
         ResultSet planRes = stmt.executeQuery(String.format("EXPLAIN SELECT sourceIP, avg(pageRank), sum(adRevenue) as totalRevenue FROM %s R JOIN (SELECT sourceIP, destURL, adRevenue FROM %s UV WHERE (datediff(UV.visitDate, '1999-01-01')>=0 AND datediff(UV.visitDate, '2000-01-01')<=0)) NUV ON (R.pageURL = NUV.destURL) group by sourceIP order by totalRevenue DESC", rankingsTable, uservisitsIndex));
@@ -98,7 +98,7 @@ public class HiveTestWithSample {
 
         // run query
         watch = Stopwatch.createStarted();
-        stmt.execute(String.format("INSERT OVERWRITE TABLE rankings_uservisits_join SELECT sourceIP, avg(pageRank), sum(adRevenue) as totalRevenue FROM %s R JOIN (SELECT sourceIP, destURL, adRevenue FROM %s UV WHERE (datediff(UV.visitDate, '1999-01-01')>=0 AND datediff(UV.visitDate, '2000-01-01')<=0)) NUV ON (R.pageURL = NUV.destURL) group by sourceIP order by totalRevenue DESC", rankingsTable, uservisitsIndex));
+        stmt.execute(String.format("INSERT OVERWRITE TABLE rankings_uservisits_%s SELECT sourceIP, avg(pageRank), sum(adRevenue) as totalRevenue FROM %s R JOIN (SELECT sourceIP, destURL, adRevenue FROM %s UV WHERE (datediff(UV.visitDate, '1999-01-01')>=0 AND datediff(UV.visitDate, '2000-01-01')<=0)) NUV ON (R.pageURL = NUV.destURL) group by sourceIP order by totalRevenue DESC", applicationName, rankingsTable, uservisitsIndex));
         watch.stop();
 
         timeTaken = watch.elapsed(TimeUnit.SECONDS);
@@ -106,8 +106,8 @@ public class HiveTestWithSample {
         break;
       }
       case "Aggregation": {
-        stmt.execute("DROP TABLE IF EXISTS uservisits_aggre");
-        stmt.execute(String.format("CREATE EXTERNAL TABLE uservisits_aggre ( sourceIP STRING, sumAdRevenue DOUBLE ) STORED AS SEQUENCEFILE LOCATION '%s/uservisits_aggre'", outputPath));
+        stmt.execute(String.format("DROP TABLE IF EXISTS uservisits_aggre_%s", applicationName));
+        stmt.execute(String.format("CREATE EXTERNAL TABLE uservisits_aggre_%s ( sourceIP STRING, sumAdRevenue DOUBLE ) STORED AS SEQUENCEFILE LOCATION '%s/uservisits_aggre'", applicationName, outputPath));
 
 
         // get plan
@@ -118,7 +118,7 @@ public class HiveTestWithSample {
 
         // run query
         watch = Stopwatch.createStarted();
-        stmt.execute(String.format("INSERT OVERWRITE TABLE uservisits_aggre SELECT sourceIP, SUM(adRevenue) FROM %s GROUP BY sourceIP", uservisitsIndex));
+        stmt.execute(String.format("INSERT OVERWRITE TABLE uservisits_aggre_%s SELECT sourceIP, SUM(adRevenue) FROM %s GROUP BY sourceIP", applicationName, uservisitsIndex));
         watch.stop();
 
         timeTaken = watch.elapsed(TimeUnit.SECONDS);
