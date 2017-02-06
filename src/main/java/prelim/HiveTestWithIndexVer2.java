@@ -56,6 +56,72 @@ public class HiveTestWithIndexVer2
     Statement stmt = conn.createStatement();
 
     switch (workload) {
+      case "ALL": {
+        // create index
+        Stopwatch watch = Stopwatch.createStarted();
+        stmt.execute(String.format("CREATE INDEX uservisits_index ON TABLE uservisits (sourceIP, destURL, visitDate, adRevenue) AS '%s' WITH DEFERRED REBUILD " +
+            "IDXPROPERTIES('hive.index.compact.binary.search'='true') STORED AS ORC " +
+            "TBLPROPERTIES('orc.compress'='SNAPPY', 'orc.create.index'='true')", indexType));
+        stmt.execute("ALTER INDEX uservisits_index ON uservisits REBUILD");
+        watch.stop();
+        long timeTaken = watch.elapsed(TimeUnit.SECONDS);
+        buildIndexWriter.println(timeTaken);
+
+        // get plan
+        planWriter.println("For Scan:");
+        ResultSet planRes = stmt.executeQuery("EXPLAIN SELECT sourceIP, destURL, visitDate, adRevenue FROM default__uservisits_uservisits_index__");
+        while (planRes.next()) {
+          planWriter.println(planRes.getString(1));
+        }
+        planWriter.println("End Scan");
+        planWriter.println();
+
+        // run query for Scan
+        stmt.execute("DROP TABLE IF EXISTS uservisits_copy");
+        stmt.execute(String.format("CREATE EXTERNAL TABLE uservisits_copy (sourceIP STRING,destURL STRING,visitDate STRING,adRevenue DOUBLE) ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde' STORED AS  SEQUENCEFILE LOCATION '%s/uservisits_copy'", outputData));
+        watch = Stopwatch.createStarted();
+        stmt.execute("INSERT OVERWRITE TABLE uservisits_copy SELECT sourceIP, destURL, visitDate, adRevenue FROM default__uservisits_uservisits_index__");
+        watch.stop();
+
+        timeTaken = watch.elapsed(TimeUnit.SECONDS);
+        timeWriter.println("Scan: " + timeTaken);
+
+        // get plan
+        planRes = stmt.executeQuery("EXPLAIN SELECT sourceIP, avg(pageRank), sum(adRevenue) as totalRevenue FROM rankings R JOIN (SELECT sourceIP, destURL, adRevenue FROM default__uservisits_uservisits_index__ UV WHERE (datediff(UV.visitDate, '1999-01-01')>=0 AND datediff(UV.visitDate, '2000-01-01')<=0)) NUV ON (R.pageURL = NUV.destURL) group by sourceIP order by totalRevenue DESC");
+        planWriter.println("For Join:");
+        while (planRes.next()) {
+          planWriter.println(planRes.getString(1));
+        }
+        planWriter.println("End Join");
+        planWriter.println();
+
+        // run query for Join
+        stmt.execute("DROP TABLE IF EXISTS rankings_uservisits_join");
+        stmt.execute(String.format("CREATE EXTERNAL TABLE rankings_uservisits_join ( sourceIP STRING, avgPageRank DOUBLE, totalRevenue DOUBLE ) STORED AS  SEQUENCEFILE LOCATION '%s/rankings_uservisits_join'", outputData));
+        watch = Stopwatch.createStarted();
+        stmt.execute("INSERT OVERWRITE TABLE rankings_uservisits_join SELECT sourceIP, avg(pageRank), sum(adRevenue) as totalRevenue FROM rankings R JOIN (SELECT sourceIP, destURL, adRevenue FROM default__uservisits_uservisits_index__ UV WHERE (datediff(UV.visitDate, '1999-01-01')>=0 AND datediff(UV.visitDate, '2000-01-01')<=0)) NUV ON (R.pageURL = NUV.destURL) group by sourceIP order by totalRevenue DESC");
+        watch.stop();
+
+        timeTaken = watch.elapsed(TimeUnit.SECONDS);
+        timeWriter.println("Join: " + timeTaken);
+
+        // get plan
+        planRes = stmt.executeQuery("EXPLAIN SELECT sourceIP, SUM(adRevenue) FROM default__uservisits_uservisits_index__ GROUP BY sourceIP");
+        while (planRes.next()) {
+          planWriter.println(planRes.getString(1));
+        }
+
+        // run query for Aggregation
+        stmt.execute("DROP TABLE IF EXISTS uservisits_aggre");
+        stmt.execute(String.format("CREATE EXTERNAL TABLE uservisits_aggre ( sourceIP STRING, sumAdRevenue DOUBLE ) STORED AS SEQUENCEFILE LOCATION '%s/uservisits_aggre'", outputData));
+        watch = Stopwatch.createStarted();
+        stmt.execute("INSERT OVERWRITE TABLE uservisits_aggre SELECT sourceIP, SUM(adRevenue) FROM default__uservisits_uservisits_index__ GROUP BY sourceIP");
+        watch.stop();
+
+        timeTaken = watch.elapsed(TimeUnit.SECONDS);
+        timeWriter.println(timeTaken);
+        break;
+      }
       case "Scan": {
         stmt.execute("DROP INDEX IF EXISTS uservisits_index ON uservisits");
         stmt.execute("DROP TABLE IF EXISTS uservisits");
