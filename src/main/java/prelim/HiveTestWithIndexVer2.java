@@ -56,7 +56,7 @@ public class HiveTestWithIndexVer2
     Statement stmt = conn.createStatement();
 
     switch (workload) {
-      case "ALL": {
+      case "All": {
         // create index
         Stopwatch watch = Stopwatch.createStarted();
         stmt.execute(String.format("CREATE INDEX uservisits_index ON TABLE uservisits (sourceIP, destURL, visitDate, adRevenue) AS '%s' WITH DEFERRED REBUILD " +
