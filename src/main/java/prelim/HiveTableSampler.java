@@ -20,7 +20,7 @@ public class HiveTableSampler
     long sampleSize = Long.parseLong(args[1]);
     String sampleSizeUnit = args[2];
 
-    if (sampleSizeUnit != "m" && sampleSizeUnit != "g") {
+    if (!sampleSizeUnit.equals("m") && sampleSizeUnit.equals("g")) {
       System.out.println("ERROR: unit must be 'm' or 'g'!");
       System.exit(-1);
     }
