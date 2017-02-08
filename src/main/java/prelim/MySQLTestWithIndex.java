@@ -174,7 +174,7 @@ public class MySQLTestWithIndex
         watch.stop();
 
         timeTaken = watch.elapsed(TimeUnit.SECONDS);
-        timeWriter.println(timeTaken);
+        timeWriter.println("Aggregation: " + timeTaken);
         break;
       }
       case "Join": {
