@@ -62,7 +62,7 @@ public class MySQLTestWithIndex
         Stopwatch watch = Stopwatch.createStarted();
         stmt.execute(String.format("CREATE INDEX uservisits_index ON uservisits (sourceIP, destURL, visitDate, adRevenue)"));
         watch.stop();
-        long timeTaken = watch.elapsed(TimeUnit.SECONDS);
+        long timeTaken = watch.elapsed(TimeUnit.MILLISECONDS);
         buildIndexWriter.println(timeTaken);
 
         // get plan
@@ -87,7 +87,7 @@ public class MySQLTestWithIndex
         stmt.execute("SELECT sourceIP, destURL, visitDate, adRevenue FROM uservisits");
         watch.stop();
 
-        timeTaken = watch.elapsed(TimeUnit.SECONDS);
+        timeTaken = watch.elapsed(TimeUnit.MILLISECONDS);
         timeWriter.println("Scan: " + timeTaken);
 
         // get plan
@@ -113,7 +113,7 @@ public class MySQLTestWithIndex
         stmt.execute("SELECT sourceIP, avg(pageRank), sum(adRevenue) as totalRevenue FROM rankings R JOIN (SELECT sourceIP, destURL, adRevenue FROM uservisits UV WHERE (datediff(UV.visitDate, '1999-01-01')>=0 AND datediff(UV.visitDate, '2000-01-01')<=0)) NUV ON (R.pageURL = NUV.destURL) group by sourceIP order by totalRevenue DESC");
         watch.stop();
 
-        timeTaken = watch.elapsed(TimeUnit.SECONDS);
+        timeTaken = watch.elapsed(TimeUnit.MILLISECONDS);
         timeWriter.println("Join: " + timeTaken);
 
         // get plan
@@ -139,8 +139,8 @@ public class MySQLTestWithIndex
         stmt.execute("SELECT sourceIP, SUM(adRevenue) FROM uservisits GROUP BY sourceIP");
         watch.stop();
 
-        timeTaken = watch.elapsed(TimeUnit.SECONDS);
-        timeWriter.println(timeTaken);
+        timeTaken = watch.elapsed(TimeUnit.MILLISECONDS);
+        timeWriter.println("Aggregation: " + timeTaken);
         break;
       }
       case "Scan": {
@@ -150,7 +150,7 @@ public class MySQLTestWithIndex
         Stopwatch watch = Stopwatch.createStarted();
         stmt.execute(String.format("CREATE INDEX uservisits_index ON TABLE uservisits (sourceIP, destURL, visitDate, adRevenue)"));
         watch.stop();
-        long timeTaken = watch.elapsed(TimeUnit.SECONDS);
+        long timeTaken = watch.elapsed(TimeUnit.MILLISECONDS);
         buildIndexWriter.println(timeTaken);
 
         // get plan
@@ -173,8 +173,8 @@ public class MySQLTestWithIndex
         stmt.execute("SELECT sourceIP, destURL, visitDate, adRevenue FROM uservisits");
         watch.stop();
 
-        timeTaken = watch.elapsed(TimeUnit.SECONDS);
-        timeWriter.println("Aggregation: " + timeTaken);
+        timeTaken = watch.elapsed(TimeUnit.MILLISECONDS);
+        timeWriter.println(timeTaken);
         break;
       }
       case "Join": {
@@ -184,7 +184,7 @@ public class MySQLTestWithIndex
         Stopwatch watch = Stopwatch.createStarted();
         stmt.execute(String.format("CREATE INDEX uservisits_index ON TABLE uservisits (sourceIP, destURL, visitDate, adRevenue)"));
         watch.stop();
-        long timeTaken = watch.elapsed(TimeUnit.SECONDS);
+        long timeTaken = watch.elapsed(TimeUnit.MILLISECONDS);
         buildIndexWriter.println(timeTaken);
 
         // get plan
@@ -207,7 +207,7 @@ public class MySQLTestWithIndex
         stmt.execute("SELECT sourceIP, avg(pageRank), sum(adRevenue) as totalRevenue FROM rankings R JOIN (SELECT sourceIP, destURL, adRevenue FROM uservisits UV WHERE (datediff(UV.visitDate, '1999-01-01')>=0 AND datediff(UV.visitDate, '2000-01-01')<=0)) NUV ON (R.pageURL = NUV.destURL) group by sourceIP order by totalRevenue DESC");
         watch.stop();
 
-        timeTaken = watch.elapsed(TimeUnit.SECONDS);
+        timeTaken = watch.elapsed(TimeUnit.MILLISECONDS);
         timeWriter.println(timeTaken);
         break;
       }
@@ -218,7 +218,7 @@ public class MySQLTestWithIndex
         Stopwatch watch = Stopwatch.createStarted();
         stmt.execute(String.format("CREATE INDEX uservisits_index ON TABLE uservisits (sourceIP, destURL, visitDate, adRevenue)"));
         watch.stop();
-        long timeTaken = watch.elapsed(TimeUnit.SECONDS);
+        long timeTaken = watch.elapsed(TimeUnit.MILLISECONDS);
         buildIndexWriter.println(timeTaken);
 
         // get plan
@@ -232,7 +232,7 @@ public class MySQLTestWithIndex
         stmt.execute("SELECT sourceIP, SUM(adRevenue) FROM uservisits GROUP BY sourceIP");
         watch.stop();
 
-        timeTaken = watch.elapsed(TimeUnit.SECONDS);
+        timeTaken = watch.elapsed(TimeUnit.MILLISECONDS);
         timeWriter.println(timeTaken);
         break;
       }
