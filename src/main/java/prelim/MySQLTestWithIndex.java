@@ -60,7 +60,7 @@ public class MySQLTestWithIndex
 
         // create index
         Stopwatch watch = Stopwatch.createStarted();
-        stmt.execute(String.format("CREATE INDEX uservisits_index ON TABLE uservisits (sourceIP, destURL, visitDate, adRevenue)"));
+        stmt.execute(String.format("CREATE INDEX uservisits_index ON uservisits (sourceIP, destURL, visitDate, adRevenue)"));
         watch.stop();
         long timeTaken = watch.elapsed(TimeUnit.SECONDS);
         buildIndexWriter.println(timeTaken);
