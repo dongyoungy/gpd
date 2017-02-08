@@ -50,8 +50,15 @@ public class MySQLTestWithIndex
 
     switch (workload) {
       case "All": {
+        // drop index if exists
+        ResultSet res = stmt.executeQuery("SHOW INDEX FROM uservisits");
+        res.last();
+        int total = res.getRow();
+        if (total == 0) {
+          stmt.execute("DROP INDEX uservisits_index ON uservisits");
+        }
+
         // create index
-        stmt.execute("DROP INDEX uservisits_index ON uservisits");
         Stopwatch watch = Stopwatch.createStarted();
         stmt.execute(String.format("CREATE INDEX uservisits_index ON TABLE uservisits (sourceIP, destURL, visitDate, adRevenue)"));
         watch.stop();
