@@ -117,7 +117,7 @@ public class MySQLTestWithIndex
         timeWriter.println("Join: " + timeTaken);
 
         // get plan
-        planRes = stmt.executeQuery("EXPLAIN EXTENDED SELECT sourceIP, SUM(adRevenue) FROM default__uservisits_uservisits_index__ GROUP BY sourceIP");
+        planRes = stmt.executeQuery("EXPLAIN EXTENDED SELECT sourceIP, SUM(adRevenue) FROM uservisits GROUP BY sourceIP");
         rsmd = planRes.getMetaData();
         columnNumber = rsmd.getColumnCount();
         planWriter.println("For Aggregation:");
@@ -170,7 +170,7 @@ public class MySQLTestWithIndex
 
         // run query
         watch = Stopwatch.createStarted();
-        stmt.execute("SELECT sourceIP, destURL, visitDate, adRevenue FROM default__uservisits_uservisits_index__");
+        stmt.execute("SELECT sourceIP, destURL, visitDate, adRevenue FROM uservisits");
         watch.stop();
 
         timeTaken = watch.elapsed(TimeUnit.SECONDS);
