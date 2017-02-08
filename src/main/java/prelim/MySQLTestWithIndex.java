@@ -70,12 +70,12 @@ public class MySQLTestWithIndex
         ResultSet planRes = stmt.executeQuery("EXPLAIN EXTENDED SELECT sourceIP, destURL, visitDate, adRevenue FROM uservisits");
         ResultSetMetaData rsmd = planRes.getMetaData();
         int columnNumber = rsmd.getColumnCount();
-        for (int i = 0; i < columnNumber; ++i) {
+        for (int i = 1; i <= columnNumber; ++i) {
           planWriter.print(rsmd.getColumnName(i) + ",");
         }
         planWriter.println();
         while (planRes.next()) {
-          for (int i = 0; i < columnNumber; ++i) {
+          for (int i = 1; i <= columnNumber; ++i) {
             planWriter.print(planRes.getString(i) + ",");
           }
           planWriter.println();
@@ -95,12 +95,12 @@ public class MySQLTestWithIndex
         rsmd = planRes.getMetaData();
         columnNumber = rsmd.getColumnCount();
         planWriter.println("For Join:");
-        for (int i = 0; i < columnNumber; ++i) {
+        for (int i = 1; i <= columnNumber; ++i) {
           planWriter.print(rsmd.getColumnName(i) + ",");
         }
         planWriter.println();
         while (planRes.next()) {
-          for (int i = 0; i < columnNumber; ++i) {
+          for (int i = 1; i <= columnNumber; ++i) {
             planWriter.print(planRes.getString(i) + ",");
           }
           planWriter.println();
@@ -121,12 +121,12 @@ public class MySQLTestWithIndex
         rsmd = planRes.getMetaData();
         columnNumber = rsmd.getColumnCount();
         planWriter.println("For Aggregation:");
-        for (int i = 0; i < columnNumber; ++i) {
+        for (int i = 1; i <= columnNumber; ++i) {
           planWriter.print(rsmd.getColumnName(i) + ",");
         }
         planWriter.println();
         while (planRes.next()) {
-          for (int i = 0; i < columnNumber; ++i) {
+          for (int i = 1; i <= columnNumber; ++i) {
             planWriter.print(planRes.getString(i) + ",");
           }
           planWriter.println();
