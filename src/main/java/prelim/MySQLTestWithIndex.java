@@ -54,7 +54,7 @@ public class MySQLTestWithIndex
         ResultSet res = stmt.executeQuery("SHOW INDEX FROM uservisits");
         res.last();
         int total = res.getRow();
-        if (total == 0) {
+        if (total != 0) {
           stmt.execute("DROP INDEX uservisits_index ON uservisits");
         }
 
