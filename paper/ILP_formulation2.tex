@@ -1,0 +1,141 @@
+\documentclass[10pt]{article}
+%	options include 12pt or 11pt or 10pt
+%	classes include article, report, book, letter, thesis
+\usepackage{xcolor}
+\usepackage{amsmath}
+
+\title{Generic Physical Designer: ILP Formulation}
+\author{Dong Young Yoon}
+\date{\today}
+
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\newcommand{\dy}[1]{\textcolor{blue}{DY: #1}}
+
+\begin{document}
+\maketitle
+
+\section{Setup}
+Consider a workload $W$ consisting of $m$ queries (i.e., $W = \{q_1, \dots, q_m\}$) and a set of $n$
+physical design structures, $P = \{P_1, \dots, P_n\}$. (e.g., indexes, storage file format for
+HDFS-based query engines, etc.)
+A configuration is a subset $C_j = \{P_{j1}, P_{j2}, \dots\}$ of physical design structures that
+all of the physical design structures in $C_j$ are used by some query $q_i$ in $W$. $C_j$ can be
+empty (i.e., $C_j = \{\}$), meaning that there are no extra physical design structures in place.
+This follows the definition of \textit{atomic configuration}
+\footnote{
+`A configuration $C$ is \textit{atomic} for a workload if for some query in the workload
+there is a possible execution of the query by the query engine that uses \textit{all} indexes in
+$C$'
+}
+in \cite{chaudhuri1997efficient},
+and we are not interested in physical design structures that are not used by any query in $W$.
+% \dy{
+% For genericity of our physical designer and considering the fact that we might not have the luxury
+% of query optimizer letting us know that it uses certain physical design structures or not (depending
+% on the target database or the query engine), should/can we also utilize the notion of atomic
+% configuration?
+% }
+
+Let $Y$ be the set of all $k$ configurations (i.e. $Y = \{C_1, \dots, C_k\}$) that can be constructed
+using physical design structures in $P$.
+We assume that physical design structures in a configuration $C_j$ are compatible with each other
+and can co-exist at the same time
+(as some physical design structures could be incompatible to each other.
+For instance, a specific storage file format may not support certain types of indexes in a
+particular HDFS-based query engine).
+The cost of a query $q_i$ using a configuration $C_j$ is $Cost(q_i, C_j)$.
+
+Now, the cost of the workload $Cost(W)$ is defined as:
+\begin{equation}
+  Cost(W) = \sum_{i=1}^{m} \argmin_{j} Cost(q_i, C_j)
+  \label{eq:cost}
+\end{equation}
+
+For our ILP formulation, we introduce a binary decision variable $x_{ij}$ (similar to
+\cite{dash2011automated, papadomanolakis2007integer}) that is 1 if the query
+$q_i$ uses a configuration $C_j$, or 0 otherwise.
+With the definition of $x_{ij}$ and under the assumption that a query uses exactly
+one configuration, we can rewrite Equation \eqref{eq:cost} as:
+\begin{equation}
+  Cost(W) = \sum_{i=1}^{m} \sum_{j=1}^{k} x_{ij} \times Cost(q_i, C_j)
+\end{equation}
+We also define $y_t$ as a binary decision variable that is 1
+if the physical design structure $P_t$ is implemented or 0 otherwise.
+Note that $x_{ij}$ depends on $y_j$ as a query cannot use a configuration
+$C_j$ unless all the physical design structures in $C_j$ are implemented.
+
+In addition, let $E_{st}$ be a binary indicator variable that is 1 if two physical design structures
+, $P_s$ and $P_t$, are compatible with each other and can co-exist, or 0 otherwise.
+Lastly, we want our set of physical design structures to meet the space requirement such that
+each physical design structure $P_t$ takes $s_t$ units of storage space, and
+they consume less than $S$ units of storage space in total.
+
+\section{ILP Formulation}
+\label{sec:ILP_formulation}
+
+From the setup that we discussed in the previous section, we have the following ILP formulation:
+\begin{equation}
+  minimize\ Cost(W) = \sum_{i=1}^{m} \sum_{j=1}^{k} x_{ij} \times Cost(q_i, C_j)
+  \label{eq:obj}
+\end{equation}
+
+Subject to:
+\begin{equation}
+  0 < \sum_{j=1}^{k} x_{ij} \leq 1,~~~\forall{i}
+  \label{eq:const1}
+\end{equation}
+\begin{equation}
+  x_{ij} \leq  y_{t},~~~\forall{i}, \forall{j,t} : P_t \in C_k
+  \label{eq:const2}
+\end{equation}
+\begin{equation}
+  y_{k_1} + y_{k_2} - 1 \leq E_{k_1 k_2},~~~\forall{k1, k2}
+  \label{eq:const3}
+\end{equation}
+\begin{equation}
+  \sum_{t=1}^{k} s_t \times y_t \leq S
+  \label{eq:const4}
+\end{equation}
+
+Constraint \eqref{eq:const1} ensures that a query uses exactly one configuration.
+Constraint \eqref{eq:const2} guarantees that every physical design structure in a configuration being
+used is implemented.
+Constraint \eqref{eq:const3} ensures that physical design structures used by different queries are
+compatible with each other.
+% (\dy{I think the constraint \eqref{eq:const3} needs a refinement as
+% I am not 100\% sure that it is correct and valid for ILP})
+Constraint \eqref{eq:const4} expresses the storage limit of the target system.
+
+\subsection{With Regression Model}
+In our generic physical design, we are going to estimate the benefit of a configuration and the
+storage requirement of physical design structure from small subsets of sampled data $D$ from the
+original data and regression model $R$.
+
+The only difference that such estimation will impose on the above formulation is with variables
+$Cost(q_i, C_j)$ and $s_{t}$.
+We denote estimated values of $Cost_(q_i, C_j)$ and $s_{t}$ to be $Cost^\prime(q_i,C_j)$ and
+$\sigma_{t}$, respectively.
+The cost of a query $q_i$ using a configuration $C_j$ with the sampled data $D$ is
+$Cost(q_i, C_j, D)$.
+
+Let $s_t (D)$ be the storage requirement of physical design structure $P_t$ on sampled data $D$.
+In addition, let $R(X)$ be the predicted value from the regression model $R$ using $X$ as its input.
+We define $Cost^\prime (q_i,C_j)$ and $\sigma_{t}$ obtained from the sampled data $D$ and
+the regression model $R$ as follows:
+\begin{equation}
+  Cost^\prime (q_i,C_j) = R(Cost(q_i, C_j, D))
+  \label{eq:regress1}
+\end{equation}
+\begin{equation}
+  \sigma_{t} = R(s_t (D))
+\end{equation}
+
+% \dy{Should we just use $Cost(q_i, \{\})$ instead of $R(Cost(q_i, \{\}, D)$ for (\ref{eq:regress1})?}
+Now, we can substitute $Cost(q_i,C_j)$ and $s_t$ from the ILP formulation in
+Sec \ref{sec:ILP_formulation} with $Cost^\prime (q_i,C_j)$ and $\sigma_{t}$.
+
+\bibliographystyle{abbrv}
+\bibliography{ilp}
+
+\end{document}
