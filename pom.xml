@@ -17,6 +17,10 @@
 
     <repositories>
         <repository>
+            <id>local-repo</id>
+            <url>file://${project.basedir}/lib</url>
+        </repository>
+        <repository>
             <id>jsqlparser-snapshots</id>
             <snapshots>
                 <enabled>true</enabled>
@@ -58,7 +62,6 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>20.0</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
@@ -113,22 +116,16 @@
             <groupId>org.gnu.glpk</groupId>
             <artifactId>glpksolver</artifactId>
             <version>1.0</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/lib/GLPKSolverPack.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>lpsolve</groupId>
             <artifactId>lpsolver</artifactId>
             <version>1.0</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/lib/LPSOLVESolverPack.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>scpsolver</groupId>
             <artifactId>scpsolver</artifactId>
             <version>1.0</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/lib/SCPSolver.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>com.google.code.gson</groupId>
