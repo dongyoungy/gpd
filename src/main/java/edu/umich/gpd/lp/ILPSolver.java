@@ -5,7 +5,7 @@ import com.google.common.base.Stopwatch;
 import edu.umich.gpd.database.Structure;
 import edu.umich.gpd.workload.Query;
 import edu.umich.gpd.workload.Workload;
-import javafx.scene.paint.Stop;
+
 import scpsolver.problems.LPSolution;
 import scpsolver.problems.LPWizard;
 import scpsolver.problems.LPWizardConstraint;
