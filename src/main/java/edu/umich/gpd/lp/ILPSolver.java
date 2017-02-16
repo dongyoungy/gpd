@@ -192,13 +192,13 @@ public class ILPSolver {
       Set<Structure> configuration = configurations.get(j);
       // build structures
       Log.info(this.getClass().getCanonicalName(), String.format(
-          "Building structures for configuration %d out of %d.", j, configurations.size()));
+          "Building structures for configuration %d out of %d.", j+1, configurations.size()));
       for (Structure s : configuration) {
         s.create(conn);
       }
 
       Log.info(this.getClass().getCanonicalName(), String.format(
-          "Running queries for configuration %d out of %d.", j, configurations.size()));
+          "Running queries for configuration %d out of %d.", j+1, configurations.size()));
       for (int i = 0; i < queries.size(); ++i) {
         Query q = queries.get(i);
         stopwatch = Stopwatch.createStarted();
@@ -208,7 +208,7 @@ public class ILPSolver {
 
       // remove structures
       Log.info(this.getClass().getCanonicalName(), String.format(
-          "Removing structures for configuration %d out of %d.", j, configurations.size()));
+          "Removing structures for configuration %d out of %d.", j+1, configurations.size()));
       for (Structure s : configuration) {
         s.drop(conn);
       }
