@@ -6,9 +6,8 @@ import edu.umich.gpd.database.Structure;
 import edu.umich.gpd.workload.Query;
 import edu.umich.gpd.workload.Workload;
 
-import scpsolver.problems.LPSolution;
-import scpsolver.problems.LPWizard;
-import scpsolver.problems.LPWizardConstraint;
+import scpsolver.problems.*;
+import scpsolver.lpsolver.*;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -41,6 +40,7 @@ public class ILPSolver {
   }
 
   public void solve() {
+    Stopwatch entireTime = Stopwatch.createStarted();
     // fill the cost array first.
     try {
       Stopwatch timetoFillCostArray = Stopwatch.createStarted();
@@ -67,18 +67,17 @@ public class ILPSolver {
       }
     }
     lpw.setAllVariablesInteger();
+    lpw.setMinProblem(true);
+
 
     // add constraints
     for (int i = 0; i < numQuery; ++i) {
-      LPWizardConstraint c1 = lpw.addConstraint("c_1_" + i, 0, "<");
-      LPWizardConstraint c2 = lpw.addConstraint("c_2_" + i, 1, ">=");
+      LPWizardConstraint c1 = lpw.addConstraint("c_1_" + i, 1, "=");
       for (int j = 0; j < numConfiguration; ++j) {
         String varName = "x_" + i + "_" + j;
         c1 = c1.plus(varName, 1.0);
-        c2 = c2.plus(varName, 1.0);
       }
       c1.setAllVariablesBoolean();
-      c2.setAllVariablesBoolean();
     }
 
     // add constaints for x_ij <= y_t
@@ -128,23 +127,26 @@ public class ILPSolver {
     // now solve
     Stopwatch timeToSolve = Stopwatch.createStarted();
     LPSolution solution = lpw.solve();
+    System.out.println("Objective Value = " + solution.getObjectiveValue());
     long timeTaken = timeToSolve.elapsed(TimeUnit.SECONDS);
     Log.info(this.getClass().getCanonicalName(), String.format("took %d seconds to solve the problem.", timeTaken));
-
-    for (int i = 0; i < numQuery; ++i) {
-      for (int j = 0; j < numConfiguration; ++j) {
-        String varName = "x_" + i + "_" + j;
-        System.out.println(varName + " = " + solution.getBoolean(varName));
-      }
-    }
-    for (int t = 0; t < numStructures; ++t) {
-      String varName = "y_" + t;
-      System.out.println(varName + " = " + solution.getBoolean(varName));
-    }
+    timeTaken = entireTime.elapsed(TimeUnit.SECONDS);
+    Log.info(this.getClass().getCanonicalName(), String.format("took %d seconds for the entire process.",
+          timeTaken));
+    //for (int i = 0; i < numQuery; ++i) {
+      //for (int j = 0; j < numConfiguration; ++j) {
+        //String varName = "x_" + i + "_" + j;
+        //System.out.println(varName + " = " + solution.getInteger(varName));
+      //}
+    //}
+    //for (int t = 0; t < numStructures; ++t) {
+      //String varName = "y_" + t;
+      //System.out.println(varName + " = " + solution.getInteger(varName));
+    //}
     System.out.println("Optimal structures:");
     for (int t = 0; t < numStructures; ++t) {
       String varName = "y_" + t;
-      if (solution.getBoolean(varName)) {
+      if (solution.getInteger(varName) == 1) {
         System.out.println("\t"+possibleStructures.get(t).getQueryString());
       }
     }
@@ -201,8 +203,6 @@ public class ILPSolver {
           "Running queries for configuration #%d out of %d.", j+1, configurations.size()));
       for (int i = 0; i < queries.size(); ++i) {
         Query q = queries.get(i);
-        Log.info(this.getClass().getCanonicalName(), String.format(
-            "Running query #%d out of %d.", i+1, queries.size()));
         stopwatch = Stopwatch.createStarted();
         stmt.execute(q.getContent());
         costArray[i][j] = stopwatch.elapsed(TimeUnit.MILLISECONDS);
