@@ -1,5 +1,7 @@
 package edu.umich.gpd.schema;
 
+import com.google.common.collect.Multiset;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -35,19 +37,17 @@ public class Schema {
     tables.add(table);
   }
 
-  public void filterUninteresting(Set<String> tableNameSet, Set<String> columnNameSet) {
+  public void filterUninteresting(Set<String> columnNameSet) {
     List<Table> newTables = new ArrayList<>();
     for (Table t : tables) {
       try
       {
         Table filteredTable = (Table)t.clone();
 
-        // interesting table
-        if (tableNameSet.contains(filteredTable.getName())) {
-          filteredTable.filterUninteresting(columnNameSet);
-          if (!filteredTable.isColumnsEmpty()) {
-            newTables.add(filteredTable);
-          }
+        // filter uninteresting columns from the table
+        filteredTable.filterUninteresting(columnNameSet);
+        if (!filteredTable.isColumnsEmpty()) {
+          newTables.add(filteredTable);
         }
       }
       catch (CloneNotSupportedException e)

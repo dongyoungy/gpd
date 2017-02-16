@@ -1,5 +1,7 @@
-package edu.umich.gpd.sql;
+package edu.umich.gpd.parser;
 
+import com.google.common.collect.*;
+import edu.umich.gpd.main.GPDMain;
 import edu.umich.gpd.schema.Schema;
 import edu.umich.gpd.workload.Query;
 import edu.umich.gpd.workload.Workload;
@@ -41,13 +43,15 @@ public class InterestingSchemaFinder implements StatementVisitor, SelectVisitor,
     FromItemVisitor, ExpressionVisitor, ItemsListVisitor, IntoTableVisitor {
 
   private Set<String> tables;
-  private Set<String> columns;
+  private Multiset<String> columns;
   private boolean isInteresting;
+  private boolean isJoin;
 
   public InterestingSchemaFinder() {
     this.tables = new LinkedHashSet<>();
-    this.columns = new LinkedHashSet<>();
+    this.columns = ConcurrentHashMultiset.create();
     this.isInteresting = false;
+    this.isJoin = false;
   }
 
   public Schema getFilteredSchema(Schema s) {
@@ -57,7 +61,16 @@ public class InterestingSchemaFinder implements StatementVisitor, SelectVisitor,
 
     try {
       Schema filteredSchema = (Schema)s.clone();
-      filteredSchema.filterUninteresting(tables, columns);
+      ImmutableMultiset<String> sortedColumns = Multisets.copyHighestCountFirst(columns);
+
+      Set<String> columnNameSet = new HashSet<>();
+      UnmodifiableIterator<String> it = sortedColumns.iterator();
+      while (it.hasNext() && columnNameSet.size() < GPDMain.MAX_NUM_COLUMN) {
+        String columnName = it.next();
+        columnNameSet.add(columnName);
+      }
+
+      filteredSchema.filterUninteresting(columnNameSet);
       return filteredSchema;
     } catch (CloneNotSupportedException e) {
       e.printStackTrace();
@@ -77,14 +90,6 @@ public class InterestingSchemaFinder implements StatementVisitor, SelectVisitor,
       }
     }
     return true;
-  }
-
-  public Set<String> getInterestingTableNameSet() {
-    return tables;
-  }
-
-  public Set<String> getInterestingColumnNameSet() {
-    return columns;
   }
 
   public void printSchema() {
@@ -210,8 +215,11 @@ public class InterestingSchemaFinder implements StatementVisitor, SelectVisitor,
   @Override
   public void visit(EqualsTo equalsTo) {
     if (equalsTo.getLeftExpression() instanceof Column &&
-        equalsTo.getRightExpression() instanceof Column) {
+        equalsTo.getRightExpression() instanceof Column &&
+        isJoin) {
+      isInteresting = true;
       visitBinaryExpression(equalsTo);
+      isInteresting = false;
     }
   }
 
@@ -460,14 +468,14 @@ public class InterestingSchemaFinder implements StatementVisitor, SelectVisitor,
     if (plainSelect.getJoins() != null) {
       for (Iterator joinsIt = plainSelect.getJoins().iterator(); joinsIt.hasNext();) {
         Join join = (Join) joinsIt.next();
-        isInteresting = true;
+        isJoin = true;
         join.getRightItem().accept(this);
         if (join.getOnExpression() != null)
           join.getOnExpression().accept(this);
         if (plainSelect.getWhere() != null) {
           plainSelect.getWhere().accept(this);
         }
-        isInteresting = false;
+        isJoin = false;
       }
     }
 

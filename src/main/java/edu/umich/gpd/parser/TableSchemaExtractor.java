@@ -1,4 +1,4 @@
-package edu.umich.gpd.sql;
+package edu.umich.gpd.parser;
 
 import edu.umich.gpd.schema.Table;
 import net.sf.jsqlparser.statement.SetStatement;
@@ -9,6 +9,7 @@ import net.sf.jsqlparser.statement.alter.Alter;
 import net.sf.jsqlparser.statement.create.index.CreateIndex;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
+import net.sf.jsqlparser.statement.create.table.Index;
 import net.sf.jsqlparser.statement.create.view.AlterView;
 import net.sf.jsqlparser.statement.create.view.CreateView;
 import net.sf.jsqlparser.statement.delete.Delete;
@@ -20,6 +21,8 @@ import net.sf.jsqlparser.statement.replace.Replace;
 import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.truncate.Truncate;
 import net.sf.jsqlparser.statement.update.Update;
+
+import java.util.List;
 
 /**
  * Created by Dong Young Yoon on 2/13/17.
@@ -91,6 +94,14 @@ public class TableSchemaExtractor implements StatementVisitor {
     table.setName(createTable.getTable().getName());
     for (ColumnDefinition c : createTable.getColumnDefinitions()) {
       table.addColumn(c);
+    }
+    List<Index> indexes = createTable.getIndexes();
+    if (indexes != null) {
+      for (Index i : indexes) {
+        for (String c : i.getColumnsNames()) {
+          table.addIndexedColumn(c);
+        }
+      }
     }
   }
 

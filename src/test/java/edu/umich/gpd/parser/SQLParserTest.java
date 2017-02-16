@@ -1,4 +1,4 @@
-package edu.umich.gpd.sql;
+package edu.umich.gpd.parser;
 
 import edu.umich.gpd.schema.Table;
 import net.sf.jsqlparser.JSQLParserException;
@@ -8,7 +8,7 @@ import net.sf.jsqlparser.statement.Statement;
 /**
  * Created by Dong Young Yoon on 2/13/17.
  */
-public class SQLParser {
+public class SQLParserTest {
 
   public static void main(String[] args) {
     try

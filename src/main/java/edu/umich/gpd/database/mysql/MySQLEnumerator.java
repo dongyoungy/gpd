@@ -6,7 +6,7 @@ import edu.umich.gpd.database.Structure;
 import edu.umich.gpd.database.StructureEnumerator;
 import edu.umich.gpd.schema.Schema;
 import edu.umich.gpd.schema.Table;
-import edu.umich.gpd.sql.InterestingSchemaFinder;
+import edu.umich.gpd.parser.InterestingSchemaFinder;
 import edu.umich.gpd.util.UniqueNumberGenerator;
 import edu.umich.gpd.util.UtilFunctions;
 import edu.umich.gpd.workload.Workload;

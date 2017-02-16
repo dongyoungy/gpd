@@ -10,15 +10,18 @@ import java.util.*;
 public class Table {
   private String name;
   private Set<ColumnDefinition> columns;
+  private Set<String> indexedColumns;
 
   public Table() {
     name = "";
     columns = new LinkedHashSet<>();
+    indexedColumns = new LinkedHashSet<>();
   }
 
   public Table(String name) {
     this.name = name;
     columns = new LinkedHashSet<>();
+    indexedColumns = new LinkedHashSet<>();
   }
 
   @Override
@@ -27,6 +30,9 @@ public class Table {
     newTable.setName(this.name);
     for (ColumnDefinition colDef : columns) {
       newTable.addColumn(colDef);
+    }
+    for (String c : indexedColumns) {
+      newTable.addIndexedColumn(c);
     }
     return newTable;
   }
@@ -41,13 +47,14 @@ public class Table {
   }
 
   /**
-   * filters uninteresting columns.
+   * filters uninteresting columns + already indexed columns.
    * @param columnNameSet a set of interesting column names
    */
   public void filterUninteresting(Set<String> columnNameSet) {
     Set<ColumnDefinition> newColumns = new LinkedHashSet<>();
     for (ColumnDefinition colDef : columns) {
-      if (columnNameSet.contains(colDef.getColumnName())) {
+      if (columnNameSet.contains(colDef.getColumnName()) &&
+          !indexedColumns.contains(colDef.getColumnName())) {
         newColumns.add(colDef);
       }
     }
@@ -76,5 +83,9 @@ public class Table {
 
   public void setColumns(List<ColumnDefinition> columns) {
     columns.addAll(columns);
+  }
+
+  public void addIndexedColumn(String column) {
+    indexedColumns.add(column);
   }
 }

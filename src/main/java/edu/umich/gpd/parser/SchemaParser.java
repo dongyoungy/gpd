@@ -2,7 +2,6 @@ package edu.umich.gpd.parser;
 
 import edu.umich.gpd.schema.Schema;
 import edu.umich.gpd.schema.Table;
-import edu.umich.gpd.sql.TableSchemaExtractor;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
