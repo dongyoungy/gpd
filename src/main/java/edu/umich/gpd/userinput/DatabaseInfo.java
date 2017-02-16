@@ -1,5 +1,7 @@
 package edu.umich.gpd.userinput;
 
+import java.util.List;
+
 /**
  * Created by Dong Young Yoon on 2/15/17.
  */
@@ -7,10 +9,10 @@ public class DatabaseInfo {
   private String type;
   private String host;
   private int port;
-  private String dbName;
+  private String targetDBName;
   private String id;
   private String password;
-  private String sampleDBName;
+  private List<String> sampleDBName;
 
   public String getType() {
     return type;
@@ -36,15 +38,15 @@ public class DatabaseInfo {
     this.port = port;
   }
 
-  public String getDbName() {
-    return dbName;
+  public String getTargetDBName() {
+    return targetDBName;
   }
 
-  public void setDbName(String dbName) {
-    this.dbName = dbName;
+  public void setTargetDBName(String targetDBName) {
+    this.targetDBName = targetDBName;
   }
 
-  public String getSampleDBName() {
+  public List<String> getSampleDBName() {
     return sampleDBName;
   }
 

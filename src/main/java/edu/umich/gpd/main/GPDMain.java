@@ -96,7 +96,8 @@ public class GPDMain {
 
     if (dbInfo.getSampleDBName() != null && !dbInfo.getSampleDBName().isEmpty()) {
       try {
-        conn.setCatalog(dbInfo.getSampleDBName());
+        // TODO: support multiple sample DBs
+        conn.setCatalog(dbInfo.getSampleDBName().get(0));
       } catch (SQLException e) {
         Log.error("GPDMain",
             String.format("Failed to use the database '%s'.", dbInfo.getSampleDBName()));

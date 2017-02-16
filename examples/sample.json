@@ -3,7 +3,8 @@
     type: 'mysql',
     host: 'localhost',
     port: 3400,
-    dbName: 'tpcc',
+    targetDBName: 'tpcc',
+    sampleDBName: ['tpcc_sample'],
     id: 'root',
     password: 'root'
   },
