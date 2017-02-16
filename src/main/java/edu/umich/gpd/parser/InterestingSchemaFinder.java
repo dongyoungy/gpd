@@ -65,7 +65,8 @@ public class InterestingSchemaFinder implements StatementVisitor, SelectVisitor,
 
       Set<String> columnNameSet = new HashSet<>();
       UnmodifiableIterator<String> it = sortedColumns.iterator();
-      while (it.hasNext() && columnNameSet.size() < GPDMain.MAX_NUM_COLUMN) {
+      while (it.hasNext() && columnNameSet.size() <
+          GPDMain.userInput.getSetting().getMaxNumColumn()) {
         String columnName = it.next();
         columnNameSet.add(columnName);
       }

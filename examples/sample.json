@@ -1,4 +1,7 @@
 {
+  setting: {
+    maxNumColumn: 3
+  },
   databaseInfo: {
     type: 'mysql',
     host: 'localhost',

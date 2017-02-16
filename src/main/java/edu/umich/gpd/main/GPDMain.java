@@ -27,7 +27,7 @@ import java.util.Set;
  * Created by Dong Young Yoon on 2/15/17.
  */
 public class GPDMain {
-  public static final int MAX_NUM_COLUMN = 10;
+  public static InputData userInput;
   public static void main(String[] args) {
     if (args.length != 1) {
       System.out.println("USAGE: GPDMain <json_spec_file>");
@@ -35,7 +35,8 @@ public class GPDMain {
     }
 
     String inputPath = args[0];
-    InputData inputData = InputDataParser.parse(new File(inputPath));
+    userInput = InputDataParser.parse(new File(inputPath));
+    InputData inputData = userInput;
     if (inputData == null) {
       Log.error("GPDMain", "Failed to parse JSON specification file.");
       System.exit(-1);
