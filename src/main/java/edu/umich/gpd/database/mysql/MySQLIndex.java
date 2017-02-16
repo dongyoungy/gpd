@@ -9,6 +9,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Created by Dong Young Yoon on 2/13/17.
@@ -60,10 +62,11 @@ public class MySQLIndex extends Structure {
 
   public boolean create(Connection conn) {
     String columnStr = "";
-    ColumnDefinition[] cols = (ColumnDefinition[])columns.toArray();
-    for (int i = 0; i < cols.length; ++i) {
-      columnStr += cols[i].getColumnName();
-      if (i < cols.length - 1) {
+    //ColumnDefinition[] cols = (ColumnDefinition[])columns.toArray();
+    List<ColumnDefinition> columnList = new ArrayList<>(columns);
+    for (int i = 0; i < columnList.size(); ++i) {
+      columnStr += columnList.get(i).getColumnName();
+      if (i < columnList.size() - 1) {
         columnStr += ",";
       }
     }
