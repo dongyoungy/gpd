@@ -182,16 +182,23 @@ public class ILPSolver {
   }
 
   private void fillCostArray() throws SQLException {
+
+    Log.info(this.getClass().getCanonicalName(), String.format(
+        "Filling the cost array"));
     Stopwatch stopwatch;
     Statement stmt = conn.createStatement();
     List<Query> queries = workload.getQueries();
     for (int j = 0; j < configurations.size(); ++j) {
       Set<Structure> configuration = configurations.get(j);
       // build structures
+      Log.info(this.getClass().getCanonicalName(), String.format(
+          "Building structures for configuration %d out of %d.", j, configurations.size()));
       for (Structure s : configuration) {
         s.create(conn);
       }
 
+      Log.info(this.getClass().getCanonicalName(), String.format(
+          "Running queries for configuration %d out of %d.", j, configurations.size()));
       for (int i = 0; i < queries.size(); ++i) {
         Query q = queries.get(i);
         stopwatch = Stopwatch.createStarted();
@@ -200,6 +207,8 @@ public class ILPSolver {
       }
 
       // remove structures
+      Log.info(this.getClass().getCanonicalName(), String.format(
+          "Removing structures for configuration %d out of %d.", j, configurations.size()));
       for (Structure s : configuration) {
         s.drop(conn);
       }
