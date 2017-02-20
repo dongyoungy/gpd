@@ -184,7 +184,7 @@ public class ILPSolver {
 
   private void fillCostArray() throws SQLException {
 
-    GPDLogger.info(this.getClass(), String.format(
+    GPDLogger.info(this, String.format(
         "Filling the cost array"));
     Stopwatch stopwatch;
     Statement stmt = conn.createStatement();
@@ -192,13 +192,13 @@ public class ILPSolver {
     for (int j = 0; j < configurations.size(); ++j) {
       Set<Structure> configuration = configurations.get(j);
       // build structures
-      GPDLogger.info(this.getClass(), String.format(
+      GPDLogger.info(this, String.format(
           "Building structures for configuration #%d out of %d.", j+1, configurations.size()));
       for (Structure s : configuration) {
         s.create(conn);
       }
 
-      GPDLogger.info(this.getClass(), String.format(
+      GPDLogger.info(this, String.format(
           "Running queries for configuration #%d out of %d.", j+1, configurations.size()));
       for (int i = 0; i < queries.size(); ++i) {
         Query q = queries.get(i);
@@ -208,7 +208,7 @@ public class ILPSolver {
       }
 
       // remove structures
-      GPDLogger.info(this.getClass(), String.format(
+      GPDLogger.info(this, String.format(
           "Removing structures for configuration #%d out of %d.", j+1, configurations.size()));
       for (Structure s : configuration) {
         s.drop(conn);
