@@ -65,6 +65,7 @@ public class MySQLSampler extends Sampler {
         stmt.execute(String.format("CREATE DATABASE %s", sampleDBName));
 
         conn.setCatalog(sampleDBName);
+        stmt = conn.createStatement();
 
         // sample tables
         for (Table t : tableList) {
