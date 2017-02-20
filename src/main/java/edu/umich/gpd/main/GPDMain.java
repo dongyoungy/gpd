@@ -10,10 +10,7 @@ import edu.umich.gpd.parser.InputDataParser;
 import edu.umich.gpd.parser.SchemaParser;
 import edu.umich.gpd.parser.WorkloadParser;
 import edu.umich.gpd.schema.Schema;
-import edu.umich.gpd.userinput.DatabaseInfo;
-import edu.umich.gpd.userinput.InputData;
-import edu.umich.gpd.userinput.SchemaInfo;
-import edu.umich.gpd.userinput.WorkloadInfo;
+import edu.umich.gpd.userinput.*;
 import edu.umich.gpd.workload.Workload;
 
 import java.io.File;
@@ -95,17 +92,23 @@ public class GPDMain {
       System.exit(-1);
     }
 
-    if (dbInfo.getSampleDBName() != null && !dbInfo.getSampleDBName().isEmpty()) {
+    Setting setting = userInput.getSetting();
+    if (setting != null) {
+      String dbName = setting.getSamples().get(0).getDbName();
       try {
         // TODO: support multiple sample DBs
-        conn.setCatalog(dbInfo.getSampleDBName().get(0));
+        conn.setCatalog(dbName);
+        ILPSolver solver = new ILPSolver(conn, workload, configurations);
+        solver.solve();
       } catch (SQLException e) {
         Log.error("GPDMain",
-            String.format("Failed to use the database '%s'.", dbInfo.getSampleDBName()));
+            String.format("Failed to use the database '%s'.", dbName));
         System.exit(-1);
       }
+    } else {
+      Log.error("GPDMain",
+          String.format("Setting null"));
+      System.exit(-1);
     }
-    ILPSolver solver = new ILPSolver(conn, workload, configurations);
-    solver.solve();
   }
 }

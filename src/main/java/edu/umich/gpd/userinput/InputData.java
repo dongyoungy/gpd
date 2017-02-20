@@ -14,16 +14,16 @@ public class InputData {
     String str = "";
     str += "setting:\n";
     str += "\tmaxNumColumn: " + setting.getMaxNumColumn() + "\n";
+    str += "\tsamples:";
+    for (SampleInfo s : setting.getSamples()) {
+      str += "\n\t\t" + s.getDbName() + ", " + s.getRatio();
+    }
+    str += "\n";
     str += "databaseInfo:\n";
     str += "\ttype: " + databaseInfo.getType() + "\n";
     str += "\thost: " + databaseInfo.getHost() + "\n";
     str += "\tport: " + databaseInfo.getPort() + "\n";
     str += "\ttargetDBName: " + databaseInfo.getTargetDBName() + "\n";
-    str += "\tsampleDBName:";
-    for (String name : databaseInfo.getSampleDBName()) {
-      str += "\n\t\t" + name;
-    }
-    str += "\n";
     str += "schemaInfo:\n";
     str += "\tpath: " + schemaInfo.getPath() + "\n";
     str += "\tdelimiter: " + schemaInfo.getDelimiter() + "\n";
