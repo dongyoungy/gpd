@@ -12,8 +12,6 @@ public class DatabaseInfo {
   private String targetDBName;
   private String id;
   private String password;
-  private List<String> sampleDBName;
-  private List<Double> sampleRatio;
 
   public String getType() {
     return type;
@@ -47,24 +45,8 @@ public class DatabaseInfo {
     this.targetDBName = targetDBName;
   }
 
-  public List<String> getSampleDBName() {
-    return sampleDBName;
-  }
-
   public String getId() {
     return id;
-  }
-
-  public void setSampleDBName(List<String> sampleDBName) {
-    this.sampleDBName = sampleDBName;
-  }
-
-  public List<Double> getSampleRatio() {
-    return sampleRatio;
-  }
-
-  public void setSampleRatio(List<Double> sampleRatio) {
-    this.sampleRatio = sampleRatio;
   }
 
   public String getPassword() {
