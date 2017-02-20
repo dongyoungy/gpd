@@ -48,6 +48,7 @@ public class SchemaParser {
       for (String createStatement : createStatements) {
         Statement stmt = CCJSqlParserUtil.parse(createStatement);
         Table table = extractor.extractTable(stmt);
+        table.setCreateStatement(createStatement);
         if (table != null) {
           schema.addTable(table);
         }

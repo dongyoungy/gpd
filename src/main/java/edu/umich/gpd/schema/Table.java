@@ -9,6 +9,7 @@ import java.util.*;
  */
 public class Table {
   private String name;
+  private String createStatement;
   private Set<ColumnDefinition> columns;
   private Set<String> indexedColumns;
 
@@ -24,10 +25,16 @@ public class Table {
     indexedColumns = new LinkedHashSet<>();
   }
 
+  public Table(String name, String createStatement) {
+    this.name = name;
+    this.createStatement = createStatement;
+  }
+
   @Override
   protected Object clone() throws CloneNotSupportedException {
     Table newTable = new Table();
     newTable.setName(this.name);
+    newTable.setCreateStatement(this.createStatement);
     for (ColumnDefinition colDef : columns) {
       newTable.addColumn(colDef);
     }
@@ -59,6 +66,14 @@ public class Table {
       }
     }
     columns = newColumns;
+  }
+
+  public void setCreateStatement(String createStatement) {
+    this.createStatement = createStatement;
+  }
+
+  public String getCreateStatement() {
+    return createStatement;
   }
 
   public boolean isColumnsEmpty() {

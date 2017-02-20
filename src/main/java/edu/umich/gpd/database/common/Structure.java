@@ -1,4 +1,4 @@
-package edu.umich.gpd.database;
+package edu.umich.gpd.database.common;
 
 import edu.umich.gpd.schema.Table;
 

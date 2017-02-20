@@ -1,13 +1,17 @@
 {
   setting: {
-    maxNumColumn: 3
+    maxNumColumn: 3,
+    sampling: true,
+    samples: [
+      {dbName: 'tpch_sample_1', ratio: 0.01},
+      {dbName: 'tpch_sample_2', ratio: 0.001}
+    ]
   },
   databaseInfo: {
     type: 'mysql',
     host: 'localhost',
     port: 3400,
     targetDBName: 'tpcc',
-    sampleDBName: ['tpcc_sample'],
     id: 'root',
     password: 'root'
   },

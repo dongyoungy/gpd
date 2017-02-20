@@ -37,11 +37,16 @@ public class Schema {
     tables.add(table);
   }
 
-  public void filterUninteresting(Set<String> columnNameSet) {
+  public void filterUninteresting(Set<String> tableNameSet, Set<String> columnNameSet) {
     List<Table> newTables = new ArrayList<>();
     for (Table t : tables) {
-      try
-      {
+
+      // if table name not found in the workload, skip it.
+      if (!tableNameSet.contains(t.getName())) {
+        continue;
+      }
+
+      try {
         Table filteredTable = (Table)t.clone();
 
         // filter uninteresting columns from the table
@@ -49,9 +54,7 @@ public class Schema {
         if (!filteredTable.isColumnsEmpty()) {
           newTables.add(filteredTable);
         }
-      }
-      catch (CloneNotSupportedException e)
-      {
+      } catch (CloneNotSupportedException e) {
         e.printStackTrace();
       }
     }

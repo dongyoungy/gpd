@@ -1,6 +1,5 @@
-package edu.umich.gpd.database;
+package edu.umich.gpd.database.common;
 
-import edu.umich.gpd.database.Structure;
 import edu.umich.gpd.schema.Schema;
 import edu.umich.gpd.workload.Workload;
 

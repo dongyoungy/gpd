@@ -2,7 +2,7 @@ package edu.umich.gpd.database.mysql;
 
 import edu.umich.gpd.parser.SchemaParser;
 import edu.umich.gpd.parser.WorkloadParser;
-import edu.umich.gpd.database.Structure;
+import edu.umich.gpd.database.common.Structure;
 import edu.umich.gpd.schema.Schema;
 import edu.umich.gpd.workload.Workload;
 

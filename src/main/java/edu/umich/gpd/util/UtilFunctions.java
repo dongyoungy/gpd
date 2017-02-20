@@ -1,6 +1,6 @@
 package edu.umich.gpd.util;
 
-import edu.umich.gpd.database.Structure;
+import edu.umich.gpd.database.common.Structure;
 
 import java.util.HashSet;
 import java.util.Set;

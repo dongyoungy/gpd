@@ -42,7 +42,7 @@ public class InputData {
   }
 
   public Setting getSetting() {
-    return setting;
+    return (setting == null) ? new Setting() : setting;
   }
 
   public WorkloadInfo getWorkloadInfo() {

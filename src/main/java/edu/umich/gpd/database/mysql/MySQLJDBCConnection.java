@@ -1,6 +1,6 @@
 package edu.umich.gpd.database.mysql;
 
-import edu.umich.gpd.database.JDBCConnection;
+import edu.umich.gpd.database.common.JDBCConnection;
 import edu.umich.gpd.userinput.DatabaseInfo;
 
 import java.sql.Connection;

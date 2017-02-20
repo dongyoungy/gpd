@@ -2,12 +2,11 @@ package edu.umich.gpd.lp;
 
 import com.esotericsoftware.minlog.Log;
 import com.google.common.base.Stopwatch;
-import edu.umich.gpd.database.Structure;
+import edu.umich.gpd.database.common.Structure;
 import edu.umich.gpd.workload.Query;
 import edu.umich.gpd.workload.Workload;
 
 import scpsolver.problems.*;
-import scpsolver.lpsolver.*;
 
 import java.sql.Connection;
 import java.sql.SQLException;

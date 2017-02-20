@@ -42,6 +42,8 @@ import java.util.*;
 public class InterestingSchemaFinder implements StatementVisitor, SelectVisitor, OrderByVisitor,
     FromItemVisitor, ExpressionVisitor, ItemsListVisitor, IntoTableVisitor {
 
+  private Set<String> currentTableSet;
+  private Set<Set<String>> interestingTableSets;
   private Set<String> tables;
   private Multiset<String> columns;
   private boolean isInteresting;
@@ -49,6 +51,8 @@ public class InterestingSchemaFinder implements StatementVisitor, SelectVisitor,
 
   public InterestingSchemaFinder() {
     this.tables = new LinkedHashSet<>();
+    this.currentTableSet = new LinkedHashSet<>();
+    this.interestingTableSets = new LinkedHashSet<>();
     this.columns = ConcurrentHashMultiset.create();
     this.isInteresting = false;
     this.isJoin = false;
@@ -71,7 +75,7 @@ public class InterestingSchemaFinder implements StatementVisitor, SelectVisitor,
         columnNameSet.add(columnName);
       }
 
-      filteredSchema.filterUninteresting(columnNameSet);
+      filteredSchema.filterUninteresting(tables, columnNameSet);
       return filteredSchema;
     } catch (CloneNotSupportedException e) {
       e.printStackTrace();
@@ -82,8 +86,12 @@ public class InterestingSchemaFinder implements StatementVisitor, SelectVisitor,
   public boolean getInterestingSchema(Workload w) {
     for (Query q : w.getQueries()) {
       try {
+        currentTableSet = new HashSet<>();
         Statement stmt = CCJSqlParserUtil.parse(q.getContent());
         stmt.accept(this);
+        if (!currentTableSet.isEmpty()) {
+          interestingTableSets.add(currentTableSet);
+        }
       } catch (JSQLParserException e) {
         System.out.println(q.getContent());
         e.printStackTrace();
@@ -91,6 +99,27 @@ public class InterestingSchemaFinder implements StatementVisitor, SelectVisitor,
       }
     }
     return true;
+  }
+
+  public List<Set<String>> getInterestingTableSets() {
+    List<Set<String>> listOfSets = new ArrayList<>(interestingTableSets);
+    Set<Set<String>> subsets = new HashSet<>();
+    for (int i = 0; i < listOfSets.size(); ++i) {
+      for (int j = 0; j < listOfSets.size(); ++j) {
+        if (i != j) {
+          Set<String> set1 = listOfSets.get(i);
+          Set<String> set2 = listOfSets.get(j);
+          if (set1.containsAll(set2)) {
+            subsets.add(set2);
+          } else if (set2.containsAll(set1)) {
+            subsets.add(set1);
+          }
+        }
+      }
+    }
+    listOfSets.removeAll(subsets);
+
+    return listOfSets;
   }
 
   public void printSchema() {
@@ -434,6 +463,7 @@ public class InterestingSchemaFinder implements StatementVisitor, SelectVisitor,
   public void visit(Table table) {
     String name = table.getName();
     tables.add(name);
+    currentTableSet.add(name);
   }
 
   @Override

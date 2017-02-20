@@ -1,9 +1,8 @@
 package edu.umich.gpd.main;
 
 import com.esotericsoftware.minlog.Log;
-import com.mysql.jdbc.authentication.MysqlClearPasswordPlugin;
-import edu.umich.gpd.database.Structure;
-import edu.umich.gpd.database.StructureEnumerator;
+import edu.umich.gpd.database.common.Structure;
+import edu.umich.gpd.database.common.StructureEnumerator;
 import edu.umich.gpd.database.mysql.MySQLEnumerator;
 import edu.umich.gpd.database.mysql.MySQLJDBCConnection;
 import edu.umich.gpd.lp.ILPSolver;
@@ -27,7 +26,7 @@ import java.util.Set;
  * Created by Dong Young Yoon on 2/15/17.
  */
 public class GPDMain {
-  public static InputData userInput;
+  public static InputData userInput = new InputData();
   public static void main(String[] args) {
     if (args.length != 1) {
       System.out.println("USAGE: GPDMain <json_spec_file>");

@@ -1,0 +1,95 @@
+package edu.umich.gpd.database.mysql;
+
+import com.esotericsoftware.minlog.Log;
+import edu.umich.gpd.userinput.SampleInfo;
+import edu.umich.gpd.database.common.Sampler;
+import edu.umich.gpd.schema.Schema;
+import edu.umich.gpd.schema.Table;
+import edu.umich.gpd.util.GPDLogger;
+
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Created by Dong Young Yoon on 2/19/17.
+ */
+public class MySQLSampler extends Sampler {
+
+  public MySQLSampler(String originalDBName) {
+    super(originalDBName);
+  }
+
+  @Override
+  public boolean sample(Connection conn, Schema schema, long minRow,
+                        List<SampleInfo> sampleInfoList) {
+    GPDLogger logger = GPDLogger.getLogger();
+    if (sampleInfoList.isEmpty()) {
+      logger.error(this.getClass(),
+          "Empty sampling information.");
+      return false;
+    }
+    try {
+      conn.setCatalog(originalDBName);
+
+      // get row counts for each table
+      List<Table> tableList = schema.getTables();
+      Map<Table, Long> tableRowCounts = new HashMap<>();
+      Statement stmt = conn.createStatement();
+
+      logger.info(this.getClass(), "Getting table row counts from the original DB.");
+      for (Table t : tableList) {
+        String tableName = t.getName();
+        ResultSet res = stmt.executeQuery(String.format("SELECT COUNT(*) FROM %s", tableName));
+        Long count = res.getLong(1);
+        tableRowCounts.put(t, count);
+      }
+
+      // create sample DBs
+      for (SampleInfo sampleInfo : sampleInfoList) {
+        String sampleDBName = sampleInfo.getDbName();
+        double sampleRatio = sampleInfo.getRatio();
+        if (sampleRatio < 0 || sampleRatio > 1) {
+          logger.error(this.getClass(), "Sampling ratio must be between 0 and 1.");
+          return false;
+        }
+
+        // drop the DB if exists
+        stmt.execute(String.format("DROP DATABASE IF EXISTS %s", sampleDBName));
+        // create sample DB
+        stmt.execute(String.format("CREATE DATABASE %s", sampleDBName));
+
+        conn.setCatalog(sampleDBName);
+
+        // sample tables
+        for (Table t : tableList) {
+          String tableName = t.getName();
+          // drop table if exists
+          stmt.execute(String.format("DROP TABLE IF EXISTS %s", tableName));
+          // create table
+          stmt.execute(t.getCreateStatement());
+
+          long rowCount = tableRowCounts.get(t);
+          if (rowCount <= minRow) {
+            // copy as-is
+            stmt.execute(String.format("INSERT INTO %s SELECT * FROM %s.%s", tableName,
+                originalDBName, tableName));
+          } else {
+            // copy using sample ratio (approx.)
+            stmt.execute(String.format("INSERT INTO %s SELECT * FROM %s.%s WHERE rand() <= %f",
+                tableName, originalDBName, tableName, sampleRatio));
+          }
+        }
+      }
+    } catch (SQLException e) {
+      logger.log(Log.LEVEL_ERROR, this.getClass(), "A SQLException has been caught.");
+      logger.log(Log.LEVEL_DEBUG, this.getClass(), e.toString());
+      return false;
+    }
+    return true;
+  }
+}

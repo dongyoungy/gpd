@@ -1,6 +1,6 @@
 package edu.umich.gpd.database.mysql;
 
-import edu.umich.gpd.database.Structure;
+import edu.umich.gpd.database.common.Structure;
 import edu.umich.gpd.schema.Table;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 
@@ -35,7 +35,7 @@ public class MySQLIndex extends Structure {
       }
       ++i;
     }
-    return String.format("CREATE INDEX %s ON %s (%s)", this.name, table.getName(), columnStr);
+    return String.format("CREATE INDEX %s ON %s (%s);", this.name, table.getName(), columnStr);
   }
 
   public String getQueryString() {
@@ -49,7 +49,7 @@ public class MySQLIndex extends Structure {
       }
       ++i;
     }
-    return String.format("CREATE INDEX %s ON %s (%s)", this.name, table.getName(), columnStr);
+    return String.format("CREATE INDEX %s ON %s (%s);", this.name, table.getName(), columnStr);
   }
 
   public void addColumn(ColumnDefinition column) {
