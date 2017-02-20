@@ -11,6 +11,7 @@ import edu.umich.gpd.parser.SchemaParser;
 import edu.umich.gpd.parser.WorkloadParser;
 import edu.umich.gpd.schema.Schema;
 import edu.umich.gpd.userinput.*;
+import edu.umich.gpd.util.GPDLogger;
 import edu.umich.gpd.workload.Workload;
 
 import java.io.File;
@@ -86,11 +87,20 @@ public class GPDMain {
       System.exit(-1);
     }
 
+    Log.info("GPDMain", "Enumerating every possible design structures...");
     List<Set<Structure>> configurations = enumerator.enumerateStructures(schema, workload);
+    while (configurations == null && inputData.getSetting().getMaxNumColumn() > 1) {
+      int newMaxColumn = inputData.getSetting().getMaxNumColumn() - 1;
+      Log.info("GPDMain", "Too many columns to consider. " +
+          "Reducing the maximum number of columns to consider to: " + newMaxColumn);
+      inputData.getSetting().setMaxNumColumn(newMaxColumn);
+      configurations = enumerator.enumerateStructures(schema, workload);
+    }
     if (configurations == null || configurations.isEmpty()) {
       Log.error("GPDMain", "Empty configurations.");
       System.exit(-1);
     }
+    Log.info("GPDMain", "Enumeration completed.");
 
     Setting setting = userInput.getSetting();
     if (setting != null) {

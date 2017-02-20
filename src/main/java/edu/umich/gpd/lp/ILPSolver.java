@@ -185,7 +185,7 @@ public class ILPSolver {
   private void fillCostArray() throws SQLException {
 
     GPDLogger.info(this, String.format(
-        "Filling the cost array"));
+        "Filling the cost array."));
     Stopwatch stopwatch;
     Statement stmt = conn.createStatement();
     List<Query> queries = workload.getQueries();

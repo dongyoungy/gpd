@@ -34,4 +34,8 @@ public class Setting {
   public List<SampleInfo> getSamples() {
     return samples;
   }
+
+  public void setMaxNumColumn(int maxNumColumn) {
+    this.maxNumColumn = maxNumColumn;
+  }
 }
