@@ -27,9 +27,8 @@ public class MySQLSampler extends Sampler {
   @Override
   public boolean sample(Connection conn, Schema schema, long minRow,
                         List<SampleInfo> sampleInfoList) {
-    GPDLogger logger = GPDLogger.getLogger();
     if (sampleInfoList.isEmpty()) {
-      logger.error(this.getClass(),
+      GPDLogger.error(this,
           "Empty sampling information.");
       return false;
     }
@@ -41,7 +40,7 @@ public class MySQLSampler extends Sampler {
       Map<Table, Long> tableRowCounts = new HashMap<>();
       Statement stmt = conn.createStatement();
 
-      logger.info(this.getClass(), "Getting table row counts from the original DB.");
+      GPDLogger.info(this, "Getting table row counts from the original DB.");
       for (Table t : tableList) {
         String tableName = t.getName();
         ResultSet res = stmt.executeQuery(String.format("SELECT COUNT(*) FROM %s", tableName));
@@ -55,7 +54,7 @@ public class MySQLSampler extends Sampler {
         String sampleDBName = sampleInfo.getDbName();
         double sampleRatio = sampleInfo.getRatio();
         if (sampleRatio < 0 || sampleRatio > 1) {
-          logger.error(this.getClass(), "Sampling ratio must be between 0 and 1.");
+          GPDLogger.error(this, "Sampling ratio must be between 0 and 1.");
           return false;
         }
 
@@ -88,7 +87,7 @@ public class MySQLSampler extends Sampler {
         }
       }
     } catch (SQLException e) {
-      logger.log(Log.LEVEL_ERROR, this.getClass(), "A SQLException has been caught.");
+      GPDLogger.error(this, "A SQLException has been caught.");
       e.printStackTrace();
       return false;
     }

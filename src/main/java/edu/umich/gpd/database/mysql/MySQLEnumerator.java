@@ -7,6 +7,7 @@ import edu.umich.gpd.database.common.StructureEnumerator;
 import edu.umich.gpd.schema.Schema;
 import edu.umich.gpd.schema.Table;
 import edu.umich.gpd.parser.InterestingSchemaFinder;
+import edu.umich.gpd.util.GPDLogger;
 import edu.umich.gpd.util.UniqueNumberGenerator;
 import edu.umich.gpd.util.UtilFunctions;
 import edu.umich.gpd.workload.Workload;
@@ -31,7 +32,7 @@ public class MySQLEnumerator extends StructureEnumerator {
         if (!t.isColumnsEmpty()) {
           Set<ColumnDefinition> columns = t.getColumns();
           if (columns.size() > 30) {
-            Log.error(this.getClass().getCanonicalName(), "Too many interesting columns." +
+            GPDLogger.error(this, "Too many interesting columns." +
                 " The number must be less than 31. The current number is " + columns.size());
             return null;
           }
@@ -48,25 +49,25 @@ public class MySQLEnumerator extends StructureEnumerator {
         }
       }
 
-      if (structures.size() > 30) {
-        Log.error(this.getClass().getCanonicalName(), "Too many interesting structures." +
-            " It must be less than 31. The current number is " + structures.size());
-        return null;
-      }
-
       // now structures have indexes for each table, now we need a powerset from those..
       List<Set<String>> interestingTableSets = finder.getInterestingTableSets();
       Set<Set<Structure>> configurations = new HashSet<>();
 
       // only get combinations of interesting table sets.
       for (Set<String> tableSets : interestingTableSets) {
-        if (tableSets.size() > 1) {
+        if (!tableSets.isEmpty()) {
           Set<Structure> structureSet = new HashSet<>();
           for (Structure structure : structures) {
             if (tableSets.contains(structure.getTable().getName())) {
               structureSet.add(structure);
             }
           }
+          if (structureSet.size() > 30) {
+            GPDLogger.error(this, "Too many interesting structures." +
+                " It must be less than 31. The current number is " + structureSet.size());
+            return null;
+          }
+
           Set<Set<Structure>> configurationPowerSet = Sets.powerSet(structureSet);
           Set<Set<Structure>> configurationPowerSetWithoutDuplicates = new HashSet<>();
           for (Set<Structure> configuration : configurationPowerSet) {

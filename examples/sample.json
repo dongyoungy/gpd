@@ -1,6 +1,7 @@
 {
   setting: {
     maxNumColumn: 3,
+    minRowForSample: 1000,
     sampling: true,
     samples: [
       {dbName: 'tpch_sample_1', ratio: 0.01},
