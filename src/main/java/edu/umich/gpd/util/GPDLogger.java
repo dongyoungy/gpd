@@ -39,24 +39,21 @@ public class GPDLogger extends Log.Logger {
         null);
   }
 
-  public void info(Class aClass, String message) {
-    super.log(Log.LEVEL_INFO,
+  public static void info(Class aClass, String message) {
+    Log.info(
         aClass.getSimpleName(),
-        message,
-        null);
+        message);
   }
 
-  public void debug(Class aClass, String message) {
-    super.log(Log.LEVEL_DEBUG,
+  public static void debug(Class aClass, String message) {
+    Log.debug(
         aClass.getSimpleName(),
-        message,
-        null);
+        message);
   }
 
-  public void error(Class aClass, String message) {
-    super.log(Log.LEVEL_ERROR,
+  public static void error(Class aClass, String message) {
+    Log.error(
         aClass.getSimpleName(),
-        message,
-        null);
+        message);
   }
 }

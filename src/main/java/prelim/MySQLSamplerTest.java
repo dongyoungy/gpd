@@ -85,6 +85,7 @@ public class MySQLSamplerTest {
     }
 
     List<SampleInfo> samples = inputData.getSetting().getSamples();
+    int minRowForSample = inputData.getSetting().getMinRowForSample();
 
     if (samples.isEmpty()) {
       Log.error("MySQLSamplerTest", "The number of sample is zero.");
@@ -93,7 +94,7 @@ public class MySQLSamplerTest {
 
     Stopwatch watch = Stopwatch.createStarted();
     Log.info("MySQLSamplerTest", "Sampling started.");
-    sampler.sample(conn, schema, 1000, samples);
+    sampler.sample(conn, schema, minRowForSample, samples);
     long timeTaken = watch.elapsed(TimeUnit.SECONDS);
     Log.info("MySQLSamplerTest", "Sampling done. " + timeTaken +
         " seconds elapsed.");

@@ -8,11 +8,13 @@ import java.util.List;
  */
 public class Setting {
   private int maxNumColumn;
+  private int minRowForSample;
   private boolean sampling;
   private List<SampleInfo> samples;
 
   public Setting() {
     this.maxNumColumn = 10;
+    this.minRowForSample = 1000;
     sampling = false;
     samples = new ArrayList<>();
   }
@@ -23,6 +25,10 @@ public class Setting {
 
   public boolean isSampling() {
     return sampling;
+  }
+
+  public int getMinRowForSample() {
+    return minRowForSample;
   }
 
   public List<SampleInfo> getSamples() {

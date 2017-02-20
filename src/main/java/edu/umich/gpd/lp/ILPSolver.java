@@ -1,8 +1,8 @@
 package edu.umich.gpd.lp;
 
-import com.esotericsoftware.minlog.Log;
 import com.google.common.base.Stopwatch;
 import edu.umich.gpd.database.common.Structure;
+import edu.umich.gpd.util.GPDLogger;
 import edu.umich.gpd.workload.Query;
 import edu.umich.gpd.workload.Workload;
 
@@ -45,11 +45,11 @@ public class ILPSolver {
       Stopwatch timetoFillCostArray = Stopwatch.createStarted();
       fillCostArray();
       long timeTaken = timetoFillCostArray.elapsed(TimeUnit.SECONDS);
-      Log.info(this.getClass().getCanonicalName(), String.format("took %d seconds to fill" +
+      GPDLogger.info(this.getClass(), String.format("took %d seconds to fill" +
           " the cost array.", timeTaken));
     } catch (SQLException e) {
       e.printStackTrace();
-      Log.error(this.getClass().getCanonicalName(), "Failed to fill cost array.");
+      GPDLogger.error(this.getClass(), "Failed to fill cost array.");
       return;
     }
     List<Structure> possibleStructures = getPossibleStructures(configurations);
@@ -128,9 +128,9 @@ public class ILPSolver {
     LPSolution solution = lpw.solve();
     System.out.println("Objective Value = " + solution.getObjectiveValue());
     long timeTaken = timeToSolve.elapsed(TimeUnit.SECONDS);
-    Log.info(this.getClass().getCanonicalName(), String.format("took %d seconds to solve the problem.", timeTaken));
+    GPDLogger.info(this.getClass(), String.format("took %d seconds to solve the problem.", timeTaken));
     timeTaken = entireTime.elapsed(TimeUnit.SECONDS);
-    Log.info(this.getClass().getCanonicalName(), String.format("took %d seconds for the entire process.",
+    GPDLogger.info(this.getClass(), String.format("took %d seconds for the entire process.",
           timeTaken));
     //for (int i = 0; i < numQuery; ++i) {
       //for (int j = 0; j < numConfiguration; ++j) {
@@ -160,16 +160,16 @@ public class ILPSolver {
       }
     }
 
-    for (int i = 0; i < possibleStructures.size(); ++i) {
-      Structure s1 = possibleStructures.get(i);
-      for (int j = i + 1; j < possibleStructures.size(); ++j) {
-        Structure s2 = possibleStructures.get(j);
-        if (s1.getTable().getName().equals(s2.getTable().getName())) {
-          compatibilityMatrix[i][j] = false;
-          compatibilityMatrix[j][j] = false;
-        }
-      }
-    }
+//    for (int i = 0; i < possibleStructures.size(); ++i) {
+//      Structure s1 = possibleStructures.get(i);
+//      for (int j = i + 1; j < possibleStructures.size(); ++j) {
+//        Structure s2 = possibleStructures.get(j);
+//        if (s1.getTable().getName().equals(s2.getTable().getName())) {
+//          compatibilityMatrix[i][j] = false;
+//          compatibilityMatrix[j][j] = false;
+//        }
+//      }
+//    }
   }
 
   private List<Structure> getPossibleStructures(List<Set<Structure>> configurations) {
@@ -184,7 +184,7 @@ public class ILPSolver {
 
   private void fillCostArray() throws SQLException {
 
-    Log.info(this.getClass().getCanonicalName(), String.format(
+    GPDLogger.info(this.getClass(), String.format(
         "Filling the cost array"));
     Stopwatch stopwatch;
     Statement stmt = conn.createStatement();
@@ -192,13 +192,13 @@ public class ILPSolver {
     for (int j = 0; j < configurations.size(); ++j) {
       Set<Structure> configuration = configurations.get(j);
       // build structures
-      Log.info(this.getClass().getCanonicalName(), String.format(
+      GPDLogger.info(this.getClass(), String.format(
           "Building structures for configuration #%d out of %d.", j+1, configurations.size()));
       for (Structure s : configuration) {
         s.create(conn);
       }
 
-      Log.info(this.getClass().getCanonicalName(), String.format(
+      GPDLogger.info(this.getClass(), String.format(
           "Running queries for configuration #%d out of %d.", j+1, configurations.size()));
       for (int i = 0; i < queries.size(); ++i) {
         Query q = queries.get(i);
@@ -208,7 +208,7 @@ public class ILPSolver {
       }
 
       // remove structures
-      Log.info(this.getClass().getCanonicalName(), String.format(
+      GPDLogger.info(this.getClass(), String.format(
           "Removing structures for configuration #%d out of %d.", j+1, configurations.size()));
       for (Structure s : configuration) {
         s.drop(conn);
