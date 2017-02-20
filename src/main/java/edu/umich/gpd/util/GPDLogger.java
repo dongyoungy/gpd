@@ -10,7 +10,7 @@ public class GPDLogger extends Log.Logger {
   private static GPDLogger instance = null;
 
   protected GPDLogger() {
-
+    super();
   }
 
   public static GPDLogger getLogger() {
@@ -27,35 +27,35 @@ public class GPDLogger extends Log.Logger {
 
   public void log(int level, Class aClass, String message, Throwable ex) {
     super.log(level,
-        aClass.getCanonicalName() + ":" + aClass.getEnclosingMethod().getName(),
+        aClass.getSimpleName(),
         message,
         ex);
   }
 
   public void log(int level, Class aClass, String message) {
     super.log(level,
-        aClass.getCanonicalName() + ":" + aClass.getEnclosingMethod().getName(),
+        aClass.getSimpleName(),
         message,
         null);
   }
 
   public void info(Class aClass, String message) {
     super.log(Log.LEVEL_INFO,
-        aClass.getCanonicalName() + ":" + aClass.getEnclosingMethod().getName(),
+        aClass.getSimpleName(),
         message,
         null);
   }
 
   public void debug(Class aClass, String message) {
     super.log(Log.LEVEL_DEBUG,
-        aClass.getCanonicalName() + ":" + aClass.getEnclosingMethod().getName(),
+        aClass.getSimpleName(),
         message,
         null);
   }
 
   public void error(Class aClass, String message) {
     super.log(Log.LEVEL_ERROR,
-        aClass.getCanonicalName() + ":" + aClass.getEnclosingMethod().getName(),
+        aClass.getSimpleName(),
         message,
         null);
   }

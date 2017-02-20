@@ -45,6 +45,7 @@ public class MySQLSampler extends Sampler {
       for (Table t : tableList) {
         String tableName = t.getName();
         ResultSet res = stmt.executeQuery(String.format("SELECT COUNT(*) FROM %s", tableName));
+        res.next();
         Long count = res.getLong(1);
         tableRowCounts.put(t, count);
       }
@@ -87,7 +88,7 @@ public class MySQLSampler extends Sampler {
       }
     } catch (SQLException e) {
       logger.log(Log.LEVEL_ERROR, this.getClass(), "A SQLException has been caught.");
-      logger.log(Log.LEVEL_DEBUG, this.getClass(), e.toString());
+      e.printStackTrace();
       return false;
     }
     return true;
