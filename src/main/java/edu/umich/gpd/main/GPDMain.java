@@ -91,7 +91,7 @@ public class GPDMain {
     List<Set<Structure>> configurations = enumerator.enumerateStructures(schema, workload);
     while (configurations == null && inputData.getSetting().getMaxNumColumn() > 1) {
       int newMaxColumn = inputData.getSetting().getMaxNumColumn() - 1;
-      Log.info("GPDMain", "Too many columns to consider. " +
+      Log.info("GPDMain", "There are too many interesting columns to consider. " +
           "Reducing the maximum number of columns to consider to: " + newMaxColumn);
       inputData.getSetting().setMaxNumColumn(newMaxColumn);
       configurations = enumerator.enumerateStructures(schema, workload);
