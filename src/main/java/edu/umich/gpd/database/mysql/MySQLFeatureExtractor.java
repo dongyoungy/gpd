@@ -211,7 +211,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
         String selectType = res.getString("select_type");
         long numRows = res.getLong("rows");
         double filtered = res.getDouble("filtered");
-        String extra = res.getString("extra");
+        String extra = res.getString("Extra");
         String joinType = res.getString("type");
 
         // extract # of rows from select
