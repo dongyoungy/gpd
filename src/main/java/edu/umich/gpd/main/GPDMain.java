@@ -1,10 +1,14 @@
 package edu.umich.gpd.main;
 
 import com.esotericsoftware.minlog.Log;
+import edu.umich.gpd.database.common.FeatureExtractor;
+import edu.umich.gpd.database.common.Sampler;
 import edu.umich.gpd.database.common.Structure;
 import edu.umich.gpd.database.common.StructureEnumerator;
 import edu.umich.gpd.database.mysql.MySQLEnumerator;
+import edu.umich.gpd.database.mysql.MySQLFeatureExtractor;
 import edu.umich.gpd.database.mysql.MySQLJDBCConnection;
+import edu.umich.gpd.database.mysql.MySQLSampler;
 import edu.umich.gpd.lp.ILPSolver;
 import edu.umich.gpd.parser.InputDataParser;
 import edu.umich.gpd.parser.SchemaParser;
@@ -17,6 +21,7 @@ import edu.umich.gpd.workload.Workload;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -70,10 +75,14 @@ public class GPDMain {
 
     Connection conn = null;
     StructureEnumerator enumerator = null;
+    Sampler sampler = null;
+    FeatureExtractor extractor = null;
     if (dbInfo.getType().equalsIgnoreCase("mysql")) {
       MySQLJDBCConnection mysqlConn = new MySQLJDBCConnection();
       conn = mysqlConn.getConnection(dbInfo);
       enumerator = new MySQLEnumerator();
+      sampler = new MySQLSampler(dbInfo.getTargetDBName());
+      extractor = new MySQLFeatureExtractor(conn);
     } else {
       Log.error("GPDMain", "Unsupported database type.");
       System.exit(-1);
@@ -103,21 +112,40 @@ public class GPDMain {
     Log.info("GPDMain", "Enumeration completed.");
 
     Setting setting = userInput.getSetting();
+    String targetDBName = userInput.getDatabaseInfo().getTargetDBName();
+    List<SampleInfo> samples = null;
     if (setting != null) {
-      String dbName = setting.getSamples().get(0).getDbName();
-      try {
-        // TODO: support multiple sample DBs
-        conn.setCatalog(dbName);
-        ILPSolver solver = new ILPSolver(conn, workload, configurations);
-        solver.solve();
-      } catch (SQLException e) {
-        Log.error("GPDMain",
-            String.format("Failed to use the database '%s'.", dbName));
+      // create sample DBs
+      samples = setting.getSamples();
+      int minRowForSample = setting.getMinRowForSample();
+      boolean useSampling = setting.useSampling();
+      boolean useRegression = setting.useRegression();
+
+      if (useSampling) {
+        Log.info("GPDMain", "Generating sample databases...");
+        if (sampler.sample(conn, schema, minRowForSample, samples)) {
+          Log.info("GPDMain", "Sampling databases done.");
+        } else {
+          Log.error("GPDMain", "Sampling databases failed.");
+          System.exit(-1);
+        }
+      } else {
+        Log.info("GPDMain", String.format("Using the target database '%s' for" +
+            " calculating optimal physical design.", targetDBName));
+        samples = new ArrayList<>();
+        SampleInfo aSample = new SampleInfo(targetDBName, 1.0);
+        samples.add(aSample);
+      }
+
+      ILPSolver solver = new ILPSolver(conn, schema, workload, configurations, samples, dbInfo,
+          useRegression, extractor);
+      if (!solver.solve()) {
+        Log.error("GPDMain", "Failed to solve the ILP problem.");
         System.exit(-1);
       }
     } else {
       Log.error("GPDMain",
-          String.format("Setting null"));
+          String.format("Setting null."));
       System.exit(-1);
     }
   }

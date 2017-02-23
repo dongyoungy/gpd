@@ -1,12 +1,18 @@
 package edu.umich.gpd.lp;
 
 import com.google.common.base.Stopwatch;
+import edu.umich.gpd.database.common.FeatureExtractor;
 import edu.umich.gpd.database.common.Structure;
+import edu.umich.gpd.regression.GPDRegression;
+import edu.umich.gpd.schema.Schema;
+import edu.umich.gpd.userinput.DatabaseInfo;
+import edu.umich.gpd.userinput.SampleInfo;
 import edu.umich.gpd.util.GPDLogger;
 import edu.umich.gpd.workload.Query;
 import edu.umich.gpd.workload.Workload;
 
 import scpsolver.problems.*;
+import weka.core.Instance;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -23,22 +29,41 @@ import java.util.concurrent.TimeUnit;
 public class ILPSolver {
   private Connection conn;
   private Workload workload;
+  private Schema schema;
   private List<Set<Structure>> configurations;
-  private long[][] costArray;
+  private List<SampleInfo> sampleDBs;
+  private DatabaseInfo dbInfo;
+  private FeatureExtractor extractor;
+  private double[][] costArray;
+  private double[][][] rawCostArray;
+  private int numSampleDBs;
   private int numQuery;
   private int numConfiguration;
+  private boolean useRegression;
 
 
-  public ILPSolver(Connection conn, Workload workload, List<Set<Structure>> configurations) {
+  public ILPSolver(Connection conn, Schema schema, Workload workload,
+                   List<Set<Structure>> configurations,
+                   List<SampleInfo> sampleDBs,
+                   DatabaseInfo dbInfo,
+                   boolean useRegression, FeatureExtractor extractor) {
     this.conn = conn;
+    this.schema = schema;
     this.workload = workload;
     this.configurations = configurations;
-    this.costArray = new long[workload.getQueries().size()][configurations.size()];
+    this.rawCostArray = new double[sampleDBs.size()]
+        [workload.getQueries().size()][configurations.size()];
+    this.costArray = new double[workload.getQueries().size()][configurations.size()];
     this.numQuery = workload.getQueries().size();
     this.numConfiguration = configurations.size();
+    this.sampleDBs = sampleDBs;
+    this.dbInfo = dbInfo;
+    this.numSampleDBs = sampleDBs.size();
+    this.useRegression = useRegression;
+    this.extractor = extractor;
   }
 
-  public void solve() {
+  public boolean solve() {
     Stopwatch entireTime = Stopwatch.createStarted();
     // fill the cost array first.
     try {
@@ -50,7 +75,7 @@ public class ILPSolver {
     } catch (SQLException e) {
       e.printStackTrace();
       GPDLogger.error(this.getClass(), "Failed to fill cost array.");
-      return;
+      return false;
     }
     List<Structure> possibleStructures = getPossibleStructures(configurations);
     int numStructures = possibleStructures.size();
@@ -149,6 +174,7 @@ public class ILPSolver {
         System.out.println("\t"+possibleStructures.get(t).getQueryString());
       }
     }
+    return true;
   }
 
   private void buildCompatibilityMatrix(List<Structure> possibleStructures,
@@ -187,31 +213,58 @@ public class ILPSolver {
     GPDLogger.info(this, String.format(
         "Filling the cost array."));
     Stopwatch stopwatch;
-    Statement stmt = conn.createStatement();
     List<Query> queries = workload.getQueries();
+
+    // fill cost array from each sample database.
+    for (int d = 0; d < numSampleDBs; ++d) {
+      String dbName = sampleDBs.get(d).getDbName();
+      conn.setCatalog(dbName);
+      Statement stmt = conn.createStatement();
+
+      for (int j = 0; j < configurations.size(); ++j) {
+        Set<Structure> configuration = configurations.get(j);
+        // build structures
+        GPDLogger.info(this, String.format(
+            "Building structures for configuration #%d out of %d.", j+1, configurations.size()));
+        for (Structure s : configuration) {
+          s.create(conn);
+        }
+
+        GPDLogger.info(this, String.format(
+            "Running queries for configuration #%d out of %d.", j+1, configurations.size()));
+        for (int i = 0; i < queries.size(); ++i) {
+          Query q = queries.get(i);
+          stopwatch = Stopwatch.createStarted();
+          stmt.execute(q.getContent());
+          double queryTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+          rawCostArray[d][i][j] = (long) queryTime;
+          extractor.addTrainingData(dbName, schema, q, j, queryTime);
+        }
+
+        // remove structures
+        GPDLogger.info(this, String.format(
+            "Removing structures for configuration #%d out of %d.", j+1, configurations.size()));
+        for (Structure s : configuration) {
+          s.drop(conn);
+        }
+      }
+    }
+
     for (int j = 0; j < configurations.size(); ++j) {
-      Set<Structure> configuration = configurations.get(j);
-      // build structures
-      GPDLogger.info(this, String.format(
-          "Building structures for configuration #%d out of %d.", j+1, configurations.size()));
-      for (Structure s : configuration) {
-        s.create(conn);
-      }
-
-      GPDLogger.info(this, String.format(
-          "Running queries for configuration #%d out of %d.", j+1, configurations.size()));
       for (int i = 0; i < queries.size(); ++i) {
-        Query q = queries.get(i);
-        stopwatch = Stopwatch.createStarted();
-        stmt.execute(q.getContent());
-        costArray[i][j] = stopwatch.elapsed(TimeUnit.MILLISECONDS);
-      }
-
-      // remove structures
-      GPDLogger.info(this, String.format(
-          "Removing structures for configuration #%d out of %d.", j+1, configurations.size()));
-      for (Structure s : configuration) {
-        s.drop(conn);
+        if (useRegression) {
+          Query q = queries.get(i);
+          Instance testInstance = extractor.getTestInstance(dbInfo.getTargetDBName(),
+              schema, q, j);
+          costArray[i][j] = GPDRegression.regressSMOReg(
+              extractor.getTrainData(), testInstance);
+        } else {
+          long total = 0;
+          for (int d = 0; d < numSampleDBs; ++d) {
+            total += rawCostArray[d][i][j];
+          }
+          costArray[i][j] = total / numSampleDBs;
+        }
       }
     }
   }

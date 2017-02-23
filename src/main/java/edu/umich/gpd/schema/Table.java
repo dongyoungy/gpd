@@ -10,6 +10,7 @@ import java.util.*;
 public class Table {
   private String name;
   private String createStatement;
+  private Map<String, Long> rowCount;
   private Set<ColumnDefinition> columns;
   private Set<String> indexedColumns;
 
@@ -17,17 +18,20 @@ public class Table {
     name = "";
     columns = new LinkedHashSet<>();
     indexedColumns = new LinkedHashSet<>();
+    rowCount = new HashMap<>();
   }
 
   public Table(String name) {
     this.name = name;
     columns = new LinkedHashSet<>();
     indexedColumns = new LinkedHashSet<>();
+    rowCount = new HashMap<>();
   }
 
   public Table(String name, String createStatement) {
     this.name = name;
     this.createStatement = createStatement;
+    rowCount = new HashMap<>();
   }
 
   @Override
@@ -35,6 +39,7 @@ public class Table {
     Table newTable = new Table();
     newTable.setName(this.name);
     newTable.setCreateStatement(this.createStatement);
+    newTable.copyRowCount(this.rowCount);
     for (ColumnDefinition colDef : columns) {
       newTable.addColumn(colDef);
     }
@@ -98,6 +103,18 @@ public class Table {
 
   public void setColumns(List<ColumnDefinition> columns) {
     columns.addAll(columns);
+  }
+
+  public long getRowCount(String dbName) {
+    return rowCount.get(dbName).longValue();
+  }
+
+  public void addRowCount(String dbName, long count) {
+    rowCount.put(dbName, count);
+  }
+
+  public void copyRowCount(Map<String, Long> rowCount) {
+    this.rowCount = new HashMap<>(rowCount);
   }
 
   public void addIndexedColumn(String column) {

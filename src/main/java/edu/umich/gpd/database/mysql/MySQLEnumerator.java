@@ -22,7 +22,9 @@ public class MySQLEnumerator extends StructureEnumerator {
   @Override
   public List<Set<Structure>> enumerateStructures(Schema s, Workload w) {
     InterestingSchemaFinder finder = new InterestingSchemaFinder();
-    finder.getInterestingSchema(w);
+    if (!finder.getInterestingSchema(w))  {
+      return null;
+    }
     Schema interestingSchema = finder.getFilteredSchema(s);
     if (interestingSchema.isEmpty()) {
       return null;

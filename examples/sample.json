@@ -2,10 +2,12 @@
   setting: {
     maxNumColumn: 3,
     minRowForSample: 1000,
-    sampling: true,
+    useSampling: true,
+    useRegression: true,
     samples: [
       {dbName: 'tpch_sample_1', ratio: 0.01},
-      {dbName: 'tpch_sample_2', ratio: 0.001}
+      {dbName: 'tpch_sample_2', ratio: 0.001},
+      {dbName: 'tpch_sample_3', ratio: 0.0001}
     ]
   },
   databaseInfo: {

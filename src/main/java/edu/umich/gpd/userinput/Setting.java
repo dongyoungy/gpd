@@ -9,13 +9,15 @@ import java.util.List;
 public class Setting {
   private int maxNumColumn;
   private int minRowForSample;
-  private boolean sampling;
+  private boolean useSampling;
+  private boolean useRegression;
   private List<SampleInfo> samples;
 
   public Setting() {
     this.maxNumColumn = 10;
     this.minRowForSample = 1000;
-    sampling = false;
+    useSampling = false;
+    useRegression = false;
     samples = new ArrayList<>();
   }
 
@@ -23,8 +25,8 @@ public class Setting {
     return (maxNumColumn == 0) ? 10 : maxNumColumn;
   }
 
-  public boolean isSampling() {
-    return sampling;
+  public boolean useSampling() {
+    return useSampling;
   }
 
   public int getMinRowForSample() {
@@ -37,5 +39,9 @@ public class Setting {
 
   public void setMaxNumColumn(int maxNumColumn) {
     this.maxNumColumn = maxNumColumn;
+  }
+
+  public boolean useRegression() {
+    return useRegression;
   }
 }
