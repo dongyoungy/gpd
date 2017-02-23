@@ -47,6 +47,7 @@ public class MySQLSampler extends Sampler {
         res.next();
         Long count = res.getLong(1);
         tableRowCounts.put(t, count);
+        t.addRowCount(originalDBName, count.longValue());
       }
 
       // create sample DBs

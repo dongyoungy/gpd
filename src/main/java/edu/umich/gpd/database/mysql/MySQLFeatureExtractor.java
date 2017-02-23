@@ -51,20 +51,20 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
             }
           }
         }
-
-        String dbName = targetDBName;
-        conn.setCatalog(dbName);
-        Statement stmt = conn.createStatement();
-        ResultSet res = stmt.executeQuery(String.format("SELECT COUNT(*) FROM %s", t.getName()));
-        if (!res.next()) {
-          GPDLogger.error(this, String.format("Failed to the row counts from table '%s'",
-              t.getName()));
-          return false;
-        } else {
-          Long count = res.getLong(1);
-          t.addRowCount(dbName, count.longValue());
-          attrList.add(new Attribute("numRow" + t.getName()));
-        }
+//
+//        String dbName = targetDBName;
+//        conn.setCatalog(dbName);
+//        Statement stmt = conn.createStatement();
+//        ResultSet res = stmt.executeQuery(String.format("SELECT COUNT(*) FROM %s", t.getName()));
+//        if (!res.next()) {
+//          GPDLogger.error(this, String.format("Failed to the row counts from table '%s'",
+//              t.getName()));
+//          return false;
+//        } else {
+//          Long count = res.getLong(1);
+//          t.addRowCount(dbName, count.longValue());
+//          attrList.add(new Attribute("numRow" + t.getName()));
+//        }
       }
 
     } catch (SQLException e) {

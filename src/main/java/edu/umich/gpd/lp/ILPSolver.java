@@ -215,6 +215,10 @@ public class ILPSolver {
     Stopwatch stopwatch;
     List<Query> queries = workload.getQueries();
 
+    if (useRegression) {
+      extractor.initialize(sampleDBs, dbInfo.getTargetDBName(), schema);
+    }
+
     // fill cost array from each sample database.
     for (int d = 0; d < numSampleDBs; ++d) {
       String dbName = sampleDBs.get(d).getDbName();

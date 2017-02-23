@@ -131,10 +131,11 @@ public class GPDMain {
         }
       } else {
         Log.info("GPDMain", String.format("Using the target database '%s' for" +
-            " calculating optimal physical design.", targetDBName));
+            " calculating optimal physical design. Regression disabled", targetDBName));
         samples = new ArrayList<>();
         SampleInfo aSample = new SampleInfo(targetDBName, 1.0);
         samples.add(aSample);
+        useRegression = false;
       }
 
       ILPSolver solver = new ILPSolver(conn, schema, workload, configurations, samples, dbInfo,
