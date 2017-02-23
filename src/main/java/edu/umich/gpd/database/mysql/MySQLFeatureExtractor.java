@@ -47,10 +47,14 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
             } else {
               Long count = res.getLong(1);
               t.addRowCount(dbName, count.longValue());
-              attrList.add(new Attribute("numRow" + t.getName()));
             }
           }
+        } else {
+          GPDLogger.error(this, "There are no sample databases to extract " +
+              "features.");
+          return false;
         }
+        attrList.add(new Attribute("numRow_" + t.getName()));
 //
 //        String dbName = targetDBName;
 //        conn.setCatalog(dbName);
