@@ -3,7 +3,7 @@ package edu.umich.gpd.lp;
 import com.google.common.base.Stopwatch;
 import edu.umich.gpd.database.common.FeatureExtractor;
 import edu.umich.gpd.database.common.Structure;
-import edu.umich.gpd.regression.GPDRegression;
+import edu.umich.gpd.regression.GPDSMORegression;
 import edu.umich.gpd.schema.Schema;
 import edu.umich.gpd.userinput.DatabaseInfo;
 import edu.umich.gpd.userinput.SampleInfo;
@@ -68,7 +68,10 @@ public class ILPSolver {
     // fill the cost array first.
     try {
       Stopwatch timetoFillCostArray = Stopwatch.createStarted();
-      fillCostArray();
+      if (!fillCostArray()) {
+        GPDLogger.error(this, "Failed to fill cost array.");
+        return false;
+      }
       long timeTaken = timetoFillCostArray.elapsed(TimeUnit.SECONDS);
       GPDLogger.info(this.getClass(), String.format("took %d seconds to fill" +
           " the cost array.", timeTaken));
@@ -208,7 +211,7 @@ public class ILPSolver {
     return new ArrayList(possibleStructures);
   }
 
-  private void fillCostArray() throws SQLException {
+  private boolean fillCostArray() throws SQLException {
 
     GPDLogger.info(this, String.format(
         "Filling the cost array."));
@@ -254,14 +257,19 @@ public class ILPSolver {
       }
     }
 
+    GPDSMORegression sr = new GPDSMORegression();
+    if (useRegression) {
+      if (!sr.build(extractor.getTrainData())) {
+        return false;
+      }
+    }
     for (int j = 0; j < configurations.size(); ++j) {
       for (int i = 0; i < queries.size(); ++i) {
         if (useRegression) {
           Query q = queries.get(i);
           Instance testInstance = extractor.getTestInstance(dbInfo.getTargetDBName(),
               schema, q, j);
-          costArray[i][j] = GPDRegression.regressSMOReg(
-              extractor.getTrainData(), testInstance);
+          costArray[i][j] = sr.regress(testInstance);
         } else {
           long total = 0;
           for (int d = 0; d < numSampleDBs; ++d) {
@@ -271,5 +279,6 @@ public class ILPSolver {
         }
       }
     }
+    return true;
   }
 }

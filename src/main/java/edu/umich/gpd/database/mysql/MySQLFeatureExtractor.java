@@ -631,100 +631,104 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
         }
 
         // now processes 'extra' column
-        String lowerExtra = extra.toLowerCase();
-        if (lowerExtra.contains("pushed join")) {
-          numExtraChildPushedJoin++;
-        }
-        if (lowerExtra.contains("const row not found")) {
-          numExtraConstRowNotFound++;
-        }
-        if (lowerExtra.contains("deleting all rows")) {
-          numExtraDeletingAllRows++;
-        }
-        if (lowerExtra.contains("distinct")) {
-          numExtraDistinct++;
-        }
-        if (lowerExtra.contains("firstmatch")) {
-          numExtraFirstMatch++;
-        }
-        if (lowerExtra.contains("full scan on null key")) {
-          numExtraFullScanOnNullKey++;
-        }
-        if (lowerExtra.contains("impossible having")) {
-          numExtraImpossibleHaving++;
-        }
-        if (lowerExtra.contains("impossible where") && !lowerExtra.contains("noticed after")) {
-          numExtraImpossibleWhere++;
-        }
-        if (lowerExtra.contains("impossible where noticed after")) {
-          numExtraImpossibleWhereNoticed++;
-        }
-        if (lowerExtra.contains("loosescan")) {
-          numExtraLooseScan++;
-        }
-        if (lowerExtra.contains("no matching min/max")) {
-          numExtraNoMatchingMinMaxRow++;
-        }
-        if (lowerExtra.contains("no matching row in const table")) {
-          numExtraNoMatchingRowInConstTable++;
-        }
-        if (lowerExtra.contains("no matching rows after partition pruning")) {
-          numExtraNoMatchingRowsAfterPartitionPruning++;
-        }
-        if (lowerExtra.contains("no tables used")) {
-          numExtraNoTablesUsed++;
-        }
-        if (lowerExtra.contains("not exists")) {
-          numExtraNotExists++;
-        }
-        if (lowerExtra.contains("plan isn't ready yet")) {
-          numExtraPlanNotReadyYet++;
-        }
-        if (lowerExtra.contains("range checked for each record")) {
-          numExtraRangeChecked++;
-        }
-        if (lowerExtra.contains("select tables optimized away")) {
-          numExtraSelecTablesOptimizedAway++;
-        }
-        if (lowerExtra.contains("start temporary")) {
-          numExtraStartTemporary++;
-        }
-        if (lowerExtra.contains("end temporary")) {
-          numExtraEndTemporary++;
-        }
-        if (lowerExtra.contains("unique row not found")) {
-          numExtraUniqueRowNotFound++;
-        }
-        if (lowerExtra.contains("using filesort")) {
-          numExtraUsingFilesort++;
-        }
-        if (lowerExtra.contains("using index condition")) {
-          numExtraUsingIndexCondition++;
-        } else if (lowerExtra.contains("using index for group-by")) {
-          numExtraUsingIndexForGroupBy++;
-        } else if (lowerExtra.contains("using index")) {
-          numExtraUsingIndex++;
-        }
-        if (lowerExtra.contains("using join buffer")) {
-          numExtraUsingJoinBuffer++;
-        }
-        if (lowerExtra.contains("using mrr")) {
-          numExtraUsingMRR++;
-        }
-        if (lowerExtra.contains("using sort_union")) {
-          numExtraUsingSortUnion++;
-        }
-        if (lowerExtra.contains("using union")) {
-          numExtraUsingUnion++;
-        }
-        if (lowerExtra.contains("using intersect")) {
-          numExtraUsingIntersect++;
-        }
-        if (lowerExtra.contains("using where")) {
-          numExtraUsingWhere++;
-        }
-        if (lowerExtra.contains("zero limit")) {
-          numExtraZeroLimit++;
+        if (extra != null) {
+          String lowerExtra = extra.toLowerCase();
+          if (lowerExtra.contains("pushed join")) {
+            numExtraChildPushedJoin++;
+          }
+          if (lowerExtra.contains("const row not found")) {
+            numExtraConstRowNotFound++;
+          }
+          if (lowerExtra.contains("deleting all rows")) {
+            numExtraDeletingAllRows++;
+          }
+          if (lowerExtra.contains("distinct")) {
+            numExtraDistinct++;
+          }
+          if (lowerExtra.contains("firstmatch")) {
+            numExtraFirstMatch++;
+          }
+          if (lowerExtra.contains("full scan on null key")) {
+            numExtraFullScanOnNullKey++;
+          }
+          if (lowerExtra.contains("impossible having")) {
+            numExtraImpossibleHaving++;
+          }
+          if (lowerExtra.contains("impossible where") && !lowerExtra.contains("noticed after")) {
+            numExtraImpossibleWhere++;
+          }
+          if (lowerExtra.contains("impossible where noticed after")) {
+            numExtraImpossibleWhereNoticed++;
+          }
+          if (lowerExtra.contains("loosescan")) {
+            numExtraLooseScan++;
+          }
+          if (lowerExtra.contains("no matching min/max")) {
+            numExtraNoMatchingMinMaxRow++;
+          }
+          if (lowerExtra.contains("no matching row in const table")) {
+            numExtraNoMatchingRowInConstTable++;
+          }
+          if (lowerExtra.contains("no matching rows after partition pruning")) {
+            numExtraNoMatchingRowsAfterPartitionPruning++;
+          }
+          if (lowerExtra.contains("no tables used")) {
+            numExtraNoTablesUsed++;
+          }
+          if (lowerExtra.contains("not exists")) {
+            numExtraNotExists++;
+          }
+          if (lowerExtra.contains("plan isn't ready yet")) {
+            numExtraPlanNotReadyYet++;
+          }
+          if (lowerExtra.contains("range checked for each record")) {
+            numExtraRangeChecked++;
+          }
+          if (lowerExtra.contains("select tables optimized away")) {
+            numExtraSelecTablesOptimizedAway++;
+          }
+          if (lowerExtra.contains("start temporary")) {
+            numExtraStartTemporary++;
+          }
+          if (lowerExtra.contains("end temporary")) {
+            numExtraEndTemporary++;
+          }
+          if (lowerExtra.contains("unique row not found")) {
+            numExtraUniqueRowNotFound++;
+          }
+          if (lowerExtra.contains("using filesort")) {
+            numExtraUsingFilesort++;
+          }
+          if (lowerExtra.contains("using index condition")) {
+            numExtraUsingIndexCondition++;
+          }
+          else if (lowerExtra.contains("using index for group-by")) {
+            numExtraUsingIndexForGroupBy++;
+          }
+          else if (lowerExtra.contains("using index")) {
+            numExtraUsingIndex++;
+          }
+          if (lowerExtra.contains("using join buffer")) {
+            numExtraUsingJoinBuffer++;
+          }
+          if (lowerExtra.contains("using mrr")) {
+            numExtraUsingMRR++;
+          }
+          if (lowerExtra.contains("using sort_union")) {
+            numExtraUsingSortUnion++;
+          }
+          if (lowerExtra.contains("using union")) {
+            numExtraUsingUnion++;
+          }
+          if (lowerExtra.contains("using intersect")) {
+            numExtraUsingIntersect++;
+          }
+          if (lowerExtra.contains("using where")) {
+            numExtraUsingWhere++;
+          }
+          if (lowerExtra.contains("zero limit")) {
+            numExtraZeroLimit++;
+          }
         }
 
         // 57 features + query time + configuration id + index size

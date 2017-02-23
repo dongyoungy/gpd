@@ -8,12 +8,28 @@ import weka.core.Instances;
 /**
  * Created by Dong Young Yoon on 2/22/17.
  */
-public class GPDRegression {
+public class GPDSMORegression {
 
-  public static double regressSMOReg(Instances trainData, Instance testInstance) {
-    SMOreg sr = new SMOreg();
+  private SMOreg sr;
+
+  public GPDSMORegression() {
+    sr = new SMOreg();
+  }
+
+  public boolean build(Instances trainData) {
     try {
       sr.buildClassifier(trainData);
+    } catch (Exception e) {
+      Log.error("GPDRegression", "Error while building classifier with SMOReg.");
+      e.printStackTrace();
+      return false;
+    }
+    return true;
+  }
+
+
+  public double regress(Instance testInstance) {
+    try {
       return sr.classifyInstance(testInstance);
     } catch (Exception e) {
       Log.error("GPDRegression", "Error while performing regression wiht SMOReg.");
