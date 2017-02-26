@@ -18,6 +18,8 @@ public class GPDSMORegression {
 
   public boolean build(Instances trainData) {
     try {
+      // assuming the last attribute is the class attribute
+      trainData.setClassIndex(trainData.numAttributes() - 1);
       sr.buildClassifier(trainData);
     } catch (Exception e) {
       Log.error("GPDRegression", "Error while building classifier with SMOReg.");
@@ -27,12 +29,11 @@ public class GPDSMORegression {
     return true;
   }
 
-
   public double regress(Instance testInstance) {
     try {
       return sr.classifyInstance(testInstance);
     } catch (Exception e) {
-      Log.error("GPDRegression", "Error while performing regression wiht SMOReg.");
+      Log.error("GPDRegression", "Error while performing regression with SMOReg.");
       e.printStackTrace();
       return -1;
     }

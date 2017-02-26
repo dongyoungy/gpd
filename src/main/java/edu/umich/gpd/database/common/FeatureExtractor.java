@@ -19,6 +19,7 @@ public abstract class FeatureExtractor {
 
   protected Connection conn;
   protected Instances trainData;
+  protected Instances trainDataForSize;
 
   protected FeatureExtractor(Connection conn) {
     this.conn = conn;
@@ -29,9 +30,17 @@ public abstract class FeatureExtractor {
   public abstract boolean addTrainingData(String dbName, Schema s, Query q, int configIndex,
                                           double queryTime);
 
+  public abstract boolean addTrainingDataForSize(String dbName, Schema s, Structure structure);
+
   public abstract Instance getTestInstance(String dbName, Schema s, Query q, int configIndex);
+
+  public abstract Instance getTestInstanceForSize(String dbName, Schema s, Structure structure);
 
   public Instances getTrainData() {
     return trainData;
+  }
+
+  public Instances getTrainDataForSize() {
+    return trainDataForSize;
   }
 }

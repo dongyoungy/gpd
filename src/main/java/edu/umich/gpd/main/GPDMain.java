@@ -1,6 +1,8 @@
 package edu.umich.gpd.main;
 
 import com.esotericsoftware.minlog.Log;
+import edu.umich.gpd.algorithm.GreedySolver;
+import edu.umich.gpd.algorithm.Solver;
 import edu.umich.gpd.database.common.FeatureExtractor;
 import edu.umich.gpd.database.common.Sampler;
 import edu.umich.gpd.database.common.Structure;
@@ -9,18 +11,16 @@ import edu.umich.gpd.database.mysql.MySQLEnumerator;
 import edu.umich.gpd.database.mysql.MySQLFeatureExtractor;
 import edu.umich.gpd.database.mysql.MySQLJDBCConnection;
 import edu.umich.gpd.database.mysql.MySQLSampler;
-import edu.umich.gpd.lp.ILPSolver;
+import edu.umich.gpd.algorithm.ILPSolver;
 import edu.umich.gpd.parser.InputDataParser;
 import edu.umich.gpd.parser.SchemaParser;
 import edu.umich.gpd.parser.WorkloadParser;
 import edu.umich.gpd.schema.Schema;
 import edu.umich.gpd.userinput.*;
-import edu.umich.gpd.util.GPDLogger;
 import edu.umich.gpd.workload.Workload;
 
 import java.io.File;
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -138,10 +138,25 @@ public class GPDMain {
         useRegression = false;
       }
 
-      ILPSolver solver = new ILPSolver(conn, schema, workload, configurations, samples, dbInfo,
-          useRegression, extractor);
+      String algorithm = setting.getAlgorithm().toLowerCase();
+      Solver solver = null;
+
+      switch (algorithm) {
+        case "ilp":
+          solver = new ILPSolver(conn, workload, schema, configurations, samples, dbInfo,
+              extractor, useRegression);
+          break;
+        case "greedy":
+          solver = new GreedySolver(conn, workload, schema, configurations, samples, dbInfo,
+              extractor, useRegression);
+          break;
+        default:
+          Log.error("GPDMain", "Unsupported algorithm: " + setting.getAlgorithm());
+          System.exit(-1);
+      }
+
       if (!solver.solve()) {
-        Log.error("GPDMain", "Failed to solve the ILP problem.");
+        Log.error("GPDMain", "Failed to solve the optimization problem.");
         System.exit(-1);
       }
     } else {

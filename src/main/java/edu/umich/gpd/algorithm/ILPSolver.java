@@ -1,8 +1,9 @@
-package edu.umich.gpd.lp;
+package edu.umich.gpd.algorithm;
 
 import com.google.common.base.Stopwatch;
 import edu.umich.gpd.database.common.FeatureExtractor;
 import edu.umich.gpd.database.common.Structure;
+import edu.umich.gpd.main.GPDMain;
 import edu.umich.gpd.regression.GPDSMORegression;
 import edu.umich.gpd.schema.Schema;
 import edu.umich.gpd.userinput.DatabaseInfo;
@@ -26,50 +27,36 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by Dong Young Yoon on 2/15/17.
  */
-public class ILPSolver {
-  private Connection conn;
-  private Workload workload;
-  private Schema schema;
-  private List<Set<Structure>> configurations;
-  private List<SampleInfo> sampleDBs;
-  private DatabaseInfo dbInfo;
-  private FeatureExtractor extractor;
+public class ILPSolver extends Solver {
+
   private double[][] costArray;
   private double[][][] rawCostArray;
   private int numSampleDBs;
   private int numQuery;
   private int numConfiguration;
-  private boolean useRegression;
 
-
-  public ILPSolver(Connection conn, Schema schema, Workload workload,
+  public ILPSolver(Connection conn, Workload workload, Schema schema,
                    List<Set<Structure>> configurations,
                    List<SampleInfo> sampleDBs,
                    DatabaseInfo dbInfo,
-                   boolean useRegression, FeatureExtractor extractor) {
-    this.conn = conn;
-    this.schema = schema;
-    this.workload = workload;
-    this.configurations = configurations;
+                   FeatureExtractor extractor, boolean useRegression) {
+
+    super(conn, workload, schema, configurations, sampleDBs, dbInfo, extractor, useRegression);
     this.rawCostArray = new double[sampleDBs.size()]
         [workload.getQueries().size()][configurations.size()];
     this.costArray = new double[workload.getQueries().size()][configurations.size()];
     this.numQuery = workload.getQueries().size();
     this.numConfiguration = configurations.size();
-    this.sampleDBs = sampleDBs;
-    this.dbInfo = dbInfo;
-    this.numSampleDBs = sampleDBs.size();
-    this.useRegression = useRegression;
-    this.extractor = extractor;
   }
 
   public boolean solve() {
+    this.sizeLimit = GPDMain.userInput.getSetting().getSizeLimit();
     Stopwatch entireTime = Stopwatch.createStarted();
     // fill the cost array first.
     try {
       Stopwatch timetoFillCostArray = Stopwatch.createStarted();
-      if (!fillCostArray()) {
-        GPDLogger.error(this, "Failed to fill cost array.");
+      if (!fillCostAndSizeArray()) {
+        GPDLogger.error(this, "Failed to fill cost & size arrays.");
         return false;
       }
       long timeTaken = timetoFillCostArray.elapsed(TimeUnit.SECONDS);
@@ -149,16 +136,31 @@ public class ILPSolver {
       }
     }
 
-    // TODO: add constraints for structure size
+    // if size limit exists, add it as a constraint
+    if (sizeLimit > 0) {
+      LPWizardConstraint c = lpw.addConstraint("c_size", sizeLimit, ">=");
+      // build classifier for structure size regression
+      GPDSMORegression sr = new GPDSMORegression();
+      sr.build(extractor.getTrainDataForSize());
+      for (int j = 0; j < numStructures; ++j) {
+        String var = "y_" + j;
+        Structure s = possibleStructures.get(j);
+        Instance testInstance = extractor.getTestInstanceForSize(
+            dbInfo.getTargetDBName(), schema, s);
+        double structureSize = sr.regress(testInstance);
+        c = c.plus(var, structureSize);
+      }
+      c.setAllVariablesBoolean();
+    }
 
     // now solve
     Stopwatch timeToSolve = Stopwatch.createStarted();
     LPSolution solution = lpw.solve();
-    System.out.println("Objective Value = " + solution.getObjectiveValue());
+    GPDLogger.info(this, "Objective Value = " + solution.getObjectiveValue());
     long timeTaken = timeToSolve.elapsed(TimeUnit.SECONDS);
-    GPDLogger.info(this.getClass(), String.format("took %d seconds to solve the problem.", timeTaken));
+    GPDLogger.info(this, String.format("took %d seconds to solve the problem.", timeTaken));
     timeTaken = entireTime.elapsed(TimeUnit.SECONDS);
-    GPDLogger.info(this.getClass(), String.format("took %d seconds for the entire process.",
+    GPDLogger.info(this, String.format("took %d seconds for the entire process.",
           timeTaken));
     //for (int i = 0; i < numQuery; ++i) {
       //for (int j = 0; j < numConfiguration; ++j) {
@@ -201,24 +203,14 @@ public class ILPSolver {
 //    }
   }
 
-  private List<Structure> getPossibleStructures(List<Set<Structure>> configurations) {
-    Set<Structure> possibleStructures = new HashSet<>();
-    for (Set<Structure> structures : configurations) {
-      for (Structure s : structures) {
-        possibleStructures.add(s);
-      }
-    }
-    return new ArrayList(possibleStructures);
-  }
-
-  private boolean fillCostArray() throws SQLException {
+  private boolean fillCostAndSizeArray() throws SQLException {
 
     GPDLogger.info(this, String.format(
         "Filling the cost array."));
     Stopwatch stopwatch;
     List<Query> queries = workload.getQueries();
 
-    if (useRegression) {
+    if (useRegression || sizeLimit > 0) {
       extractor.initialize(sampleDBs, dbInfo.getTargetDBName(), schema);
     }
 
@@ -235,6 +227,7 @@ public class ILPSolver {
             "Building structures for configuration #%d out of %d.", j+1, configurations.size()));
         for (Structure s : configuration) {
           s.create(conn);
+          extractor.addTrainingDataForSize(dbName, schema, s);
         }
 
         GPDLogger.info(this, String.format(
@@ -279,6 +272,7 @@ public class ILPSolver {
         }
       }
     }
+
     return true;
   }
 }

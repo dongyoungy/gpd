@@ -1,6 +1,7 @@
 package edu.umich.gpd.database.mysql;
 
 import edu.umich.gpd.database.common.FeatureExtractor;
+import edu.umich.gpd.database.common.Structure;
 import edu.umich.gpd.schema.Schema;
 import edu.umich.gpd.schema.Table;
 import edu.umich.gpd.userinput.SampleInfo;
@@ -32,6 +33,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
   public boolean initialize(List<SampleInfo> sampleDBs, String targetDBName, Schema s) {
 
     ArrayList<Attribute> attrList = new ArrayList<>();
+    ArrayList<Attribute> attrListForSize = new ArrayList<>();
     try {
       for (Table t : s.getTables()) {
         if (sampleDBs != null) {
@@ -55,6 +57,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
           return false;
         }
         attrList.add(new Attribute("numRow_" + t.getName()));
+        attrListForSize.add(new Attribute("numRow_" + t.getName()));
 //
 //        String dbName = targetDBName;
 //        conn.setCatalog(dbName);
@@ -77,7 +80,6 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
       return false;
     }
     attrList.add(new Attribute("queryId"));
-    attrList.add(new Attribute("configId"));
     attrList.add(new Attribute("totalRowFromSimpleSelect"));
     attrList.add(new Attribute("totalRowFromPrimarySelect"));
     attrList.add(new Attribute("totalRowFromUnionSelect"));
@@ -135,9 +137,11 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
     attrList.add(new Attribute("numExtraUsingWhere"));
     attrList.add(new Attribute("numExtraZeroLimit"));
     attrList.add(new Attribute("queryTime"));
+    attrListForSize.add(new Attribute("structureId"));
+    attrListForSize.add(new Attribute("structureSize"));
 
     trainData = new Instances("trainData", attrList, 1000);
-    trainData.setClassIndex(trainData.numAttributes() - 1);
+    trainDataForSize = new Instances("trainDataForSize", attrListForSize, 1000);
     return true;
   }
 
@@ -475,9 +479,27 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
   }
 
   @Override
+  public boolean addTrainingDataForSize(String dbName, Schema s, Structure structure) {
+    Instance newInstance = new DenseInstance(trainDataForSize.numAttributes());
+    int idx = 0;
+    for (Table t : s.getTables()) {
+      newInstance.setValue(idx++, t.getRowCount(dbName));
+    }
+    newInstance.setValue(idx++, structure.getName());
+    newInstance.setValue(idx++, structure.getSize());
+    trainDataForSize.add(newInstance);
+    return true;
+  }
+
+  @Override
   public Instance getTestInstance(String dbName, Schema s, Query q, int configIndex) {
 
-    int queryId = q.getId();
+    int queryId;
+    if (q == null) {
+      queryId = -1;
+    } else {
+      queryId = q.getId();
+    }
     long totalRowFromSimpleSelect = 0;
     long totalRowFromPrimarySelect = 0;
     long totalRowFromUnionSelect = 0;
@@ -738,7 +760,11 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
         for (Table t : s.getTables()) {
           newInstance.setValue(idx++, t.getRowCount(dbName));
         }
-        newInstance.setValue(idx++, queryId);
+        if (queryId == -1) {
+          idx++;
+        } else {
+          newInstance.setValue(idx++, queryId);
+        }
         newInstance.setValue(idx++, configIndex);
         newInstance.setValue(idx++, totalRowFromSimpleSelect);
         newInstance.setValue(idx++, totalRowFromPrimarySelect);
@@ -805,5 +831,16 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
       return null;
     }
     return null;
+  }
+
+  @Override
+  public Instance getTestInstanceForSize(String dbName, Schema s, Structure structure) {
+    Instance newInstance = new DenseInstance(trainDataForSize.numAttributes());
+    int idx = 0;
+    for (Table t : s.getTables()) {
+      newInstance.setValue(idx++, t.getRowCount(dbName));
+    }
+    newInstance.setValue(idx++, structure.getName());
+    return newInstance;
   }
 }

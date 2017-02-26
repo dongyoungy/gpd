@@ -2,9 +2,11 @@ package edu.umich.gpd.database.mysql;
 
 import edu.umich.gpd.database.common.Structure;
 import edu.umich.gpd.schema.Table;
+import edu.umich.gpd.util.GPDLogger;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.LinkedHashSet;
@@ -73,6 +75,18 @@ public class MySQLIndex extends Structure {
     try {
       Statement stmt = conn.createStatement();
       stmt.execute(String.format("CREATE INDEX %s ON %s (%s)", this.name, table.getName(), columnStr));
+
+      String dbName = conn.getCatalog();
+      ResultSet res = stmt.executeQuery(String.format("SELECT stat_value*@@innodb_page_size FROM " +
+          "mysql.innodb_index_stats WHERE stat_name = 'size' and database_name = '%s' and " +
+          "index_name = '%s'", dbName, this.name));
+      if (res.next()) {
+        this.size = res.getLong(1);
+      }
+      else {
+        GPDLogger.info(this, "Failed to obtain the size of this physical " +
+            "structure: " + name);
+      }
     } catch (SQLException e) {
       e.printStackTrace();
       return false;

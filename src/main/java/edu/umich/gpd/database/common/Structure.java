@@ -11,6 +11,7 @@ import java.sql.SQLException;
 public abstract class Structure {
   protected String name;
   protected Table table;
+  protected long size;
 
   public Structure() {
 
@@ -19,6 +20,7 @@ public abstract class Structure {
   public Structure(String name, Table table) {
     this.name = name;
     this.table = table;
+    this.size = -1;
   }
 
   public String getName() {
@@ -27,6 +29,10 @@ public abstract class Structure {
 
   public Table getTable() {
     return table;
+  }
+
+  public long getSize() {
+    return size;
   }
 
   /**
