@@ -5,7 +5,9 @@ import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -15,7 +17,7 @@ public abstract class Structure {
   protected String name;
   protected Table table;
   protected long size;
-  protected Set<ColumnDefinition> columns;
+  protected List<ColumnDefinition> columns;
 
   public Structure() {
 
@@ -25,6 +27,7 @@ public abstract class Structure {
     this.name = name;
     this.table = table;
     this.size = -1;
+    this.columns = new ArrayList<>();
   }
 
   public String getName() {
@@ -59,8 +62,8 @@ public abstract class Structure {
     this.columns.add(column);
   }
 
-  public void setColumns(Set<ColumnDefinition> columns) {
-    this.columns = new LinkedHashSet<>(columns);
+  public void setColumns(List<ColumnDefinition> columns) {
+    this.columns = new ArrayList<>(columns);
   }
 
 }

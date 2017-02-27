@@ -21,7 +21,6 @@ public class MySQLIndex extends Structure {
 
   public MySQLIndex(String name, Table table) {
     super(name, table);
-    this.columns = new LinkedHashSet<>();
   }
 
   @Override

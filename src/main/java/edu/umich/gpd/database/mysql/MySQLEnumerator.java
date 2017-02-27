@@ -1,6 +1,7 @@
 package edu.umich.gpd.database.mysql;
 
 import com.esotericsoftware.minlog.Log;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.Sets;
 import edu.umich.gpd.database.common.Structure;
 import edu.umich.gpd.database.common.StructureEnumerator;
@@ -47,17 +48,20 @@ public class MySQLEnumerator extends StructureEnumerator {
                 columnSetString.add(cd.getColumnName());
               }
 
-              if (Sets.symmetricDifference(t.getPrimaryKeys(), columnSetString).isEmpty()) {
-                structure = new MySQLUniqueIndex(
-                    t.getName() + "_unique_index_" + UniqueNumberGenerator.getUniqueID(),
-                    t);
-              } else {
-                structure = new MySQLIndex(
-                    t.getName() + "_index_" + UniqueNumberGenerator.getUniqueID(),
-                    t);
+              Collection<List<ColumnDefinition>> perms = Collections2.permutations(columnSet);
+              for (List<ColumnDefinition> perm : perms) {
+                if (Sets.symmetricDifference(t.getPrimaryKeys(), columnSetString).isEmpty()) {
+                  structure = new MySQLUniqueIndex(
+                      t.getName() + "_unique_index_" + UniqueNumberGenerator.getUniqueID(),
+                      t);
+                } else {
+                  structure = new MySQLIndex(
+                      t.getName() + "_index_" + UniqueNumberGenerator.getUniqueID(),
+                      t);
+                }
+                structure.setColumns(perm);
+                structures.add(structure);
               }
-              structure.setColumns(columnSet);
-              structures.add(structure);
             }
           }
         }

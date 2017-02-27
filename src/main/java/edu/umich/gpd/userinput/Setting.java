@@ -16,7 +16,7 @@ public class Setting {
   private String algorithm;
 
   public Setting() {
-    this.maxNumColumn = 20;
+    this.maxNumColumn = 10;
     this.minRowForSample = 1000;
     this.sizeLimit = -1;
     this.useSampling = false;
@@ -26,7 +26,7 @@ public class Setting {
   }
 
   public int getMaxNumColumn() {
-    return (maxNumColumn == 0) ? 20 : maxNumColumn;
+    return (maxNumColumn == 0) ? 10 : maxNumColumn;
   }
 
   public boolean useSampling() {

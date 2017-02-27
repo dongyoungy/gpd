@@ -18,11 +18,9 @@ import java.util.Set;
  * Created by Dong Young Yoon on 2/13/17.
  */
 public class MySQLUniqueIndex extends Structure {
-  private Set<ColumnDefinition> columns;
 
   public MySQLUniqueIndex(String name, Table table) {
     super(name, table);
-    this.columns = new LinkedHashSet<>();
   }
 
   @Override
@@ -52,14 +50,6 @@ public class MySQLUniqueIndex extends Structure {
       ++i;
     }
     return String.format("CREATE UNIQUE INDEX %s ON %s (%s);", this.name, table.getName(), columnStr);
-  }
-
-  public void addColumn(ColumnDefinition column) {
-    this.columns.add(column);
-  }
-
-  public void setColumns(Set<ColumnDefinition> columns) {
-    this.columns = new LinkedHashSet<>(columns);
   }
 
   public boolean create(Connection conn) {
