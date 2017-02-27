@@ -10,7 +10,7 @@ import java.io.File;
  */
 public class SchemaParserTest {
   public static void main(String[] args) {
-    File file = new File("/Users/dyoon/work/gpd/examples/tpcc-schema.sql");
+    File file = new File("/Users/dyoon/work/gpd/examples/tpch-schema.sql");
     SchemaParser parser = new SchemaParser("@@@");
     Schema s = parser.parse(file);
     for (Table t : s.getTables()) {

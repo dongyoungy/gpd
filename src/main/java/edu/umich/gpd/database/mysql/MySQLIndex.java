@@ -18,7 +18,6 @@ import java.util.ArrayList;
  * Created by Dong Young Yoon on 2/13/17.
  */
 public class MySQLIndex extends Structure {
-  private Set<ColumnDefinition> columns;
 
   public MySQLIndex(String name, Table table) {
     super(name, table);
@@ -52,14 +51,6 @@ public class MySQLIndex extends Structure {
       ++i;
     }
     return String.format("CREATE INDEX %s ON %s (%s);", this.name, table.getName(), columnStr);
-  }
-
-  public void addColumn(ColumnDefinition column) {
-    this.columns.add(column);
-  }
-
-  public void setColumns(Set<ColumnDefinition> columns) {
-    this.columns = new LinkedHashSet<>(columns);
   }
 
   public boolean create(Connection conn) {

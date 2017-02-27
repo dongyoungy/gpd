@@ -36,6 +36,9 @@ public class MySQLEnumeratorTest {
         if (st instanceof MySQLIndex) {
           MySQLIndex ind = (MySQLIndex)st;
           System.out.println("\t" + ind.toString());
+        } else if (st instanceof MySQLUniqueIndex) {
+          MySQLUniqueIndex ind = (MySQLUniqueIndex)st;
+          System.out.println("\t" + ind.toString());
         }
       }
       ++count;

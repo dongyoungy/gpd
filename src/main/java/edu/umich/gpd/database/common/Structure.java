@@ -1,9 +1,12 @@
 package edu.umich.gpd.database.common;
 
 import edu.umich.gpd.schema.Table;
+import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * Created by Dong Young Yoon on 2/13/17.
@@ -12,6 +15,7 @@ public abstract class Structure {
   protected String name;
   protected Table table;
   protected long size;
+  protected Set<ColumnDefinition> columns;
 
   public Structure() {
 
@@ -50,4 +54,13 @@ public abstract class Structure {
   public abstract boolean drop(Connection conn);
 
   public abstract String getQueryString();
+
+  public void addColumn(ColumnDefinition column) {
+    this.columns.add(column);
+  }
+
+  public void setColumns(Set<ColumnDefinition> columns) {
+    this.columns = new LinkedHashSet<>(columns);
+  }
+
 }

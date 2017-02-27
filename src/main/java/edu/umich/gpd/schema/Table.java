@@ -13,11 +13,13 @@ public class Table {
   private Map<String, Long> rowCount;
   private Set<ColumnDefinition> columns;
   private Set<String> indexedColumns;
+  private Set<String> primaryKeys;
 
   public Table() {
     name = "";
     columns = new LinkedHashSet<>();
     indexedColumns = new LinkedHashSet<>();
+    primaryKeys = new LinkedHashSet<>();
     rowCount = new HashMap<>();
   }
 
@@ -25,12 +27,15 @@ public class Table {
     this.name = name;
     columns = new LinkedHashSet<>();
     indexedColumns = new LinkedHashSet<>();
+    primaryKeys = new LinkedHashSet<>();
     rowCount = new HashMap<>();
   }
 
   public Table(String name, String createStatement) {
     this.name = name;
     this.createStatement = createStatement;
+    indexedColumns = new LinkedHashSet<>();
+    primaryKeys = new LinkedHashSet<>();
     rowCount = new HashMap<>();
   }
 
@@ -45,6 +50,9 @@ public class Table {
     }
     for (String c : indexedColumns) {
       newTable.addIndexedColumn(c);
+    }
+    for (String c : primaryKeys) {
+      newTable.addPrimaryKey(c);
     }
     return newTable;
   }
@@ -119,5 +127,13 @@ public class Table {
 
   public void addIndexedColumn(String column) {
     indexedColumns.add(column);
+  }
+
+  public void addPrimaryKey(String column) {
+    primaryKeys.add(column);
+  }
+
+  public Set<String> getPrimaryKeys() {
+    return primaryKeys;
   }
 }
