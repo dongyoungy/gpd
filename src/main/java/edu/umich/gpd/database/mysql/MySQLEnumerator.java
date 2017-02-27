@@ -47,7 +47,7 @@ public class MySQLEnumerator extends StructureEnumerator {
                 columnSetString.add(cd.getColumnName());
               }
 
-              if (t.getPrimaryKeys().containsAll(columnSetString)) {
+              if (Sets.symmetricDifference(t.getPrimaryKeys(), columnSetString).isEmpty()) {
                 structure = new MySQLUniqueIndex(
                     t.getName() + "_unique_index_" + UniqueNumberGenerator.getUniqueID(),
                     t);
