@@ -44,8 +44,13 @@ public class MySQLEnumerator extends StructureEnumerator {
               MySQLIndex index = new MySQLIndex(
                   t.getName() + "_index_" + UniqueNumberGenerator.getUniqueID(),
                   t);
+              MySQLUniqueIndex uniqueIndex = new MySQLUniqueIndex(
+                  t.getName() + "_unique_index_" + UniqueNumberGenerator.getUniqueID(),
+                  t);
               index.setColumns(columnSet);
+              uniqueIndex.setColumns(columnSet);
               structures.add(index);
+              structures.add(uniqueIndex);
             }
           }
         }

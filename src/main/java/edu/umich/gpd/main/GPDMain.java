@@ -131,7 +131,7 @@ public class GPDMain {
         }
       } else {
         Log.info("GPDMain", String.format("Using the target database '%s' for" +
-            " calculating optimal physical design. Regression disabled", targetDBName));
+            " calculating optimal physical design. Regression has been disabled", targetDBName));
         samples = new ArrayList<>();
         SampleInfo aSample = new SampleInfo(targetDBName, 1.0);
         samples.add(aSample);
