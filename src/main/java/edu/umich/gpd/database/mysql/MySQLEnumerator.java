@@ -69,6 +69,11 @@ public class MySQLEnumerator extends StructureEnumerator {
           }
         }
       }
+      if (structureSet.size() > 30) {
+        GPDLogger.error(this, "Too many interesting structures." +
+            " It must be less than 31. The current number is " + structureSet.size());
+        return null;
+      }
       Set<Set<Structure>> configurationPowerSet = Sets.powerSet(structureSet);
       Set<Set<Structure>> configurationPowerSetWithoutDuplicates = new HashSet<>();
       for (Set<Structure> configuration : configurationPowerSet) {
