@@ -18,7 +18,7 @@ import java.util.Set;
 /**
  * Created by Dong Young Yoon on 2/26/17.
  */
-public class GreedySolver extends Solver {
+public class GreedySolver extends AbstractSolver {
 
   public GreedySolver(Connection conn, Workload workload, Schema schema,
                       List<Set<Structure>> configurations, List<SampleInfo> sampleDBs,

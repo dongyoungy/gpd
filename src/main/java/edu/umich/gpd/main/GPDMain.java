@@ -2,7 +2,7 @@ package edu.umich.gpd.main;
 
 import com.esotericsoftware.minlog.Log;
 import edu.umich.gpd.algorithm.GreedySolver;
-import edu.umich.gpd.algorithm.Solver;
+import edu.umich.gpd.algorithm.AbstractSolver;
 import edu.umich.gpd.database.common.FeatureExtractor;
 import edu.umich.gpd.database.common.Sampler;
 import edu.umich.gpd.database.common.Structure;
@@ -139,7 +139,7 @@ public class GPDMain {
       }
 
       String algorithm = setting.getAlgorithm().toLowerCase();
-      Solver solver = null;
+      AbstractSolver solver = null;
 
       switch (algorithm) {
         case "ilp":

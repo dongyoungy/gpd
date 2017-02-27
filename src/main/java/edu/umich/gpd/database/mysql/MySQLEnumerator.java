@@ -60,31 +60,49 @@ public class MySQLEnumerator extends StructureEnumerator {
       List<Set<String>> interestingTableSets = finder.getInterestingTableSets();
       Set<Set<Structure>> configurations = new HashSet<>();
 
-      // only get combinations of interesting table sets.
-      for (Set<String> tableSets : interestingTableSets) {
-        if (!tableSets.isEmpty()) {
-          Set<Structure> structureSet = new HashSet<>();
-          for (Structure structure : structures) {
-            if (tableSets.contains(structure.getTable().getName())) {
-              structureSet.add(structure);
-            }
+      Set<Structure> structureSet = new HashSet<>();
+      for (Structure structure : structures) {
+        for (Set<String> tableSets : interestingTableSets) {
+          if (tableSets.contains(structure.getTable().getName())) {
+            structureSet.add(structure);
+            continue;
           }
-          if (structureSet.size() > 30) {
-            GPDLogger.error(this, "Too many interesting structures." +
-                " It must be less than 31. The current number is " + structureSet.size());
-            return null;
-          }
-
-          Set<Set<Structure>> configurationPowerSet = Sets.powerSet(structureSet);
-          Set<Set<Structure>> configurationPowerSetWithoutDuplicates = new HashSet<>();
-          for (Set<Structure> configuration : configurationPowerSet) {
-            if (!UtilFunctions.containsStructureWithDuplicateTables(configuration)) {
-              configurationPowerSetWithoutDuplicates.add(configuration);
-            }
-          }
-          configurations.addAll(configurationPowerSetWithoutDuplicates);
         }
       }
+      Set<Set<Structure>> configurationPowerSet = Sets.powerSet(structureSet);
+      Set<Set<Structure>> configurationPowerSetWithoutDuplicates = new HashSet<>();
+      for (Set<Structure> configuration : configurationPowerSet) {
+        if (!UtilFunctions.containsStructureWithDuplicateTables(configuration)) {
+          configurationPowerSetWithoutDuplicates.add(configuration);
+        }
+      }
+      configurations.addAll(configurationPowerSetWithoutDuplicates);
+
+      // only get combinations of interesting table sets.
+//      for (Set<String> tableSets : interestingTableSets) {
+//        if (!tableSets.isEmpty()) {
+//          Set<Structure> structureSet = new HashSet<>();
+//          for (Structure structure : structures) {
+//            if (tableSets.contains(structure.getTable().getName())) {
+//              structureSet.add(structure);
+//            }
+//          }
+//          if (structureSet.size() > 30) {
+//            GPDLogger.error(this, "Too many interesting structures." +
+//                " It must be less than 31. The current number is " + structureSet.size());
+//            return null;
+//          }
+//
+//          Set<Set<Structure>> configurationPowerSet = Sets.powerSet(structureSet);
+//          Set<Set<Structure>> configurationPowerSetWithoutDuplicates = new HashSet<>();
+//          for (Set<Structure> configuration : configurationPowerSet) {
+//            if (!UtilFunctions.containsStructureWithDuplicateTables(configuration)) {
+//              configurationPowerSetWithoutDuplicates.add(configuration);
+//            }
+//          }
+//          configurations.addAll(configurationPowerSetWithoutDuplicates);
+//        }
+//      }
 
 
 //      Set<Set<Structure>> configurations = Sets.powerSet(structures);

@@ -18,8 +18,6 @@ import weka.core.Instance;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -27,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by Dong Young Yoon on 2/15/17.
  */
-public class ILPSolver extends Solver {
+public class ILPSolver extends AbstractSolver {
 
   private double[][] costArray;
   private double[][][] rawCostArray;

@@ -16,7 +16,7 @@ import java.util.Set;
 /**
  * Created by Dong Young Yoon on 2/26/17.
  */
-public abstract class Solver {
+public abstract class AbstractSolver {
 
   protected Connection conn;
   protected Workload workload;
@@ -28,9 +28,9 @@ public abstract class Solver {
   protected boolean useRegression;
   protected long sizeLimit;
 
-  public Solver(Connection conn, Workload workload, Schema schema,
-                List<Set<Structure>> configurations, List<SampleInfo> sampleDBs,
-                DatabaseInfo dbInfo, FeatureExtractor extractor, boolean useRegression) {
+  public AbstractSolver(Connection conn, Workload workload, Schema schema,
+                        List<Set<Structure>> configurations, List<SampleInfo> sampleDBs,
+                        DatabaseInfo dbInfo, FeatureExtractor extractor, boolean useRegression) {
     this.conn = conn;
     this.workload = workload;
     this.schema = schema;
