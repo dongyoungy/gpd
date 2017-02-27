@@ -99,9 +99,10 @@ public class TableSchemaExtractor implements StatementVisitor {
     if (indexes != null) {
       for (Index i : indexes) {
         for (String c : i.getColumnsNames()) {
-          table.addIndexedColumn(c);
           if (i.getType().equalsIgnoreCase("PRIMARY KEY")) {
             table.addPrimaryKey(c);
+          } else {
+            table.addIndexedColumn(c);
           }
         }
       }
