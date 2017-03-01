@@ -80,6 +80,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
       return false;
     }
     attrList.add(new Attribute("queryId"));
+    attrList.add(new Attribute("configId"));
     attrList.add(new Attribute("totalRowFromSimpleSelect"));
     attrList.add(new Attribute("totalRowFromPrimarySelect"));
     attrList.add(new Attribute("totalRowFromUnionSelect"));
