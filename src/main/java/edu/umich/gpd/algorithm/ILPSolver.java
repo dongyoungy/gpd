@@ -244,14 +244,10 @@ public class ILPSolver extends AbstractSolver {
             stmt.setQueryTimeout(GPDMain.userInput.getSetting().getQueryTimeout());
             stmt.execute(q.getContent());
 
-          } catch (SQLTimeoutException e) {
+          } catch (SQLException e) {
             GPDLogger.info(this, String.format("Query #%d has been timed out. Assigning " +
                 "maximum cost.", i));
             isTimedOut = true;
-          } catch (SQLException e) {
-            GPDLogger.error(this,"A SQLException has been caught.");
-            e.printStackTrace();
-            return false;
           }
           double queryTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
           // when query times out, we assign INT_MAX to its cost.
