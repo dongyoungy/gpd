@@ -259,7 +259,8 @@ public class ILPSolver extends AbstractSolver {
           } else {
             rawCostArray[d][i][j] = (long) queryTime;
           }
-          extractor.addTrainingData(dbName, schema, q, j, queryTime);
+          if (useRegression)
+            extractor.addTrainingData(dbName, schema, q, j, queryTime);
         }
 
         // remove structures

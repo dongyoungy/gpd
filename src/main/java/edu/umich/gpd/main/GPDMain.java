@@ -60,6 +60,7 @@ public class GPDMain {
     }
 
     if (userInput.getSetting().isDebug()) {
+      Log.info("GPDMain", "Debug log enabled.");
       Log.set(Log.LEVEL_DEBUG);
     }
 
