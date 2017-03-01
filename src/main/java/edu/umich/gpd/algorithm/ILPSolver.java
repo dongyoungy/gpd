@@ -229,7 +229,8 @@ public class ILPSolver extends AbstractSolver {
             "Building structures for configuration #%d out of %d.", j+1, configurations.size()));
         for (Structure s : configuration) {
           s.create(conn);
-          extractor.addTrainingDataForSize(dbName, schema, s);
+          if (useRegression || sizeLimit > 0)
+            extractor.addTrainingDataForSize(dbName, schema, s);
         }
 
         GPDLogger.info(this, String.format(
