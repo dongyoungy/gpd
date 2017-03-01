@@ -52,12 +52,14 @@ public class ILPSolver extends AbstractSolver {
     Stopwatch entireTime = Stopwatch.createStarted();
     // fill the cost array first.
     Stopwatch timetoFillCostArray = Stopwatch.createStarted();
+    GPDLogger.info(this, String.format("Filling the cost & size array with " +
+        " %d configurations", configurations.size()));
     if (!fillCostAndSizeArray()) {
       GPDLogger.error(this, "Failed to fill cost & size arrays.");
       return false;
     }
     long timeTaken = timetoFillCostArray.elapsed(TimeUnit.SECONDS);
-    GPDLogger.info(this.getClass(), String.format("took %d seconds to fill" +
+    GPDLogger.info(this, String.format("took %d seconds to fill" +
         " the cost array.", timeTaken));
 
     List<Structure> possibleStructures = getPossibleStructures(configurations);

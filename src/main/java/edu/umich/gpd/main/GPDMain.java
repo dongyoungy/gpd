@@ -123,7 +123,7 @@ public class GPDMain {
     Log.info("GPDMain", "Enumeration completed.");
     Log.info("GPDMain", String.format("Total number of interesting design " +
         "configurations = %d", configurations.size()));
-    
+
 
     Setting setting = userInput.getSetting();
     String targetDBName = userInput.getDatabaseInfo().getTargetDBName();
