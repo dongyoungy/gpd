@@ -1,5 +1,6 @@
 {
   setting: {
+    debug: false,
     algorithm: 'ILP',
     maxNumColumn: 3,
     minRowForSample: 1000,
