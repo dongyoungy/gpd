@@ -94,4 +94,22 @@ public class MySQLIndex extends Structure {
     }
     return true;
   }
+
+  public boolean isCovering(Structure other) {
+    if (!(other instanceof MySQLIndex || other instanceof MySQLUniqueIndex)) {
+      return false;
+    }
+    List<ColumnDefinition> otherColumns = other.getColumns();
+    int i = 0, j = 0;
+    while (i < columns.size() && j < otherColumns.size()) {
+      ColumnDefinition myColumn = columns.get(i);
+      ColumnDefinition otherColumn = otherColumns.get(j);
+      if (myColumn.getColumnName().equals(otherColumn.getColumnName())) {
+        ++i; ++j;
+      } else {
+        return false;
+      }
+    }
+    return true;
+  }
 }

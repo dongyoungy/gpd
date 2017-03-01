@@ -1,5 +1,7 @@
 package edu.umich.gpd.database.mysql;
 
+import com.esotericsoftware.minlog.Log;
+import edu.umich.gpd.main.GPDMain;
 import edu.umich.gpd.parser.SchemaParser;
 import edu.umich.gpd.parser.WorkloadParser;
 import edu.umich.gpd.database.common.Structure;
@@ -7,6 +9,8 @@ import edu.umich.gpd.schema.Schema;
 import edu.umich.gpd.workload.Workload;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -24,24 +28,39 @@ public class MySQLEnumeratorTest {
 
     MySQLEnumerator enumerator = new MySQLEnumerator();
 
-    List<Set<Structure>> configurations = enumerator.enumerateStructures(s,w);
-    if (configurations == null) {
-      return;
+    Set<List<Structure>> configurations = enumerator.enumerateStructures(s,w);
+    while (configurations == null) {
+      int prevMaxNumColumn = GPDMain.userInput.getSetting().getMaxNumColumn();
+      GPDMain.userInput.getSetting().setMaxNumColumn(prevMaxNumColumn-1);
+      Log.info("MySQLEnumeratorTest",
+          "Reducing the number of columns to consider to: " +
+          (prevMaxNumColumn-1));
+      configurations = enumerator.enumerateStructures(s,w);
     }
 
     int count = 1;
-    for (Set<Structure> configuration : configurations) {
-      System.out.println("Configuration " + count + ":");
-      for (Structure st : configuration) {
-        if (st instanceof MySQLIndex) {
-          MySQLIndex ind = (MySQLIndex)st;
-          System.out.println("\t" + ind.toString());
-        } else if (st instanceof MySQLUniqueIndex) {
-          MySQLUniqueIndex ind = (MySQLUniqueIndex)st;
-          System.out.println("\t" + ind.toString());
-        }
+    List<Structure> possibleStructure = getPossibleStructures(configurations);
+    System.out.println("Possible Structures:");
+    for (Structure st : possibleStructure) {
+      if (st instanceof MySQLIndex) {
+        MySQLIndex ind = (MySQLIndex)st;
+        System.out.println("\t" + ind.toString());
+      } else if (st instanceof MySQLUniqueIndex) {
+        MySQLUniqueIndex ind = (MySQLUniqueIndex)st;
+        System.out.println("\t" + ind.toString());
       }
-      ++count;
     }
+    System.out.println("# of configurations = " + configurations.size());
+    System.out.println("# of possible structures = " + possibleStructure.size());
+  }
+
+  private static List<Structure> getPossibleStructures(Set<List<Structure>> configurations) {
+    Set<Structure> possibleStructures = new HashSet<>();
+    for (List<Structure> structures : configurations) {
+      for (Structure s : structures) {
+        possibleStructures.add(s);
+      }
+    }
+    return new ArrayList(possibleStructures);
   }
 }

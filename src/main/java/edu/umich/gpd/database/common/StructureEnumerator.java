@@ -12,5 +12,5 @@ import java.util.Set;
  * Enumerates all possible interesting physical structures from the workload
  */
 public abstract class StructureEnumerator {
-  public abstract List<Set<Structure>> enumerateStructures(Schema s, Workload w);
+  public abstract Set<List<Structure>> enumerateStructures(Schema s, Workload w);
 }

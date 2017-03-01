@@ -34,7 +34,7 @@ public class ILPSolver extends AbstractSolver {
   private int numConfiguration;
 
   public ILPSolver(Connection conn, Workload workload, Schema schema,
-                   List<Set<Structure>> configurations,
+                   Set<List<Structure>> configurations,
                    List<SampleInfo> sampleDBs,
                    DatabaseInfo dbInfo,
                    FeatureExtractor extractor, boolean useRegression) {
@@ -51,20 +51,15 @@ public class ILPSolver extends AbstractSolver {
     this.sizeLimit = GPDMain.userInput.getSetting().getSizeLimit();
     Stopwatch entireTime = Stopwatch.createStarted();
     // fill the cost array first.
-    try {
-      Stopwatch timetoFillCostArray = Stopwatch.createStarted();
-      if (!fillCostAndSizeArray()) {
-        GPDLogger.error(this, "Failed to fill cost & size arrays.");
-        return false;
-      }
-      long timeTaken = timetoFillCostArray.elapsed(TimeUnit.SECONDS);
-      GPDLogger.info(this.getClass(), String.format("took %d seconds to fill" +
-          " the cost array.", timeTaken));
-    } catch (SQLException e) {
-      e.printStackTrace();
-      GPDLogger.error(this.getClass(), "Failed to fill cost array.");
+    Stopwatch timetoFillCostArray = Stopwatch.createStarted();
+    if (!fillCostAndSizeArray()) {
+      GPDLogger.error(this, "Failed to fill cost & size arrays.");
       return false;
     }
+    long timeTaken = timetoFillCostArray.elapsed(TimeUnit.SECONDS);
+    GPDLogger.info(this.getClass(), String.format("took %d seconds to fill" +
+        " the cost array.", timeTaken));
+
     List<Structure> possibleStructures = getPossibleStructures(configurations);
     int numStructures = possibleStructures.size();
     boolean[][] compatibilityMatrix = new boolean[numStructures][numStructures];
@@ -98,7 +93,7 @@ public class ILPSolver extends AbstractSolver {
       Structure y = possibleStructures.get(t);
       String yVarName = "y_" + t;
       for (int j = 0; j < configurations.size(); ++j) {
-        Set<Structure> structureSet = configurations.get(j);
+        List<Structure> structureSet = configurations.get(j);
         for (Structure s : structureSet) {
           if (s.getName().equals(y.getName())) {
            for (int i = 0; i < numQuery; ++i) {
@@ -155,7 +150,7 @@ public class ILPSolver extends AbstractSolver {
     Stopwatch timeToSolve = Stopwatch.createStarted();
     LPSolution solution = lpw.solve();
     GPDLogger.info(this, "Objective Value = " + solution.getObjectiveValue());
-    long timeTaken = timeToSolve.elapsed(TimeUnit.SECONDS);
+    timeTaken = timeToSolve.elapsed(TimeUnit.SECONDS);
     GPDLogger.info(this, String.format("took %d seconds to solve the problem.", timeTaken));
     timeTaken = entireTime.elapsed(TimeUnit.SECONDS);
     GPDLogger.info(this, String.format("took %d seconds for the entire process.",
@@ -201,7 +196,7 @@ public class ILPSolver extends AbstractSolver {
 //    }
   }
 
-  private boolean fillCostAndSizeArray() throws SQLException {
+  private boolean fillCostAndSizeArray() {
 
     GPDLogger.info(this, String.format(
         "Filling the cost array."));
@@ -215,11 +210,18 @@ public class ILPSolver extends AbstractSolver {
     // fill cost array from each sample database.
     for (int d = 0; d < numSampleDBs; ++d) {
       String dbName = sampleDBs.get(d).getDbName();
-      conn.setCatalog(dbName);
-      Statement stmt = conn.createStatement();
+      Statement stmt;
+      try {
+        conn.setCatalog(dbName);
+        stmt = conn.createStatement();
+      } catch (SQLException e) {
+        GPDLogger.error(this,"A SQLException has been caught.");
+        e.printStackTrace();;
+        return false;
+      }
 
       for (int j = 0; j < configurations.size(); ++j) {
-        Set<Structure> configuration = configurations.get(j);
+        List<Structure> configuration = configurations.get(j);
         // build structures
         GPDLogger.info(this, String.format(
             "Building structures for configuration #%d out of %d.", j+1, configurations.size()));
@@ -233,9 +235,23 @@ public class ILPSolver extends AbstractSolver {
         for (int i = 0; i < queries.size(); ++i) {
           Query q = queries.get(i);
           stopwatch = Stopwatch.createStarted();
-          stmt.execute(q.getContent());
+
+          boolean isTimedOut = false;
+          try {
+            stmt.setQueryTimeout(GPDMain.userInput.getSetting().getQueryTimeout());
+            stmt.execute(q.getContent());
+          } catch (SQLException e) {
+            GPDLogger.info(this, String.format("Query #%d has been timed out. Assigning " +
+                "maximum cost.", i));
+            isTimedOut = true;
+          }
           double queryTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
-          rawCostArray[d][i][j] = (long) queryTime;
+          // when query times out, we assign INT_MAX to its cost.
+          if (isTimedOut) {
+            rawCostArray[d][i][j] = (long) Integer.MAX_VALUE;
+          } else {
+            rawCostArray[d][i][j] = (long) queryTime;
+          }
           extractor.addTrainingData(dbName, schema, q, j, queryTime);
         }
 

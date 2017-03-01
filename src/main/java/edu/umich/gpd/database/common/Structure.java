@@ -56,6 +56,8 @@ public abstract class Structure {
    */
   public abstract boolean drop(Connection conn);
 
+  public abstract boolean isCovering(Structure other);
+
   public abstract String getQueryString();
 
   public void addColumn(ColumnDefinition column) {
@@ -66,4 +68,7 @@ public abstract class Structure {
     this.columns = new ArrayList<>(columns);
   }
 
+  public List<ColumnDefinition> getColumns() {
+    return columns;
+  }
 }

@@ -97,7 +97,7 @@ public class GPDMain {
     }
 
     Log.info("GPDMain", "Enumerating every possible design structures...");
-    List<Set<Structure>> configurations = enumerator.enumerateStructures(schema, workload);
+    Set<List<Structure>> configurations = enumerator.enumerateStructures(schema, workload);
     while (configurations == null && inputData.getSetting().getMaxNumColumn() > 1) {
       int newMaxColumn = inputData.getSetting().getMaxNumColumn() - 1;
       Log.info("GPDMain", "There are too many interesting columns to consider. " +
@@ -131,7 +131,7 @@ public class GPDMain {
         }
       } else {
         Log.info("GPDMain", String.format("Using the target database '%s' for" +
-            " calculating optimal physical design. Regression has been disabled", targetDBName));
+            " calculating optimal physical design. Regression has been disabled.", targetDBName));
         samples = new ArrayList<>();
         SampleInfo aSample = new SampleInfo(targetDBName, 1.0);
         samples.add(aSample);

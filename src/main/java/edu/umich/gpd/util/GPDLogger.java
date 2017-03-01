@@ -24,4 +24,10 @@ public class GPDLogger {
         anObject.getClass().getSimpleName(),
         message);
   }
+
+  public static void warn(Object anObject, String message) {
+    Log.warn(
+        anObject.getClass().getSimpleName(),
+        message);
+  }
 }

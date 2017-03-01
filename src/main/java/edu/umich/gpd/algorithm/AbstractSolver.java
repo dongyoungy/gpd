@@ -21,7 +21,7 @@ public abstract class AbstractSolver {
   protected Connection conn;
   protected Workload workload;
   protected Schema schema;
-  protected List<Set<Structure>> configurations;
+  protected List<List<Structure>> configurations;
   protected List<SampleInfo> sampleDBs;
   protected DatabaseInfo dbInfo;
   protected FeatureExtractor extractor;
@@ -29,12 +29,12 @@ public abstract class AbstractSolver {
   protected long sizeLimit;
 
   public AbstractSolver(Connection conn, Workload workload, Schema schema,
-                        List<Set<Structure>> configurations, List<SampleInfo> sampleDBs,
+                        Set<List<Structure>> configurations, List<SampleInfo> sampleDBs,
                         DatabaseInfo dbInfo, FeatureExtractor extractor, boolean useRegression) {
     this.conn = conn;
     this.workload = workload;
     this.schema = schema;
-    this.configurations = configurations;
+    this.configurations = new ArrayList<>(configurations);
     this.sampleDBs = sampleDBs;
     this.dbInfo = dbInfo;
     this.extractor = extractor;
@@ -43,9 +43,9 @@ public abstract class AbstractSolver {
 
   public abstract boolean solve();
 
-  protected List<Structure> getPossibleStructures(List<Set<Structure>> configurations) {
+  protected List<Structure> getPossibleStructures(List<List<Structure>> configurations) {
     Set<Structure> possibleStructures = new HashSet<>();
-    for (Set<Structure> structures : configurations) {
+    for (List<Structure> structures : configurations) {
       for (Structure s : structures) {
         possibleStructures.add(s);
       }

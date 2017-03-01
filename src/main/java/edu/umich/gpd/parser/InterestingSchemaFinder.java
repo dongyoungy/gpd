@@ -48,6 +48,7 @@ public class InterestingSchemaFinder implements StatementVisitor, SelectVisitor,
   private Multiset<String> columns;
   private boolean isInteresting;
   private boolean isJoin;
+  private Query currentQuery;
 
   public InterestingSchemaFinder() {
     this.tables = new LinkedHashSet<>();
@@ -66,6 +67,10 @@ public class InterestingSchemaFinder implements StatementVisitor, SelectVisitor,
     try {
       Schema filteredSchema = (Schema)s.clone();
       ImmutableMultiset<String> sortedColumns = Multisets.copyHighestCountFirst(columns);
+      Set<String> sortedColumnSet = new LinkedHashSet<>();
+      for (String col : sortedColumns) {
+        sortedColumnSet.add(col);
+      }
 
       Set<String> columnNameSet = new HashSet<>();
       UnmodifiableIterator<String> it = sortedColumns.iterator();
@@ -87,6 +92,7 @@ public class InterestingSchemaFinder implements StatementVisitor, SelectVisitor,
     for (Query q : w.getQueries()) {
       try {
         currentTableSet = new HashSet<>();
+        currentQuery = q;
         Statement stmt = CCJSqlParserUtil.parse(q.getContent());
         stmt.accept(this);
         if (!currentTableSet.isEmpty()) {
@@ -255,12 +261,16 @@ public class InterestingSchemaFinder implements StatementVisitor, SelectVisitor,
 
   @Override
   public void visit(GreaterThan greaterThan) {
+    isInteresting = true;
     visitBinaryExpression(greaterThan);
+    isInteresting = false;
   }
 
   @Override
   public void visit(GreaterThanEquals greaterThanEquals) {
+    isInteresting = true;
     visitBinaryExpression(greaterThanEquals);
+    isInteresting = false;
   }
 
   @Override
@@ -281,12 +291,16 @@ public class InterestingSchemaFinder implements StatementVisitor, SelectVisitor,
 
   @Override
   public void visit(MinorThan minorThan) {
+    isInteresting = true;
     visitBinaryExpression(minorThan);
+    isInteresting = false;
   }
 
   @Override
   public void visit(MinorThanEquals minorThanEquals) {
+    isInteresting = true;
     visitBinaryExpression(minorThanEquals);
+    isInteresting = false;
   }
 
   @Override
@@ -296,8 +310,10 @@ public class InterestingSchemaFinder implements StatementVisitor, SelectVisitor,
 
   @Override
   public void visit(Column column) {
-    if (isInteresting)
+    if (isInteresting) {
       columns.add(column.getColumnName());
+      currentQuery.addColumn(column.getColumnName());
+    }
   }
 
   @Override
@@ -462,6 +478,7 @@ public class InterestingSchemaFinder implements StatementVisitor, SelectVisitor,
   @Override
   public void visit(Table table) {
     String name = table.getName();
+    currentQuery.addTable(name);
     tables.add(name);
     currentTableSet.add(name);
   }

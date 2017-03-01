@@ -21,7 +21,7 @@ import java.util.Set;
 public class GreedySolver extends AbstractSolver {
 
   public GreedySolver(Connection conn, Workload workload, Schema schema,
-                      List<Set<Structure>> configurations, List<SampleInfo> sampleDBs,
+                      Set<List<Structure>> configurations, List<SampleInfo> sampleDBs,
                       DatabaseInfo dbInfo, FeatureExtractor extractor, boolean useRegression) {
     super(conn, workload, schema, configurations, sampleDBs, dbInfo, extractor, useRegression);
   }

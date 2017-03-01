@@ -1,17 +1,17 @@
 package edu.umich.gpd.schema;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by Dong Young Yoon on 2/15/17.
  */
 public class Schema {
   private List<Table> tables;
+  private Map<String, Table> tableMap;
 
   public Schema() {
     tables = new ArrayList<>();
+    tableMap = new HashMap<>();
   }
 
   public boolean isEmpty() {
@@ -31,8 +31,12 @@ public class Schema {
     return tables;
   }
 
+  public Table getTable(String name) {
+    return tableMap.get(name);
+  }
   public void addTable(Table table) {
     tables.add(table);
+    tableMap.put(table.getName(), table);
   }
 
   public void filterUninteresting(Set<String> tableNameSet, Set<String> columnNameSet) {

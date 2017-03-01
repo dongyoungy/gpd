@@ -9,6 +9,7 @@ import java.util.List;
 public class Setting {
   private int maxNumColumn;
   private int minRowForSample;
+  private int queryTimeout;
   private long sizeLimit;
   private boolean useSampling;
   private boolean useRegression;
@@ -16,8 +17,9 @@ public class Setting {
   private String algorithm;
 
   public Setting() {
-    this.maxNumColumn = 10;
+    this.maxNumColumn = 30;
     this.minRowForSample = 1000;
+    this.queryTimeout = 30;
     this.sizeLimit = -1;
     this.useSampling = false;
     this.useRegression = false;
@@ -26,7 +28,7 @@ public class Setting {
   }
 
   public int getMaxNumColumn() {
-    return (maxNumColumn == 0) ? 10 : maxNumColumn;
+    return (maxNumColumn == 0) ? 30 : maxNumColumn;
   }
 
   public boolean useSampling() {
@@ -55,6 +57,14 @@ public class Setting {
 
   public String getAlgorithm() {
     return algorithm;
+  }
+
+  public int getQueryTimeout() {
+    return queryTimeout;
+  }
+
+  public void setQueryTimeout(int queryTimeout) {
+    this.queryTimeout = queryTimeout;
   }
 
   public void setAlgorithm(String algorithm) {
