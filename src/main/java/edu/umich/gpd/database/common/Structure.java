@@ -18,6 +18,9 @@ public abstract class Structure {
   protected Table table;
   protected long size;
   protected List<ColumnDefinition> columns;
+  protected int id;
+
+  private static int idCount = 1;
 
   public Structure() {
 
@@ -28,6 +31,11 @@ public abstract class Structure {
     this.table = table;
     this.size = -1;
     this.columns = new ArrayList<>();
+    this.id = idCount++;
+  }
+
+  public int getId() {
+    return id;
   }
 
   public String getName() {

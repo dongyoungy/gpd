@@ -486,7 +486,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
     for (Table t : s.getTables()) {
       newInstance.setValue(idx++, t.getRowCount(dbName));
     }
-    newInstance.setValue(idx++, structure.getName());
+    newInstance.setValue(idx++, structure.getId());
     newInstance.setValue(idx++, structure.getSize());
     trainDataForSize.add(newInstance);
     return true;
@@ -841,7 +841,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
     for (Table t : s.getTables()) {
       newInstance.setValue(idx++, t.getRowCount(dbName));
     }
-    newInstance.setValue(idx++, structure.getName());
+    newInstance.setValue(idx++, structure.getId());
     return newInstance;
   }
 }
