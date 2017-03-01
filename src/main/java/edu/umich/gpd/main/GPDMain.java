@@ -73,6 +73,17 @@ public class GPDMain {
     WorkloadParser workloadParser = new WorkloadParser(workloadDelimiter);
     Workload workload = workloadParser.parse(new File(workloadInfo.getPath()));
 
+    if (schema == null) {
+      Log.error("GPDMain", "Failed to parse the schema file. Please make sure " +
+          "that the schema file exists.");
+      System.exit(-1);
+    }
+    if (workload == null) {
+      Log.error("GPDMain", "Failed to parse the schema file. Please make sure " +
+          "that the workload file exists.");
+      System.exit(-1);
+    }
+
     Connection conn = null;
     StructureEnumerator enumerator = null;
     Sampler sampler = null;
@@ -110,6 +121,9 @@ public class GPDMain {
       System.exit(-1);
     }
     Log.info("GPDMain", "Enumeration completed.");
+    Log.info("GPDMain", String.format("Total number of interesting design " +
+        "configurations = %d", configurations.size()));
+    
 
     Setting setting = userInput.getSetting();
     String targetDBName = userInput.getDatabaseInfo().getTargetDBName();

@@ -37,8 +37,10 @@ public class WorkloadParser {
       String rawQueries = new String(data, "UTF-8");
       String[] queries = rawQueries.split(this.delimiter);
       for (String q : queries) {
-        Query query = new Query(q);
-        w.addQuery(query);
+        if (!q.isEmpty()) {
+          Query query = new Query(q);
+          w.addQuery(query);
+        }
       }
 
       return w;
