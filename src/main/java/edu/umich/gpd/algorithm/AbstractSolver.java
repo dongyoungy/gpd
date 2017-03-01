@@ -25,6 +25,7 @@ public abstract class AbstractSolver {
   protected List<SampleInfo> sampleDBs;
   protected DatabaseInfo dbInfo;
   protected FeatureExtractor extractor;
+  protected int numSampleDBs;
   protected boolean useRegression;
   protected long sizeLimit;
 
@@ -36,6 +37,7 @@ public abstract class AbstractSolver {
     this.schema = schema;
     this.configurations = new ArrayList<>(configurations);
     this.sampleDBs = sampleDBs;
+    this.numSampleDBs = sampleDBs.size();
     this.dbInfo = dbInfo;
     this.extractor = extractor;
     this.useRegression = useRegression;

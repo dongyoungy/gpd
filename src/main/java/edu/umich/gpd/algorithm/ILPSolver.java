@@ -29,7 +29,6 @@ public class ILPSolver extends AbstractSolver {
 
   private double[][] costArray;
   private double[][][] rawCostArray;
-  private int numSampleDBs;
   private int numQuery;
   private int numConfiguration;
 
@@ -53,7 +52,7 @@ public class ILPSolver extends AbstractSolver {
     // fill the cost array first.
     Stopwatch timetoFillCostArray = Stopwatch.createStarted();
     GPDLogger.info(this, String.format("Filling the cost & size array with " +
-        " %d configurations", configurations.size()));
+        "%d configurations.", configurations.size()));
     if (!fillCostAndSizeArray()) {
       GPDLogger.error(this, "Failed to fill cost & size arrays.");
       return false;
@@ -218,7 +217,7 @@ public class ILPSolver extends AbstractSolver {
         stmt = conn.createStatement();
       } catch (SQLException e) {
         GPDLogger.error(this,"A SQLException has been caught.");
-        e.printStackTrace();;
+        e.printStackTrace();
         return false;
       }
 
