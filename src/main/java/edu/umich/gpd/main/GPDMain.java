@@ -17,6 +17,7 @@ import edu.umich.gpd.parser.SchemaParser;
 import edu.umich.gpd.parser.WorkloadParser;
 import edu.umich.gpd.schema.Schema;
 import edu.umich.gpd.userinput.*;
+import edu.umich.gpd.util.UtilFunctions;
 import edu.umich.gpd.workload.Workload;
 
 import java.io.File;
@@ -35,6 +36,7 @@ public class GPDMain {
       System.out.println("USAGE: GPDMain <json_spec_file>");
       System.exit(-1);
     }
+    Log.set(Log.LEVEL_INFO);
 
     String inputPath = args[0];
     userInput = InputDataParser.parse(new File(inputPath));
@@ -55,6 +57,10 @@ public class GPDMain {
       Log.error("GPDMain", "'workloadInfo' is missing 'path' in the JSON " +
           "specification file.");
       System.exit(-1);
+    }
+
+    if (userInput.getSetting().isDebug()) {
+      Log.set(Log.LEVEL_DEBUG);
     }
 
     // parse schema
@@ -124,6 +130,13 @@ public class GPDMain {
     Log.info("GPDMain", String.format("Total number of interesting design " +
         "configurations = %d", configurations.size()));
 
+    if (userInput.getSetting().isDebug()) {
+      int count = 1;
+      for (Structure s : UtilFunctions.getPossibleStructures(configurations)) {
+        Log.debug("GPDMain", String.format("Possible Structure #%d: %s",
+            count++, s.getQueryString()));
+      }
+    }
 
     Setting setting = userInput.getSetting();
     String targetDBName = userInput.getDatabaseInfo().getTargetDBName();

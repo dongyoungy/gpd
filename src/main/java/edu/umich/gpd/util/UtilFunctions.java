@@ -2,7 +2,9 @@ package edu.umich.gpd.util;
 
 import edu.umich.gpd.database.common.Structure;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -19,5 +21,15 @@ public class UtilFunctions {
       }
     }
     return false;
+  }
+
+  public static List<Structure> getPossibleStructures(Set<List<Structure>> configurations) {
+    Set<Structure> possibleStructures = new HashSet<>();
+    for (List<Structure> structures : configurations) {
+      for (Structure s : structures) {
+        possibleStructures.add(s);
+      }
+    }
+    return new ArrayList(possibleStructures);
   }
 }

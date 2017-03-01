@@ -17,6 +17,7 @@ import weka.core.Instance;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.SQLTimeoutException;
 import java.sql.Statement;
 import java.util.List;
 import java.util.Set;
@@ -241,10 +242,15 @@ public class ILPSolver extends AbstractSolver {
           try {
             stmt.setQueryTimeout(GPDMain.userInput.getSetting().getQueryTimeout());
             stmt.execute(q.getContent());
-          } catch (SQLException e) {
+
+          } catch (SQLTimeoutException e) {
             GPDLogger.info(this, String.format("Query #%d has been timed out. Assigning " +
                 "maximum cost.", i));
             isTimedOut = true;
+          } catch (SQLException e) {
+            GPDLogger.error(this,"A SQLException has been caught.");
+            e.printStackTrace();
+            return false;
           }
           double queryTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
           // when query times out, we assign INT_MAX to its cost.
