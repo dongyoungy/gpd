@@ -24,6 +24,24 @@ public class MySQLUniqueIndex extends Structure {
   }
 
   @Override
+  public boolean equals(Object o) {
+    if (o instanceof MySQLUniqueIndex) {
+      MySQLUniqueIndex other = (MySQLUniqueIndex)o;
+      if (!other.getTable().getName().equals(this.table.getName())) {
+        return false;
+      }
+      List<ColumnDefinition> otherColumns = other.getColumns();
+      if (columns.containsAll(otherColumns) && otherColumns.containsAll(columns)) {
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
+  }
+
+  @Override
   public String toString() {
     String columnStr = "";
     int length = columns.size();

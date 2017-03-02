@@ -50,6 +50,9 @@ public abstract class Structure {
     return size;
   }
 
+  @Override
+  public abstract boolean equals(Object o);
+
   /**
    * creates this physical structure using the provided JDBC connection
    * @param conn JDBC connection to the target database

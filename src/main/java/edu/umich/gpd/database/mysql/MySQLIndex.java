@@ -24,6 +24,24 @@ public class MySQLIndex extends Structure {
   }
 
   @Override
+  public boolean equals(Object o) {
+    if (o instanceof MySQLIndex) {
+      MySQLIndex other = (MySQLIndex)o;
+      if (!other.getTable().getName().equals(this.table.getName())) {
+        return false;
+      }
+      List<ColumnDefinition> otherColumns = other.getColumns();
+      if (columns.containsAll(otherColumns) && otherColumns.containsAll(columns)) {
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
+  }
+
+  @Override
   public String toString() {
     String columnStr = "";
     int length = columns.size();
