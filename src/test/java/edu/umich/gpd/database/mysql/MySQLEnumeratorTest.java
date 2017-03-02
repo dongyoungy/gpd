@@ -22,7 +22,7 @@ public class MySQLEnumeratorTest {
     File file = new File("/Users/dyoon/work/gpd/examples/tpch-schema.sql");
     SchemaParser parser = new SchemaParser("@@@");
     Schema s = parser.parse(file);
-    file = new File("/Users/dyoon/work/gpd/examples/tpch-workload.sql");
+    file = new File("/Users/dyoon/work/gpd/examples/tpch-workload-test2.sql");
     WorkloadParser parser2 = new WorkloadParser("@@@");
     Workload w = parser2.parse(file);
 

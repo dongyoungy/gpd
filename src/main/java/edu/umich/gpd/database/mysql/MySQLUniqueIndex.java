@@ -24,6 +24,17 @@ public class MySQLUniqueIndex extends Structure {
   }
 
   @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = result * prime + table.getName().hashCode();
+    for (ColumnDefinition cd : columns) {
+      result = result * prime + cd.getColumnName().hashCode();
+    }
+    return result;
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (o instanceof MySQLUniqueIndex) {
       MySQLUniqueIndex other = (MySQLUniqueIndex)o;
@@ -31,10 +42,17 @@ public class MySQLUniqueIndex extends Structure {
         return false;
       }
       List<ColumnDefinition> otherColumns = other.getColumns();
-      if (columns.equals(otherColumns)) {
-        return true;
-      } else {
+      if (columns.size() != otherColumns.size()) {
         return false;
+      } else {
+        int idx = 0;
+        while (idx < columns.size()) {
+          if (!columns.get(idx).getColumnName().equals(otherColumns.get(idx).getColumnName())) {
+            return false;
+          }
+          ++idx;
+        }
+        return true;
       }
     } else {
       return false;
