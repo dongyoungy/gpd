@@ -31,7 +31,7 @@ public class MySQLIndex extends Structure {
         return false;
       }
       List<ColumnDefinition> otherColumns = other.getColumns();
-      if (columns.containsAll(otherColumns) && otherColumns.containsAll(columns)) {
+      if (columns.equals(otherColumns)) {
         return true;
       } else {
         return false;
