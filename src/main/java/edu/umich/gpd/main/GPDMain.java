@@ -135,10 +135,9 @@ public class GPDMain {
         "= %d", UtilFunctions.getPossibleStructures(configurations).size()));
 
     if (userInput.getSetting().isDebug()) {
-      int count = 1;
+      Log.debug("GPDMain", "Possible design structures:");
       for (Structure s : UtilFunctions.getPossibleStructures(configurations)) {
-        Log.debug("GPDMain", String.format("Possible Structure #%d: %s",
-            count++, s.getQueryString()));
+        System.out.println("\t" + s.getQueryString());
       }
     }
 
