@@ -14,7 +14,9 @@ import edu.umich.gpd.workload.Workload;
 
 import scpsolver.problems.*;
 import weka.classifiers.functions.GaussianProcesses;
+import weka.classifiers.functions.SMOreg;
 import weka.core.Instance;
+import weka.core.Utils;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -135,7 +137,15 @@ public class ILPSolver extends AbstractSolver {
     if (sizeLimit > 0) {
       LPWizardConstraint c = lpw.addConstraint("c_size", sizeLimit, ">=");
       // build classifier for structure size regression
-      GPDClassifier sr = new GPDClassifier(new GaussianProcesses());
+      SMOreg smo = new SMOreg();
+      try {
+        smo.setOptions(Utils.splitOptions("-C 0"));
+      } catch (Exception e) {
+        GPDLogger.error(this, "Failed to set options for the classifier.");
+        e.printStackTrace();
+        return false;
+      }
+      GPDClassifier sr = new GPDClassifier(smo);
       sr.build(extractor.getTrainDataForSize());
       for (int j = 0; j < numStructures; ++j) {
         String var = "y_" + j;
@@ -269,7 +279,16 @@ public class ILPSolver extends AbstractSolver {
       }
     }
 
-    GPDClassifier sr = new GPDClassifier(new GaussianProcesses());
+    // build classifier for structure size regression
+    SMOreg smo = new SMOreg();
+    try {
+      smo.setOptions(Utils.splitOptions("-C 0"));
+    } catch (Exception e) {
+      GPDLogger.error(this, "Failed to set options for the classifier.");
+      e.printStackTrace();
+      return false;
+    }
+    GPDClassifier sr = new GPDClassifier(smo);
     if (useRegression) {
       if (!sr.build(extractor.getTrainData())) {
         return false;
