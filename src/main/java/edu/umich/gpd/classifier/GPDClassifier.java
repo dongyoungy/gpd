@@ -1,6 +1,7 @@
-package edu.umich.gpd.regression;
+package edu.umich.gpd.classifier;
 
 import com.esotericsoftware.minlog.Log;
+import weka.classifiers.Classifier;
 import weka.classifiers.functions.SMOreg;
 import weka.core.Instance;
 import weka.core.Instances;
@@ -8,19 +9,19 @@ import weka.core.Instances;
 /**
  * Created by Dong Young Yoon on 2/22/17.
  */
-public class GPDSMORegression {
+public class GPDClassifier {
 
-  private SMOreg sr;
+  private Classifier classifier;
 
-  public GPDSMORegression() {
-    sr = new SMOreg();
+  public GPDClassifier(Classifier classifier) {
+    this.classifier = classifier;
   }
 
   public boolean build(Instances trainData) {
     try {
       // assuming the last attribute is the class attribute
       trainData.setClassIndex(trainData.numAttributes() - 1);
-      sr.buildClassifier(trainData);
+      classifier.buildClassifier(trainData);
     } catch (Exception e) {
       Log.error("GPDRegression", "Error while building classifier with SMOReg.");
       e.printStackTrace();
@@ -31,7 +32,7 @@ public class GPDSMORegression {
 
   public double regress(Instance testInstance) {
     try {
-      return sr.classifyInstance(testInstance);
+      return classifier.classifyInstance(testInstance);
     } catch (Exception e) {
       Log.error("GPDRegression", "Error while performing regression with SMOReg.");
       e.printStackTrace();

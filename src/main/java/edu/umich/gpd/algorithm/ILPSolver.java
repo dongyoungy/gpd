@@ -4,7 +4,7 @@ import com.google.common.base.Stopwatch;
 import edu.umich.gpd.database.common.FeatureExtractor;
 import edu.umich.gpd.database.common.Structure;
 import edu.umich.gpd.main.GPDMain;
-import edu.umich.gpd.regression.GPDSMORegression;
+import edu.umich.gpd.classifier.GPDClassifier;
 import edu.umich.gpd.schema.Schema;
 import edu.umich.gpd.userinput.DatabaseInfo;
 import edu.umich.gpd.userinput.SampleInfo;
@@ -13,11 +13,11 @@ import edu.umich.gpd.workload.Query;
 import edu.umich.gpd.workload.Workload;
 
 import scpsolver.problems.*;
+import weka.classifiers.functions.GaussianProcesses;
 import weka.core.Instance;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.sql.SQLTimeoutException;
 import java.sql.Statement;
 import java.util.List;
 import java.util.Set;
@@ -135,7 +135,7 @@ public class ILPSolver extends AbstractSolver {
     if (sizeLimit > 0) {
       LPWizardConstraint c = lpw.addConstraint("c_size", sizeLimit, ">=");
       // build classifier for structure size regression
-      GPDSMORegression sr = new GPDSMORegression();
+      GPDClassifier sr = new GPDClassifier(new GaussianProcesses());
       sr.build(extractor.getTrainDataForSize());
       for (int j = 0; j < numStructures; ++j) {
         String var = "y_" + j;
@@ -269,7 +269,7 @@ public class ILPSolver extends AbstractSolver {
       }
     }
 
-    GPDSMORegression sr = new GPDSMORegression();
+    GPDClassifier sr = new GPDClassifier(new GaussianProcesses());
     if (useRegression) {
       if (!sr.build(extractor.getTrainData())) {
         return false;

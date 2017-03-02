@@ -20,6 +20,7 @@ import edu.umich.gpd.userinput.*;
 import edu.umich.gpd.util.UtilFunctions;
 import edu.umich.gpd.workload.Workload;
 
+import javax.rmi.CORBA.Util;
 import java.io.File;
 import java.sql.Connection;
 import java.util.ArrayList;
@@ -130,6 +131,8 @@ public class GPDMain {
     Log.info("GPDMain", "Enumeration completed.");
     Log.info("GPDMain", String.format("Total number of interesting design " +
         "configurations = %d", configurations.size()));
+    Log.info("GPDMain", String.format("Total number of physical design structures " +
+        "= %d", UtilFunctions.getPossibleStructures(configurations).size()));
 
     if (userInput.getSetting().isDebug()) {
       int count = 1;
