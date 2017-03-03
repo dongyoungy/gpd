@@ -186,7 +186,7 @@ public class ILPSolver extends AbstractSolver {
         optimalStructures.add(possibleStructures.get(t));
       }
     }
-    
+
     System.out.println("Optimal structures:");
     for (Structure s : optimalStructures) {
       System.out.println("\t"+s.getQueryString());

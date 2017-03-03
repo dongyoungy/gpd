@@ -47,9 +47,12 @@ public abstract class AbstractSolver {
 
   protected List<Structure> getAllStructures(List<List<Structure>> configurations) {
     List<Structure> possibleStructures = new ArrayList<>();
+    Set<String> structureNameSet = new HashSet<>();
     for (List<Structure> structures : configurations) {
       for (Structure s : structures) {
-        possibleStructures.add(s);
+        if (structureNameSet.add(s.getName())) {
+          possibleStructures.add(s);
+        }
       }
     }
     return possibleStructures;
