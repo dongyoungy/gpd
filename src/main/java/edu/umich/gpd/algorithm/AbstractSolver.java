@@ -45,13 +45,13 @@ public abstract class AbstractSolver {
 
   public abstract boolean solve();
 
-  protected List<Structure> getPossibleStructures(List<List<Structure>> configurations) {
-    Set<Structure> possibleStructures = new HashSet<>();
+  protected List<Structure> getAllStructures(List<List<Structure>> configurations) {
+    List<Structure> possibleStructures = new ArrayList<>();
     for (List<Structure> structures : configurations) {
       for (Structure s : structures) {
         possibleStructures.add(s);
       }
     }
-    return new ArrayList(possibleStructures);
+    return possibleStructures;
   }
 }

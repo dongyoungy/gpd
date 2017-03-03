@@ -21,6 +21,8 @@ import weka.core.Utils;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -64,7 +66,7 @@ public class ILPSolver extends AbstractSolver {
     GPDLogger.info(this, String.format("took %d seconds to fill" +
         " the cost array.", timeTaken));
 
-    List<Structure> possibleStructures = getPossibleStructures(configurations);
+    List<Structure> possibleStructures = getAllStructures(configurations);
     int numStructures = possibleStructures.size();
     boolean[][] compatibilityMatrix = new boolean[numStructures][numStructures];
     // TODO: make this function to be implemented as platform-specific.
@@ -177,12 +179,17 @@ public class ILPSolver extends AbstractSolver {
       //String varName = "y_" + t;
       //System.out.println(varName + " = " + solution.getInteger(varName));
     //}
-    System.out.println("Optimal structures:");
-    for (int t = 0; t < numStructures; ++t) {
+    Set<Structure> optimalStructures = new LinkedHashSet<>();
+    for (int t = 0; t < possibleStructures.size(); ++t) {
       String varName = "y_" + t;
       if (solution.getInteger(varName) == 1) {
-        System.out.println("\t"+possibleStructures.get(t).getQueryString());
+        optimalStructures.add(possibleStructures.get(t));
       }
+    }
+    
+    System.out.println("Optimal structures:");
+    for (Structure s : optimalStructures) {
+      System.out.println("\t"+s.getQueryString());
     }
     return true;
   }
