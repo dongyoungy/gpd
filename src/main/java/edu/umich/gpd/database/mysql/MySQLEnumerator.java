@@ -40,6 +40,7 @@ public class MySQLEnumerator extends StructureEnumerator {
 
       Set<String> interestingTableSet = q.getTables();
       Set<String> interestingColumnList = q.getColumns();
+      Set<Structure> interestingStructures = new LinkedHashSet<>();
       List<Set<Structure>> structuresForQuery = new ArrayList<>();
 
       for (String tableName : interestingTableSet) {
@@ -56,22 +57,11 @@ public class MySQLEnumerator extends StructureEnumerator {
               " The number must be less than 31. The current number is " + columnsToAdd.size());
           return null;
         }
-        Set<Set<ColumnDefinition>> columnPowerSet = Sets.powerSet(columnsToAdd);
-        for (Set<ColumnDefinition> columnSet : columnPowerSet) {
-          if (columnSet.size() > GPDMain.userInput.getSetting().getMaxNumColumn()) {
-            continue;
-          }
-          Collection<List<ColumnDefinition>> perms = Collections2.permutations(columnSet);
-          Set<String> columnSetString = new LinkedHashSet<>();
-          for (ColumnDefinition cd : columnSet) {
-            columnSetString.add(cd.getColumnName());
-          }
-          for (List<ColumnDefinition> perm : perms) {
-            if (perm.isEmpty()) {
-              continue;
-            }
-            Structure structure;
-            if (Sets.symmetricDifference(t.getPrimaryKeys(), columnSetString).isEmpty()) {
+
+        Structure structure;
+        if (columnsToAdd.size() >= 3) {
+          for (ColumnDefinition cd : columnsToAdd) {
+            if (t.getPrimaryKeys().contains(cd.getColumnName()) && t.getPrimaryKeys().size() == 1) {
               structure = new MySQLUniqueIndex(
                   t.getName() + "_unique_index_" + UniqueNumberGenerator.getUniqueID(),
                   t);
@@ -80,18 +70,44 @@ public class MySQLEnumerator extends StructureEnumerator {
                   t.getName() + "_index_" + UniqueNumberGenerator.getUniqueID(),
                   t);
             }
-            structure.setColumns(perm);
-            structuresForTable.add(structure);
+            ArrayList<ColumnDefinition> structureColumns = new ArrayList<>();
+            structureColumns.add(cd);
+            structure.setColumns(structureColumns);
+            interestingStructures.add(structure);
+          }
+        } else {
+          Set<Set<ColumnDefinition>> columnPowerSet = Sets.powerSet(columnsToAdd);
+          for (Set<ColumnDefinition> columnSet : columnPowerSet) {
+            if (columnSet.size() > GPDMain.userInput.getSetting().getMaxNumColumn()) {
+              continue;
+            }
+            Collection<List<ColumnDefinition>> perms = Collections2.permutations(columnSet);
+            Set<String> columnSetString = new LinkedHashSet<>();
+            for (ColumnDefinition cd : columnSet) {
+              columnSetString.add(cd.getColumnName());
+            }
+            for (List<ColumnDefinition> perm : perms) {
+              if (perm.isEmpty()) {
+                continue;
+              }
+              if (Sets.symmetricDifference(t.getPrimaryKeys(), columnSetString).isEmpty()) {
+                structure = new MySQLUniqueIndex(
+                    t.getName() + "_unique_index_" + UniqueNumberGenerator.getUniqueID(),
+                    t);
+              } else {
+                structure = new MySQLIndex(
+                    t.getName() + "_index_" + UniqueNumberGenerator.getUniqueID(),
+                    t);
+              }
+              structure.setColumns(perm);
+              interestingStructures.add(structure);
+            }
           }
         }
-        structuresForQuery.add(structuresForTable);
       }
-      Set<List<Structure>> configForQuery =  Sets.cartesianProduct(structuresForQuery);
-      Configuration emptyConfig = new Configuration();
-      q.addConfiguration(emptyConfig);
-      configurations.add(emptyConfig);
-      for (List<Structure> config : configForQuery) {
-        Configuration newConfig = new Configuration(config);
+      Set<Set<Structure>> structurePowersets = Sets.powerSet(interestingStructures);
+      for (Set<Structure> config : structurePowersets) {
+        Configuration newConfig = new Configuration(new ArrayList(config));
         configurations.add(newConfig);
         q.addConfiguration(newConfig);
       }

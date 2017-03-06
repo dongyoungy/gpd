@@ -18,7 +18,7 @@ public class Setting {
   private String algorithm;
 
   public Setting() {
-    this.maxNumColumn = 3;
+    this.maxNumColumn = 2;
     this.minRowForSample = 1000;
     this.queryTimeout = 30;
     this.sizeLimit = -1;
