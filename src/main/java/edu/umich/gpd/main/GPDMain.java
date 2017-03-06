@@ -3,10 +3,8 @@ package edu.umich.gpd.main;
 import com.esotericsoftware.minlog.Log;
 import edu.umich.gpd.algorithm.GreedySolver;
 import edu.umich.gpd.algorithm.AbstractSolver;
-import edu.umich.gpd.database.common.FeatureExtractor;
-import edu.umich.gpd.database.common.Sampler;
-import edu.umich.gpd.database.common.Structure;
-import edu.umich.gpd.database.common.StructureEnumerator;
+import edu.umich.gpd.algorithm.ILPSolver2;
+import edu.umich.gpd.database.common.*;
 import edu.umich.gpd.database.mysql.MySQLEnumerator;
 import edu.umich.gpd.database.mysql.MySQLFeatureExtractor;
 import edu.umich.gpd.database.mysql.MySQLJDBCConnection;
@@ -116,7 +114,7 @@ public class GPDMain {
     }
 
     Log.info("GPDMain", "Enumerating every possible design structures...");
-    Set<List<Structure>> configurations = enumerator.enumerateStructures(schema, workload);
+    Set<Configuration> configurations = enumerator.enumerateStructures(schema, workload);
     while (configurations == null && inputData.getSetting().getMaxNumColumn() > 1) {
       int newMaxColumn = inputData.getSetting().getMaxNumColumn() - 1;
       Log.info("GPDMain", "There are too many interesting columns to consider. " +
@@ -173,7 +171,7 @@ public class GPDMain {
 
       switch (algorithm) {
         case "ilp":
-          solver = new ILPSolver(conn, workload, schema, configurations, samples, dbInfo,
+          solver = new ILPSolver2(conn, workload, schema, configurations, samples, dbInfo,
               extractor, useRegression);
           break;
         case "greedy":

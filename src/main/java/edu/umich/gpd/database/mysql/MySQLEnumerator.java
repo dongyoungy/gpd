@@ -2,6 +2,7 @@ package edu.umich.gpd.database.mysql;
 
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Sets;
+import edu.umich.gpd.database.common.Configuration;
 import edu.umich.gpd.database.common.Structure;
 import edu.umich.gpd.database.common.StructureEnumerator;
 import edu.umich.gpd.main.GPDMain;
@@ -23,16 +24,16 @@ import java.util.*;
 public class MySQLEnumerator extends StructureEnumerator {
 
   @Override
-  public Set<List<Structure>> enumerateStructures(Schema s, Workload w) {
+  public Set<Configuration> enumerateStructures(Schema s, Workload w) {
     InterestingSchemaFinder finder = new InterestingSchemaFinder();
     if (!finder.getInterestingSchema(w))  {
       return null;
     }
 
-    Set<List<Structure>> configurations = new HashSet<>();
+    Set<Configuration> configurations = new HashSet<>();
 
     // add empty set first
-    configurations.add(new ArrayList<Structure>());
+    configurations.add(new Configuration());
 
     // For each query, generate structures that are 'interesting'
     for (Query q : w.getQueries()) {
@@ -85,7 +86,12 @@ public class MySQLEnumerator extends StructureEnumerator {
         }
         structuresForQuery.add(structuresForTable);
       }
-      configurations.addAll(Sets.cartesianProduct(structuresForQuery));
+      Set<List<Structure>> configForQuery =  Sets.cartesianProduct(structuresForQuery);
+      for (List<Structure> config : configForQuery) {
+        Configuration newConfig = new Configuration(config);
+        configurations.add(newConfig);
+        q.addConfiguration(newConfig);
+      }
     }
 
     return configurations;

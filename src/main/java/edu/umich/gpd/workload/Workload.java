@@ -20,4 +20,12 @@ public class Workload {
   public List<Query> getQueries() {
     return queries;
   }
+
+  public int getTotalConfigurationCount() {
+    int count = 0;
+    for (Query q : queries) {
+      count += q.getConfigurations().size();
+    }
+    return count;
+  }
 }

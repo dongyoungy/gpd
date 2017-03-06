@@ -1,6 +1,7 @@
 package edu.umich.gpd.database.mysql;
 
 import com.esotericsoftware.minlog.Log;
+import edu.umich.gpd.database.common.Configuration;
 import edu.umich.gpd.main.GPDMain;
 import edu.umich.gpd.parser.SchemaParser;
 import edu.umich.gpd.parser.WorkloadParser;
@@ -28,7 +29,7 @@ public class MySQLEnumeratorTest {
 
     MySQLEnumerator enumerator = new MySQLEnumerator();
 
-    Set<List<Structure>> configurations = enumerator.enumerateStructures(s,w);
+    Set<Configuration> configurations = enumerator.enumerateStructures(s,w);
     while (configurations == null) {
       int prevMaxNumColumn = GPDMain.userInput.getSetting().getMaxNumColumn();
       GPDMain.userInput.getSetting().setMaxNumColumn(prevMaxNumColumn-1);
@@ -54,10 +55,10 @@ public class MySQLEnumeratorTest {
     System.out.println("# of possible structures = " + possibleStructure.size());
   }
 
-  private static List<Structure> getPossibleStructures(Set<List<Structure>> configurations) {
+  private static List<Structure> getPossibleStructures(Set<Configuration> configurations) {
     Set<Structure> possibleStructures = new HashSet<>();
-    for (List<Structure> structures : configurations) {
-      for (Structure s : structures) {
+    for (Configuration config : configurations) {
+      for (Structure s : config.getStructures()) {
         possibleStructures.add(s);
       }
     }

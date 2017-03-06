@@ -1,9 +1,9 @@
 package edu.umich.gpd.workload;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import edu.umich.gpd.database.common.Configuration;
+import edu.umich.gpd.database.common.Structure;
+
+import java.util.*;
 
 /**
  * Created by Dong Young Yoon on 2/13/17.
@@ -15,6 +15,7 @@ public class Query {
   private String content;
   private Set<String> columns;
   private Set<String> tables;
+  private Set<Configuration> configurations;
 
   // do not allow using default constructor
   private Query() {
@@ -26,6 +27,7 @@ public class Query {
     this.content = content;
     this.columns = new HashSet<>();
     this.tables = new HashSet<>();
+    this.configurations = new LinkedHashSet<>();
   }
 
   public String getContent() {
@@ -46,6 +48,14 @@ public class Query {
 
   public void addTable(String tableName) {
     this.tables.add(tableName);
+  }
+
+  public Set<Configuration> getConfigurations() {
+    return configurations;
+  }
+
+  public void addConfiguration(Configuration configuration) {
+    this.configurations.add(configuration);
   }
 
   public Set<String> getTables() {

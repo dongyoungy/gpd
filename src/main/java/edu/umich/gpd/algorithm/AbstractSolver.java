@@ -1,5 +1,6 @@
 package edu.umich.gpd.algorithm;
 
+import edu.umich.gpd.database.common.Configuration;
 import edu.umich.gpd.database.common.FeatureExtractor;
 import edu.umich.gpd.database.common.Structure;
 import edu.umich.gpd.schema.Schema;
@@ -21,7 +22,7 @@ public abstract class AbstractSolver {
   protected Connection conn;
   protected Workload workload;
   protected Schema schema;
-  protected List<List<Structure>> configurations;
+  protected List<Configuration> configurations;
   protected List<SampleInfo> sampleDBs;
   protected DatabaseInfo dbInfo;
   protected FeatureExtractor extractor;
@@ -30,7 +31,7 @@ public abstract class AbstractSolver {
   protected long sizeLimit;
 
   public AbstractSolver(Connection conn, Workload workload, Schema schema,
-                        Set<List<Structure>> configurations, List<SampleInfo> sampleDBs,
+                        Set<Configuration> configurations, List<SampleInfo> sampleDBs,
                         DatabaseInfo dbInfo, FeatureExtractor extractor, boolean useRegression) {
     this.conn = conn;
     this.workload = workload;
@@ -45,11 +46,11 @@ public abstract class AbstractSolver {
 
   public abstract boolean solve();
 
-  protected List<Structure> getAllStructures(List<List<Structure>> configurations) {
+  protected List<Structure> getAllStructures(List<Configuration> configurations) {
     List<Structure> possibleStructures = new ArrayList<>();
     Set<String> structureNameSet = new HashSet<>();
-    for (List<Structure> structures : configurations) {
-      for (Structure s : structures) {
+    for (Configuration c : configurations) {
+      for (Structure s : c.getStructures()) {
         if (structureNameSet.add(s.getName())) {
           possibleStructures.add(s);
         }

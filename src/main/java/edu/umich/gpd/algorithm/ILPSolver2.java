@@ -1,20 +1,20 @@
 package edu.umich.gpd.algorithm;
 
 import com.google.common.base.Stopwatch;
+import edu.umich.gpd.classifier.GPDClassifier;
 import edu.umich.gpd.database.common.Configuration;
 import edu.umich.gpd.database.common.FeatureExtractor;
 import edu.umich.gpd.database.common.Structure;
 import edu.umich.gpd.main.GPDMain;
-import edu.umich.gpd.classifier.GPDClassifier;
 import edu.umich.gpd.schema.Schema;
 import edu.umich.gpd.userinput.DatabaseInfo;
 import edu.umich.gpd.userinput.SampleInfo;
 import edu.umich.gpd.util.GPDLogger;
 import edu.umich.gpd.workload.Query;
 import edu.umich.gpd.workload.Workload;
-
-import scpsolver.problems.*;
-import weka.classifiers.functions.GaussianProcesses;
+import scpsolver.problems.LPSolution;
+import scpsolver.problems.LPWizard;
+import scpsolver.problems.LPWizardConstraint;
 import weka.classifiers.functions.SMOreg;
 import weka.core.Instance;
 import weka.core.Utils;
@@ -22,7 +22,6 @@ import weka.core.Utils;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -31,25 +30,25 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by Dong Young Yoon on 2/15/17.
  */
-public class ILPSolver extends AbstractSolver {
+public class ILPSolver2 extends AbstractSolver {
 
-  private double[][] costArray;
-  private double[][][] rawCostArray;
+  private double[] costArray;
+  private double[][] rawCostArray;
   private int numQuery;
-  private int numConfiguration;
+  private int numCostVariables;
 
-  public ILPSolver(Connection conn, Workload workload, Schema schema,
-                   Set<Configuration> configurations,
-                   List<SampleInfo> sampleDBs,
-                   DatabaseInfo dbInfo,
-                   FeatureExtractor extractor, boolean useRegression) {
+  public ILPSolver2(Connection conn, Workload workload, Schema schema,
+                    Set<Configuration> configurations,
+                    List<SampleInfo> sampleDBs,
+                    DatabaseInfo dbInfo,
+                    FeatureExtractor extractor, boolean useRegression) {
 
     super(conn, workload, schema, configurations, sampleDBs, dbInfo, extractor, useRegression);
+    this.numCostVariables = workload.getTotalConfigurationCount();
     this.rawCostArray = new double[sampleDBs.size()]
-        [workload.getQueries().size()][configurations.size()];
-    this.costArray = new double[workload.getQueries().size()][configurations.size()];
+        [numCostVariables];
+    this.costArray = new double[numCostVariables];
     this.numQuery = workload.getQueries().size();
-    this.numConfiguration = configurations.size();
   }
 
   public boolean solve() {
@@ -73,11 +72,15 @@ public class ILPSolver extends AbstractSolver {
     // TODO: make this function to be implemented as platform-specific.
     buildCompatibilityMatrix(possibleStructures, compatibilityMatrix);
 
+    int count = 0;
     LPWizard lpw = new LPWizard();
     for (int i = 0; i < numQuery; ++i) {
-      for (int j = 0; j < numConfiguration; ++j) {
+      Query q = workload.getQueries().get(i);
+      int numConfig = q.getConfigurations().size();
+      for (int j = 0; j < numConfig; ++j) {
         String varName = "x_" + i + "_" + j;
-        lpw = lpw.plus(varName, costArray[i][j]);
+        lpw = lpw.plus(varName, costArray[count]);
+        ++count;
       }
     }
     lpw.setAllVariablesInteger();
@@ -86,8 +89,10 @@ public class ILPSolver extends AbstractSolver {
 
     // add constraints
     for (int i = 0; i < numQuery; ++i) {
+      Query q = workload.getQueries().get(i);
+      int numConfig = q.getConfigurations().size();
       LPWizardConstraint c1 = lpw.addConstraint("c_1_" + i, 1, "=");
-      for (int j = 0; j < numConfiguration; ++j) {
+      for (int j = 0; j < numConfig; ++j) {
         String varName = "x_" + i + "_" + j;
         c1 = c1.plus(varName, 1.0);
       }
@@ -99,17 +104,19 @@ public class ILPSolver extends AbstractSolver {
     for (int t = 0; t < possibleStructures.size(); ++t) {
       Structure y = possibleStructures.get(t);
       String yVarName = "y_" + t;
-      for (int j = 0; j < configurations.size(); ++j) {
-        List<Structure> structureSet = configurations.get(j).getStructures();
-        for (Structure s : structureSet) {
-          if (s.getName().equals(y.getName())) {
-           for (int i = 0; i < numQuery; ++i) {
-             LPWizardConstraint c = lpw.addConstraint("c_3_" + constraintCount, 0, ">=");
-             String xVarName = "x_" + i + "_" + j;
-             c = c.plus(xVarName, 1.0).plus(yVarName, -1.0);
-             c.setAllVariablesBoolean();
-             ++constraintCount;
-           }
+      for (int i = 0; i < numQuery; ++i) {
+        Query q = workload.getQueries().get(i);
+        int numConfig = q.getConfigurations().size();
+        for (int j = 0; j < numConfig; ++j) {
+          Configuration config = configurations.get(j);
+          for (Structure s : config.getStructures()) {
+            if (s.getName().equals(y.getName())) {
+              LPWizardConstraint c = lpw.addConstraint("c_3_" + constraintCount, 0, ">=");
+              String xVarName = "x_" + i + "_" + j;
+              c = c.plus(xVarName, 1.0).plus(yVarName, -1.0);
+              c.setAllVariablesBoolean();
+              ++constraintCount;
+            }
           }
         }
       }
@@ -203,17 +210,6 @@ public class ILPSolver extends AbstractSolver {
         compatibilityMatrix[i][j] = true;
       }
     }
-
-//    for (int i = 0; i < possibleStructures.size(); ++i) {
-//      Structure s1 = possibleStructures.get(i);
-//      for (int j = i + 1; j < possibleStructures.size(); ++j) {
-//        Structure s2 = possibleStructures.get(j);
-//        if (s1.getTable().getName().equals(s2.getTable().getName())) {
-//          compatibilityMatrix[i][j] = false;
-//          compatibilityMatrix[j][j] = false;
-//        }
-//      }
-//    }
   }
 
   private boolean fillCostAndSizeArray() {
@@ -235,26 +231,28 @@ public class ILPSolver extends AbstractSolver {
         conn.setCatalog(dbName);
         stmt = conn.createStatement();
       } catch (SQLException e) {
-        GPDLogger.error(this,"A SQLException has been caught.");
+        GPDLogger.error(this, "A SQLException has been caught.");
         e.printStackTrace();
         return false;
       }
 
-      for (int j = 0; j < configurations.size(); ++j) {
-        List<Structure> configuration = configurations.get(j).getStructures();
-        // build structures
-        GPDLogger.info(this, String.format(
-            "Building structures for configuration #%d out of %d.", j+1, configurations.size()));
-        for (Structure s : configuration) {
-          s.create(conn);
-          if (useRegression || sizeLimit > 0)
-            extractor.addTrainingDataForSize(dbName, schema, s);
-        }
+      int count = 0;
+      for (int i = 0; i < queries.size(); ++i) {
+        Query q = queries.get(i);
+        for (Configuration configuration : q.getConfigurations()) {
+          // build structures
+          GPDLogger.info(this, String.format(
+              "Building structures for configuration #%d out of %d.", configuration.getId() + 1,
+              numCostVariables));
+          for (Structure s : configuration.getStructures()) {
+            s.create(conn);
+            if (useRegression || sizeLimit > 0)
+              extractor.addTrainingDataForSize(dbName, schema, s);
+          }
 
-        GPDLogger.info(this, String.format(
-            "Running queries for configuration #%d out of %d.", j+1, configurations.size()));
-        for (int i = 0; i < queries.size(); ++i) {
-          Query q = queries.get(i);
+          GPDLogger.info(this, String.format(
+              "Running queries for configuration #%d out of %d.", configuration.getId() + 1,
+              numCostVariables));
           stopwatch = Stopwatch.createStarted();
 
           boolean isTimedOut = false;
@@ -270,19 +268,23 @@ public class ILPSolver extends AbstractSolver {
           double queryTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
           // when query times out, we assign INT_MAX to its cost.
           if (isTimedOut) {
-            rawCostArray[d][i][j] = (long) Integer.MAX_VALUE;
-          } else {
-            rawCostArray[d][i][j] = (long) queryTime;
+            rawCostArray[d][count] = (long) Integer.MAX_VALUE;
+          }
+          else {
+            rawCostArray[d][count] = (long) queryTime;
           }
           if (useRegression)
-            extractor.addTrainingData(dbName, schema, q, j, queryTime);
-        }
+            extractor.addTrainingData(dbName, schema, q, configuration.getId(),
+                queryTime);
 
-        // remove structures
-        GPDLogger.info(this, String.format(
-            "Removing structures for configuration #%d out of %d.", j+1, configurations.size()));
-        for (Structure s : configuration) {
-          s.drop(conn);
+          // remove structures
+          GPDLogger.info(this, String.format(
+              "Removing structures for configuration #%d out of %d.", configuration.getId()+1,
+              numCostVariables));
+          for (Structure s : configuration.getStructures()) {
+            s.drop(conn);
+          }
+          ++count;
         }
       }
     }
@@ -302,20 +304,22 @@ public class ILPSolver extends AbstractSolver {
         return false;
       }
     }
-    for (int j = 0; j < configurations.size(); ++j) {
-      for (int i = 0; i < queries.size(); ++i) {
+    int count = 0;
+    for (int i = 0; i < queries.size(); ++i) {
+      Query q = queries.get(i);
+      for (Configuration config : q.getConfigurations()) {
         if (useRegression) {
-          Query q = queries.get(i);
           Instance testInstance = extractor.getTestInstance(dbInfo.getTargetDBName(),
-              schema, q, j);
-          costArray[i][j] = sr.regress(testInstance);
+              schema, q, config.getId());
+          costArray[count] = sr.regress(testInstance);
         } else {
           long total = 0;
           for (int d = 0; d < numSampleDBs; ++d) {
-            total += rawCostArray[d][i][j];
+            total += rawCostArray[d][count];
           }
-          costArray[i][j] = total / numSampleDBs;
+          costArray[count] = total / numSampleDBs;
         }
+        ++count;
       }
     }
 
