@@ -33,7 +33,7 @@ public class MySQLEnumerator extends StructureEnumerator {
     Set<Configuration> configurations = new HashSet<>();
 
     // add empty set first
-    configurations.add(new Configuration());
+//    configurations.add(new Configuration());
 
     // For each query, generate structures that are 'interesting'
     for (Query q : w.getQueries()) {
@@ -87,6 +87,9 @@ public class MySQLEnumerator extends StructureEnumerator {
         structuresForQuery.add(structuresForTable);
       }
       Set<List<Structure>> configForQuery =  Sets.cartesianProduct(structuresForQuery);
+      Configuration emptyConfig = new Configuration();
+      q.addConfiguration(emptyConfig);
+      configurations.add(emptyConfig);
       for (List<Structure> config : configForQuery) {
         Configuration newConfig = new Configuration(config);
         configurations.add(newConfig);
