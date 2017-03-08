@@ -1,9 +1,8 @@
-TEXFILES=ILP_formulation.tex
+TEXFILES=ILP_formulation3.tex
 
-MAIN=ILP_formulation
-MAIN2=ILP_formulation2
+MAIN=ILP_formulation3
 
-all: $(MAIN).pdf $(MAIN2).pdf
+all: $(MAIN).pdf
 
 $(MAIN).pdf: $(MAIN).tex
 	pdflatex $(MAIN).tex
@@ -11,11 +10,5 @@ $(MAIN).pdf: $(MAIN).tex
 	pdflatex $(MAIN).tex
 	pdflatex $(MAIN).tex
 
-$(MAIN2).pdf: $(MAIN2).tex
-	pdflatex $(MAIN2).tex
-	bibtex $(MAIN2)
-	pdflatex $(MAIN2).tex
-	pdflatex $(MAIN2).tex
-
 clean:
-	rm $(MAIN).pdf $(MAIN2).pdf *.log *.blg *.aux *.out *.bbl
+	rm $(MAIN).pdf *.log *.blg *.aux *.out *.bbl

@@ -1,0 +1,139 @@
+\documentclass[10pt]{article}
+%	options include 12pt or 11pt or 10pt
+%	classes include article, report, book, letter, thesis
+\usepackage{xcolor}
+\usepackage{amsmath}
+
+\title{Generic Physical Designer: ILP Formulation}
+\author{Dong Young Yoon}
+\date{\today}
+
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\newcommand{\dy}[1]{\textcolor{blue}{DY: #1}}
+
+\begin{document}
+\maketitle
+
+\section{Setup}
+Consider a workload $W$ consisting of $m$ queries (i.e., $W = \{q_1, \dots, q_m\}$) and a set of $n$
+available physical design structures, $P = \{p_1, \dots, p_n\}$
+(e.g., indexes, storage file format for HDFS-based query engines, etc. --
+we call these as a \textit{structure} and we also say that we \textit{build} such structure
+from here on).
+
+We define a particular $j^\text{th}$ subset of $P$ as $S_j$, where $S_j = \{p_{j_1}, p_{j_2}, \dots\}$
+and $S_j \subset P$.
+$S_j$ can be empty (i.e., $S_j = \{\}$),
+meaning that there are no extra structures in place.
+
+Let $Y$ be the set of all $k$ possible subsets of $P$ such that $Y = \{S_1, \dots, S_k\}$,
+where each subset $S_j$ is atomic for the workload $W$.
+This follows the definition of \textit{atomic configuration}
+\footnote{
+`A configuration $C$ is \textit{atomic} for a workload if for some query in the workload
+there is a possible execution of the query by the query engine that uses \textit{all} indexes in
+$C$' -- a \textit{configuration} equals to a set of structures in our formulation.
+}
+in \cite{chaudhuri1997efficient},
+We assume that structures in a subset $S_j$ are compatible with each other
+and can co-exist at the same time
+(as some structures could be incompatible to each other.
+For instance, a specific storage file format may not support certain types of indexes in a
+particular HDFS-based query engine).
+The cost of a query $q_i$ with every structure in a subset $S_j$ is built
+is defined as $Cost(q_i, S_j)$.
+
+Now, the optimal cost of the workload $Cost(W)$ is defined as:
+\begin{equation}
+  Cost(W) = \sum_{i=1}^{m} \argmin_{j} Cost(q_i, S_j)
+  \label{eq:cost}
+\end{equation}
+
+For our ILP formulation, we introduce a binary variable $x_{ij}$
+that is 1 if every structure in a subset $S_j$ is built and it yields the optimal cost for
+a query $q_i$ among all currently available subsets in $Y$
+(i.e., subsets with all of their structures are built), or 0 otherwise.
+
+With the definition of $x_{ij}$, we can rewrite Equation \eqref{eq:cost} with respect to the
+currently available structures as:
+\begin{equation}
+  Cost(W) = \sum_{i=1}^{m} \sum_{j=1}^{k} x_{ij} \times Cost(q_i, S_j)
+\end{equation}
+We define $y_t$ as a binary decision variable that is 1
+if the structure $p_t$ is built, or 0 otherwise.
+Note that $x_{ij}$ depends on $y_t$ as $x_{ij}$ can be 1 only if every structure in
+$S_j = \{p_{j_1}, p_{j_2}, \dots\}$ is built. In other words, $y_t$ must satisfy the following
+condition: $ y_t = 1, \forall t \in \{j_1, j_2, \dots\}$
+
+In addition, let $E_{st}$ be a binary indicator variable that is 1 if two structures
+, $p_s$ and $p_t$, are compatible with each other and can co-exist, or 0 otherwise.
+Lastly, we want our set of physical design structures to meet the space requirement such that
+each physical design structure $z_t$ takes $z_t$ units of storage space, and
+they consume less than $Z$ units of storage space in total.
+
+\section{ILP Formulation}
+\label{sec:ILP_formulation}
+
+From the setup that we discussed in the previous section, we have the following ILP formulation:
+\begin{equation}
+  minimize\ Cost(W) = \sum_{i=1}^{m} \sum_{j=1}^{k} x_{ij} \times Cost(q_i, S_j)
+  \label{eq:obj}
+\end{equation}
+
+Subject to:
+\begin{equation}
+  \sum_{j=1}^{k} x_{ij} = 1,~~~\forall{i}
+  \label{eq:const1}
+\end{equation}
+\begin{equation}
+  x_{ij} \leq  y_{t},~~~\forall{i}, \forall{j,t} : p_t \in S_j
+  \label{eq:const2}
+\end{equation}
+\begin{equation}
+  y_{k_1} + y_{k_2} - 1 \leq E_{k_1 k_2},~~~\forall{k1, k2}
+  \label{eq:const3}
+\end{equation}
+\begin{equation}
+  \sum_{t=1}^{k} z_t \times y_t \leq Z
+  \label{eq:const4}
+\end{equation}
+
+Constraint \eqref{eq:const1} ensures that the formulation only considers
+the optimal cost possible for each query from available structures.
+Constraint \eqref{eq:const2} guarantees that every structure in a subset is actually built.
+Constraint \eqref{eq:const3} ensures that structures used by different queries are
+compatible with each other.
+Constraint \eqref{eq:const4} expresses the storage limit of the target system.
+
+\subsection{With Regression Model}
+In our generic physical design, we are going to estimate the benefit of structures and the
+storage requirement of physical design structure from small subsets of sampled data $D$ from the
+original data and regression model $R$.
+
+The only difference that such estimation will impose on the above formulation is with variables
+$Cost(q_i, S_j)$ and $z_{t}$.
+We denote estimated values of $Cost_(q_i, S_j)$ and $z_{t}$ to be $Cost^\prime(q_i, S_j)$ and
+$\sigma_{t}$, respectively.
+The cost of a query $q_i$ with a set of structures $S_j$ and the sampled data $D$ is
+$Cost(q_i, S_j, D)$.
+
+Let $z_t (D)$ be the storage requirement of physical design structure $p_t$ on sampled data $D$.
+In addition, let $R(X)$ be the predicted value from the regression model $R$ using $X$ as its input.
+We define $Cost^\prime (q_i,S_j)$ and $\sigma_{t}$ obtained from the sampled data $D$ and
+the regression model $R$ as follows:
+\begin{equation}
+  Cost^\prime (q_i,S_j) = R(Cost(q_i, S_j, D))
+  \label{eq:regress1}
+\end{equation}
+\begin{equation}
+  \sigma_{t} = R(z_t (D))
+\end{equation}
+
+Now, we can substitute $Cost(q_i,S_j)$ and $z_t$ from the ILP formulation in
+Sec \ref{sec:ILP_formulation} with $Cost^\prime (q_i,S_j)$ and $\sigma_{t}$.
+
+\bibliographystyle{abbrv}
+\bibliography{ilp}
+
+\end{document}
