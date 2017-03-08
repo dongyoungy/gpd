@@ -406,6 +406,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
         }
 
         Instance newInstance = new DenseInstance(trainData.numAttributes());
+        newInstance.setDataset(trainData);
         int idx = 0;
         for (Table t : s.getTables()) {
           newInstance.setValue(idx++, t.getRowCount(dbName));
@@ -483,6 +484,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
   @Override
   public boolean addTrainingDataForSize(String dbName, Schema s, Structure structure) {
     Instance newInstance = new DenseInstance(trainDataForSize.numAttributes());
+    newInstance.setDataset(trainDataForSize);
     int idx = 0;
     for (Table t : s.getTables()) {
       newInstance.setValue(idx++, t.getRowCount(dbName));
@@ -758,6 +760,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
         // 57 features + query time + configuration id + index size
 //        Instance newInstance = new DenseInstance(57 + 1);
         Instance newInstance = new DenseInstance(trainData.numAttributes());
+        newInstance.setDataset(trainData);
         int idx = 0;
         for (Table t : s.getTables()) {
           newInstance.setValue(idx++, t.getRowCount(dbName));
@@ -838,6 +841,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
   @Override
   public Instance getTestInstanceForSize(String dbName, Schema s, Structure structure) {
     Instance newInstance = new DenseInstance(trainDataForSize.numAttributes());
+    newInstance.setDataset(trainDataForSize);
     int idx = 0;
     for (Table t : s.getTables()) {
       newInstance.setValue(idx++, t.getRowCount(dbName));
