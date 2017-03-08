@@ -88,6 +88,21 @@ public class MySQLUniqueIndex extends Structure {
     return String.format("CREATE UNIQUE INDEX %s ON %s (%s);", this.name, table.getName(), columnStr);
   }
 
+  @Override
+  public String getNonUniqueString() {
+    String columnStr = "";
+    int length = columns.size();
+    int i = 0;
+    for (ColumnDefinition colDef : columns) {
+      columnStr += colDef.getColumnName();
+      if (i < length - 1) {
+        columnStr += ",";
+      }
+      ++i;
+    }
+    return String.format("CREATE UNIQUE INDEX ON %s (%s);", this.name, table.getName(), columnStr);
+  }
+
   public boolean create(Connection conn) {
     String columnStr = "";
     //ColumnDefinition[] cols = (ColumnDefinition[])columns.toArray();

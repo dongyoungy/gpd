@@ -47,4 +47,12 @@ public class Configuration {
   public List<Structure> getStructures() {
     return structures;
   }
+
+  public String getNonUniqueString() {
+    String str = "";
+    for (Structure s : structures) {
+      str += s.getNonUniqueString() + "\n";
+    }
+    return str;
+  }
 }

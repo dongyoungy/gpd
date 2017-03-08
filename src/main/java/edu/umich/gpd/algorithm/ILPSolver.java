@@ -241,6 +241,7 @@ public class ILPSolver extends AbstractSolver {
       }
 
       for (int j = 0; j < configurations.size(); ++j) {
+        Configuration config = configurations.get(j);
         List<Structure> configuration = configurations.get(j).getStructures();
         // build structures
         GPDLogger.info(this, String.format(
@@ -275,7 +276,7 @@ public class ILPSolver extends AbstractSolver {
             rawCostArray[d][i][j] = (long) queryTime;
           }
           if (useRegression)
-            extractor.addTrainingData(dbName, schema, q, j, queryTime);
+            extractor.addTrainingData(dbName, schema, q, config.getNonUniqueString(), queryTime);
         }
 
         // remove structures
@@ -303,11 +304,12 @@ public class ILPSolver extends AbstractSolver {
       }
     }
     for (int j = 0; j < configurations.size(); ++j) {
+      Configuration config = configurations.get(j);
       for (int i = 0; i < queries.size(); ++i) {
         if (useRegression) {
           Query q = queries.get(i);
           Instance testInstance = extractor.getTestInstance(dbInfo.getTargetDBName(),
-              schema, q, j);
+              schema, q, config.getNonUniqueString());
           costArray[i][j] = sr.regress(testInstance);
         } else {
           long total = 0;

@@ -80,7 +80,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
       return false;
     }
     attrList.add(new Attribute("queryId"));
-    attrList.add(new Attribute("configId"));
+    attrList.add(new Attribute("configId", true));
     attrList.add(new Attribute("totalRowFromSimpleSelect"));
     attrList.add(new Attribute("totalRowFromPrimarySelect"));
     attrList.add(new Attribute("totalRowFromUnionSelect"));
@@ -138,7 +138,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
     attrList.add(new Attribute("numExtraUsingWhere"));
     attrList.add(new Attribute("numExtraZeroLimit"));
     attrList.add(new Attribute("queryTime"));
-    attrListForSize.add(new Attribute("structureId"));
+    attrListForSize.add(new Attribute("structureId", true));
     attrListForSize.add(new Attribute("structureSize"));
 
     trainData = new Instances("trainData", attrList, 1000);
@@ -147,7 +147,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
   }
 
   @Override
-  public boolean addTrainingData(String dbName, Schema s, Query q, int configIndex,
+  public boolean addTrainingData(String dbName, Schema s, Query q, String configString,
                                  double queryTime) {
 
     int queryId = q.getId();
@@ -410,7 +410,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
           newInstance.setValue(idx++, t.getRowCount(dbName));
         }
         newInstance.setValue(idx++, queryId);
-        newInstance.setValue(idx++, configIndex);
+        newInstance.setValue(idx++, configString);
         newInstance.setValue(idx++, totalRowFromSimpleSelect);
         newInstance.setValue(idx++, totalRowFromPrimarySelect);
         newInstance.setValue(idx++, totalRowFromUnionSelect);
@@ -493,7 +493,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
   }
 
   @Override
-  public Instance getTestInstance(String dbName, Schema s, Query q, int configIndex) {
+  public Instance getTestInstance(String dbName, Schema s, Query q, String configString) {
 
     int queryId;
     if (q == null) {
@@ -766,7 +766,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
         } else {
           newInstance.setValue(idx++, queryId);
         }
-        newInstance.setValue(idx++, configIndex);
+        newInstance.setValue(idx++, configString);
         newInstance.setValue(idx++, totalRowFromSimpleSelect);
         newInstance.setValue(idx++, totalRowFromPrimarySelect);
         newInstance.setValue(idx++, totalRowFromUnionSelect);

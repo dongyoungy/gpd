@@ -74,6 +74,8 @@ public abstract class Structure {
 
   public abstract String getQueryString();
 
+  public abstract String getNonUniqueString();
+
   public void addColumn(ColumnDefinition column) {
     this.columns.add(column);
   }
