@@ -163,6 +163,8 @@ public class ILPSolver2 extends AbstractSolver {
         Instance testInstance = extractor.getTestInstanceForSize(
             dbInfo.getTargetDBName(), schema, s);
         double structureSize = sr.regress(testInstance);
+        GPDLogger.debug(this, String.format("Estimated Structure Size = %d (%s)",
+            structureSize, s.getQueryString()));
         c = c.plus(var, structureSize);
       }
       c.setAllVariablesBoolean();
