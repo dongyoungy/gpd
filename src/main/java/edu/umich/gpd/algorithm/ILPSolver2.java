@@ -16,6 +16,7 @@ import scpsolver.problems.LPSolution;
 import scpsolver.problems.LPWizard;
 import scpsolver.problems.LPWizardConstraint;
 import weka.classifiers.functions.SMOreg;
+import weka.classifiers.trees.M5P;
 import weka.core.Instance;
 import weka.core.Utils;
 
@@ -158,14 +159,16 @@ public class ILPSolver2 extends AbstractSolver {
       LPWizardConstraint c = lpw.addConstraint("c_size", sizeLimit, ">=");
       // build classifier for structure size regression
       SMOreg smo = new SMOreg();
+      M5P m5p = new M5P();
       try {
         smo.setOptions(Utils.splitOptions("-C 0"));
+        m5p.setOptions(Utils.splitOptions("-M 1"));
       } catch (Exception e) {
         GPDLogger.error(this, "Failed to set options for the classifier.");
         e.printStackTrace();
         return false;
       }
-      GPDClassifier sr = new GPDClassifier(smo);
+      GPDClassifier sr = new GPDClassifier(m5p);
       sr.build(extractor.getTrainDataForSize());
       for (int j = 0; j < numStructures; ++j) {
         String var = "y_" + j;
@@ -307,7 +310,7 @@ public class ILPSolver2 extends AbstractSolver {
       }
     }
 
-    // build classifier for structure size regression
+    // build classifier for cost regression
     SMOreg smo = new SMOreg();
     try {
       smo.setOptions(Utils.splitOptions("-C 0"));
