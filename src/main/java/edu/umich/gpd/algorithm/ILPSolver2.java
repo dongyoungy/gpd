@@ -251,6 +251,7 @@ public class ILPSolver2 extends AbstractSolver {
       }
 
       int count = 0;
+      Set<Structure> trainedSet = new HashSet<>();
       for (int i = 0; i < queries.size(); ++i) {
         Query q = queries.get(i);
         for (Configuration configuration : q.getConfigurations()) {
@@ -260,8 +261,11 @@ public class ILPSolver2 extends AbstractSolver {
               numCostVariables));
           for (Structure s : configuration.getStructures()) {
             s.create(conn);
-            if (useRegression || sizeLimit > 0)
-              extractor.addTrainingDataForSize(dbName, schema, s);
+            if (useRegression || sizeLimit > 0) {
+              if (trainedSet.add(s)) {
+                extractor.addTrainingDataForSize(dbName, schema, s);
+              }
+            }
           }
 
           GPDLogger.info(this, String.format(
