@@ -22,10 +22,7 @@ import weka.core.Utils;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -37,6 +34,8 @@ public class ILPSolver extends AbstractSolver {
   private double[][][] rawCostArray;
   private int numQuery;
   private int numConfiguration;
+  private List<String> configStrList;
+  private List<String> structureStrList;
 
   public ILPSolver(Connection conn, Workload workload, Schema schema,
                    Set<Configuration> configurations,
@@ -50,6 +49,8 @@ public class ILPSolver extends AbstractSolver {
     this.costArray = new double[workload.getQueries().size()][configurations.size()];
     this.numQuery = workload.getQueries().size();
     this.numConfiguration = configurations.size();
+    this.configStrList = new ArrayList<>();
+    this.structureStrList = new ArrayList<>();
   }
 
   public boolean solve() {
@@ -68,6 +69,12 @@ public class ILPSolver extends AbstractSolver {
         " the cost array.", timeTaken));
 
     List<Structure> possibleStructures = getAllStructures(configurations);
+    for (Configuration c : configurations) {
+      configStrList.add(c.getNonUniqueString());
+    }
+    for (Structure s : possibleStructures) {
+      structureStrList.add(s.getNonUniqueString());
+    }
     int numStructures = possibleStructures.size();
     boolean[][] compatibilityMatrix = new boolean[numStructures][numStructures];
     // TODO: make this function to be implemented as platform-specific.
@@ -224,7 +231,8 @@ public class ILPSolver extends AbstractSolver {
     List<Query> queries = workload.getQueries();
 
     if (useRegression || sizeLimit > 0) {
-      extractor.initialize(sampleDBs, dbInfo.getTargetDBName(), schema);
+      extractor.initialize(sampleDBs, dbInfo.getTargetDBName(), schema,
+          structureStrList, configStrList);
     }
 
     // fill cost array from each sample database.

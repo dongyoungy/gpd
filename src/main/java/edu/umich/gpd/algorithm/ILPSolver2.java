@@ -22,6 +22,7 @@ import weka.core.Utils;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -36,6 +37,8 @@ public class ILPSolver2 extends AbstractSolver {
   private double[][] rawCostArray;
   private int numQuery;
   private int numCostVariables;
+  private List<String> configStrList;
+  private List<String> structureStrList;
 
   public ILPSolver2(Connection conn, Workload workload, Schema schema,
                     Set<Configuration> configurations,
@@ -49,6 +52,8 @@ public class ILPSolver2 extends AbstractSolver {
         [numCostVariables];
     this.costArray = new double[numCostVariables];
     this.numQuery = workload.getQueries().size();
+    this.configStrList = new ArrayList<>();
+    this.structureStrList = new ArrayList<>();
   }
 
   public boolean solve() {
@@ -67,6 +72,12 @@ public class ILPSolver2 extends AbstractSolver {
         " the cost array.", timeTaken));
 
     List<Structure> possibleStructures = getAllStructures(configurations);
+    for (Configuration c : configurations) {
+      configStrList.add(c.getNonUniqueString());
+    }
+    for (Structure s : possibleStructures) {
+      structureStrList.add(s.getNonUniqueString());
+    }
     int numStructures = possibleStructures.size();
     boolean[][] compatibilityMatrix = new boolean[numStructures][numStructures];
     // TODO: make this function to be implemented as platform-specific.
@@ -222,7 +233,8 @@ public class ILPSolver2 extends AbstractSolver {
     List<Query> queries = workload.getQueries();
 
     if (useRegression || sizeLimit > 0) {
-      extractor.initialize(sampleDBs, dbInfo.getTargetDBName(), schema);
+      extractor.initialize(sampleDBs, dbInfo.getTargetDBName(), schema, structureStrList,
+          configStrList);
     }
 
     // fill cost array from each sample database.

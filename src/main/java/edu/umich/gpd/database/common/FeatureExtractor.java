@@ -25,7 +25,8 @@ public abstract class FeatureExtractor {
     this.conn = conn;
   }
 
-  public abstract boolean initialize(List<SampleInfo> sampleDBs, String targetDBName, Schema s);
+  public abstract boolean initialize(List<SampleInfo> sampleDBs, String targetDBName, Schema s,
+                                     List<String> structureStrList, List<String> configStrList);
 
   public abstract boolean addTrainingData(String dbName, Schema s, Query q, String configString,
                                           double queryTime);

@@ -30,7 +30,8 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
   }
 
   @Override
-  public boolean initialize(List<SampleInfo> sampleDBs, String targetDBName, Schema s) {
+  public boolean initialize(List<SampleInfo> sampleDBs, String targetDBName, Schema s,
+                            List<String> structureStrList, List<String> configStrList) {
 
     ArrayList<Attribute> attrList = new ArrayList<>();
     ArrayList<Attribute> attrListForSize = new ArrayList<>();
@@ -80,7 +81,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
       return false;
     }
     attrList.add(new Attribute("queryId"));
-    attrList.add(new Attribute("configId", true));
+    attrList.add(new Attribute("configStr", configStrList));
     attrList.add(new Attribute("totalRowFromSimpleSelect"));
     attrList.add(new Attribute("totalRowFromPrimarySelect"));
     attrList.add(new Attribute("totalRowFromUnionSelect"));
@@ -138,7 +139,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
     attrList.add(new Attribute("numExtraUsingWhere"));
     attrList.add(new Attribute("numExtraZeroLimit"));
     attrList.add(new Attribute("queryTime"));
-    attrListForSize.add(new Attribute("structureId", true));
+    attrListForSize.add(new Attribute("structureStr", structureStrList));
     attrListForSize.add(new Attribute("structureSize"));
 
     trainData = new Instances("trainData", attrList, 1000);
@@ -486,7 +487,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
     for (Table t : s.getTables()) {
       newInstance.setValue(idx++, t.getRowCount(dbName));
     }
-    newInstance.setValue(idx++, structure.getId());
+    newInstance.setValue(idx++, structure.getNonUniqueString());
     newInstance.setValue(idx++, structure.getSize());
     trainDataForSize.add(newInstance);
     return true;
@@ -841,7 +842,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
     for (Table t : s.getTables()) {
       newInstance.setValue(idx++, t.getRowCount(dbName));
     }
-    newInstance.setValue(idx++, structure.getId());
+    newInstance.setValue(idx++, structure.getNonUniqueString());
     return newInstance;
   }
 }
