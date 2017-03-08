@@ -59,6 +59,17 @@ public class ILPSolver2 extends AbstractSolver {
   public boolean solve() {
     this.sizeLimit = GPDMain.userInput.getSetting().getSizeLimit();
     Stopwatch entireTime = Stopwatch.createStarted();
+
+    List<Structure> possibleStructures = getAllStructures(configurations);
+    for (Configuration c : configurations) {
+      configStrList.add(c.getNonUniqueString());
+    }
+    for (Structure s : possibleStructures) {
+      GPDLogger.debug(this, "structure string = " +
+          s.getNonUniqueString());
+      structureStrList.add(s.getNonUniqueString());
+    }
+
     // fill the cost array first.
     Stopwatch timetoFillCostArray = Stopwatch.createStarted();
     GPDLogger.info(this, String.format("Filling the cost & size array with " +
@@ -71,15 +82,6 @@ public class ILPSolver2 extends AbstractSolver {
     GPDLogger.info(this, String.format("took %d seconds to fill" +
         " the cost array.", timeTaken));
 
-    List<Structure> possibleStructures = getAllStructures(configurations);
-    for (Configuration c : configurations) {
-      configStrList.add(c.getNonUniqueString());
-    }
-    for (Structure s : possibleStructures) {
-      GPDLogger.debug(this, "structure string = " +
-          s.getNonUniqueString());
-      structureStrList.add(s.getNonUniqueString());
-    }
     int numStructures = possibleStructures.size();
     boolean[][] compatibilityMatrix = new boolean[numStructures][numStructures];
     // TODO: make this function to be implemented as platform-specific.
