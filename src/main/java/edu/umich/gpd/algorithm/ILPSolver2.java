@@ -62,8 +62,6 @@ public class ILPSolver2 extends AbstractSolver {
       configStrSet.add(c.getNonUniqueString());
     }
     for (Structure s : possibleStructures) {
-      GPDLogger.debug(this, "structure string = " +
-          s.getNonUniqueString());
       structureStrSet.add(s.getNonUniqueString());
     }
 
