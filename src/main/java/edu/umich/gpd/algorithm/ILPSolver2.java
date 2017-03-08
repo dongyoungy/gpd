@@ -22,10 +22,7 @@ import weka.core.Utils;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -37,8 +34,8 @@ public class ILPSolver2 extends AbstractSolver {
   private double[][] rawCostArray;
   private int numQuery;
   private int numCostVariables;
-  private List<String> configStrList;
-  private List<String> structureStrList;
+  private Set<String> configStrSet;
+  private Set<String> structureStrSet;
 
   public ILPSolver2(Connection conn, Workload workload, Schema schema,
                     Set<Configuration> configurations,
@@ -52,8 +49,8 @@ public class ILPSolver2 extends AbstractSolver {
         [numCostVariables];
     this.costArray = new double[numCostVariables];
     this.numQuery = workload.getQueries().size();
-    this.configStrList = new ArrayList<>();
-    this.structureStrList = new ArrayList<>();
+    this.configStrSet = new HashSet<>();
+    this.structureStrSet = new HashSet<>();
   }
 
   public boolean solve() {
@@ -62,12 +59,12 @@ public class ILPSolver2 extends AbstractSolver {
 
     List<Structure> possibleStructures = getAllStructures(configurations);
     for (Configuration c : configurations) {
-      configStrList.add(c.getNonUniqueString());
+      configStrSet.add(c.getNonUniqueString());
     }
     for (Structure s : possibleStructures) {
       GPDLogger.debug(this, "structure string = " +
           s.getNonUniqueString());
-      structureStrList.add(s.getNonUniqueString());
+      structureStrSet.add(s.getNonUniqueString());
     }
 
     // fill the cost array first.
@@ -237,8 +234,9 @@ public class ILPSolver2 extends AbstractSolver {
     List<Query> queries = workload.getQueries();
 
     if (useRegression || sizeLimit > 0) {
-      extractor.initialize(sampleDBs, dbInfo.getTargetDBName(), schema, structureStrList,
-          configStrList);
+      extractor.initialize(sampleDBs, dbInfo.getTargetDBName(), schema,
+          new ArrayList<>(structureStrSet),
+          new ArrayList<>(configStrSet));
     }
 
     // fill cost array from each sample database.

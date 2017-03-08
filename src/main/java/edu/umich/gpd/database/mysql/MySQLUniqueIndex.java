@@ -100,7 +100,7 @@ public class MySQLUniqueIndex extends Structure {
       }
       ++i;
     }
-    return String.format("CREATE UNIQUE INDEX ON %s (%s);", this.name, table.getName(), columnStr);
+    return String.format("CREATE UNIQUE INDEX ON %s (%s);", table.getName(), columnStr);
   }
 
   public boolean create(Connection conn) {
