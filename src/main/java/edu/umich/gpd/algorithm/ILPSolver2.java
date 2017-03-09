@@ -162,7 +162,7 @@ public class ILPSolver2 extends AbstractSolver {
       M5P m5p = new M5P();
       try {
         smo.setOptions(Utils.splitOptions("-C 0"));
-        m5p.setOptions(Utils.splitOptions("-M 1"));
+        m5p.setOptions(Utils.splitOptions("-R -M 1"));
       } catch (Exception e) {
         GPDLogger.error(this, "Failed to set options for the classifier.");
         e.printStackTrace();
@@ -186,12 +186,16 @@ public class ILPSolver2 extends AbstractSolver {
     // now solve
     Stopwatch timeToSolve = Stopwatch.createStarted();
     LPSolution solution = lpw.solve();
-    GPDLogger.info(this, "Objective Value = " + solution.getObjectiveValue());
-    timeTaken = timeToSolve.elapsed(TimeUnit.SECONDS);
-    GPDLogger.info(this, String.format("took %d seconds to solve the problem.", timeTaken));
-    timeTaken = entireTime.elapsed(TimeUnit.SECONDS);
-    GPDLogger.info(this, String.format("took %d seconds for the entire process.",
+    if (solution == null) {
+      GPDLogger.info(this, "No feasible solution found.");
+    } else {
+      GPDLogger.info(this, "Objective Value = " + solution.getObjectiveValue());
+      timeTaken = timeToSolve.elapsed(TimeUnit.SECONDS);
+      GPDLogger.info(this, String.format("took %d seconds to solve the problem.", timeTaken));
+      timeTaken = entireTime.elapsed(TimeUnit.SECONDS);
+      GPDLogger.info(this, String.format("took %d seconds for the entire process.",
           timeTaken));
+    }
     //for (int i = 0; i < numQuery; ++i) {
       //for (int j = 0; j < numConfiguration; ++j) {
         //String varName = "x_" + i + "_" + j;
