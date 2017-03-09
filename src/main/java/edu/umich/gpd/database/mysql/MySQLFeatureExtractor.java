@@ -81,7 +81,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
       return false;
     }
     attrList.add(new Attribute("queryId"));
-    attrList.add(new Attribute("configStr", configStrList));
+    attrList.add(new Attribute("configId"));
     attrList.add(new Attribute("totalRowFromSimpleSelect"));
     attrList.add(new Attribute("totalRowFromPrimarySelect"));
     attrList.add(new Attribute("totalRowFromUnionSelect"));
@@ -148,7 +148,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
   }
 
   @Override
-  public boolean addTrainingData(String dbName, Schema s, Query q, String configString,
+  public boolean addTrainingData(String dbName, Schema s, Query q, int configId,
                                  double queryTime) {
 
     int queryId = q.getId();
@@ -412,7 +412,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
           newInstance.setValue(idx++, t.getRowCount(dbName));
         }
         newInstance.setValue(idx++, queryId);
-        newInstance.setValue(idx++, configString);
+        newInstance.setValue(idx++, configId);
         newInstance.setValue(idx++, totalRowFromSimpleSelect);
         newInstance.setValue(idx++, totalRowFromPrimarySelect);
         newInstance.setValue(idx++, totalRowFromUnionSelect);
@@ -496,7 +496,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
   }
 
   @Override
-  public Instance getTestInstance(String dbName, Schema s, Query q, String configString) {
+  public Instance getTestInstance(String dbName, Schema s, Query q, int configId) {
 
     int queryId;
     if (q == null) {
@@ -770,7 +770,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
         } else {
           newInstance.setValue(idx++, queryId);
         }
-        newInstance.setValue(idx++, configString);
+        newInstance.setValue(idx++, configId);
         newInstance.setValue(idx++, totalRowFromSimpleSelect);
         newInstance.setValue(idx++, totalRowFromPrimarySelect);
         newInstance.setValue(idx++, totalRowFromUnionSelect);

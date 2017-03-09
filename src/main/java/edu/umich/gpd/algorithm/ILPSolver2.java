@@ -37,6 +37,7 @@ public class ILPSolver2 extends AbstractSolver {
   private int numCostVariables;
   private Set<String> configStrSet;
   private Set<String> structureStrSet;
+  private Map<String, Integer> configStrMap;
 
   public ILPSolver2(Connection conn, Workload workload, Schema schema,
                     Set<Configuration> configurations,
@@ -52,15 +53,18 @@ public class ILPSolver2 extends AbstractSolver {
     this.numQuery = workload.getQueries().size();
     this.configStrSet = new HashSet<>();
     this.structureStrSet = new HashSet<>();
+    this.configStrMap = new HashMap<>();
   }
 
   public boolean solve() {
     this.sizeLimit = GPDMain.userInput.getSetting().getSizeLimit();
     Stopwatch entireTime = Stopwatch.createStarted();
 
+    int count = 0;
     List<Structure> possibleStructures = getAllStructures(configurations);
     for (Configuration c : configurations) {
       configStrSet.add(c.getNonUniqueString());
+      configStrMap.put(c.getNonUniqueString(), count++);
     }
     for (Structure s : possibleStructures) {
       structureStrSet.add(s.getNonUniqueString());
@@ -83,7 +87,7 @@ public class ILPSolver2 extends AbstractSolver {
     // TODO: make this function to be implemented as platform-specific.
     buildCompatibilityMatrix(possibleStructures, compatibilityMatrix);
 
-    int count = 0;
+    count = 0;
     LPWizard lpw = new LPWizard();
     for (int i = 0; i < numQuery; ++i) {
       Query q = workload.getQueries().get(i);
@@ -302,7 +306,8 @@ public class ILPSolver2 extends AbstractSolver {
             rawCostArray[d][count] = (long) queryTime;
           }
           if (useRegression)
-            extractor.addTrainingData(dbName, schema, q, configuration.getNonUniqueString(),
+            extractor.addTrainingData(dbName, schema, q,
+                configStrMap.get(configuration.getNonUniqueString()).intValue(),
                 queryTime);
 
           // remove structures
@@ -341,7 +346,7 @@ public class ILPSolver2 extends AbstractSolver {
       for (Configuration config : q.getConfigurations()) {
         if (useRegression) {
           Instance testInstance = extractor.getTestInstance(dbInfo.getTargetDBName(),
-              schema, q, config.getNonUniqueString());
+              schema, q, configStrMap.get(config.getNonUniqueString()).intValue());
           costArray[count] = sr.regress(testInstance);
         } else {
           long total = 0;
