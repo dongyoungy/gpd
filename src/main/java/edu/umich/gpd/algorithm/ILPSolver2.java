@@ -20,6 +20,7 @@ import weka.classifiers.functions.LibSVM;
 import weka.classifiers.functions.SMOreg;
 import weka.classifiers.trees.M5P;
 import weka.core.Instance;
+import weka.core.SelectedTag;
 import weka.core.Utils;
 
 import java.sql.Connection;
@@ -328,6 +329,7 @@ public class ILPSolver2 extends AbstractSolver {
     SMOreg smo = new SMOreg();
     LibLINEAR libLINEAR = new LibLINEAR();
     LibSVM libSVM = new LibSVM();
+    libSVM.setSVMType(new SelectedTag(LibSVM.SVMTYPE_EPSILON_SVR, LibSVM.TAGS_SVMTYPE));
     try {
       smo.setOptions(Utils.splitOptions("-C 1.0 -N 0 " +
           "-I \"weka.classifiers.functions.supportVector.RegSMOImproved " +
