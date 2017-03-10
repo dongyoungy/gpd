@@ -284,7 +284,7 @@ public class ILPSolver extends AbstractSolver {
             rawCostArray[d][i][j] = (long) queryTime;
           }
           if (useRegression)
-            extractor.addTrainingData(dbName, schema, q, config.getNonUniqueString(), queryTime);
+            extractor.addTrainingData(dbName, schema, q, config.getId(), queryTime);
         }
 
         // remove structures
@@ -317,7 +317,7 @@ public class ILPSolver extends AbstractSolver {
         if (useRegression) {
           Query q = queries.get(i);
           Instance testInstance = extractor.getTestInstance(dbInfo.getTargetDBName(),
-              schema, q, config.getNonUniqueString());
+              schema, q, config.getId());
           costArray[i][j] = sr.regress(testInstance);
         } else {
           long total = 0;

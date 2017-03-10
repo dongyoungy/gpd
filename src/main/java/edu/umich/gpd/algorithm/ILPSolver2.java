@@ -15,6 +15,7 @@ import edu.umich.gpd.workload.Workload;
 import scpsolver.problems.LPSolution;
 import scpsolver.problems.LPWizard;
 import scpsolver.problems.LPWizardConstraint;
+import weka.classifiers.functions.LibLINEAR;
 import weka.classifiers.functions.SMOreg;
 import weka.classifiers.trees.M5P;
 import weka.core.Instance;
@@ -324,6 +325,7 @@ public class ILPSolver2 extends AbstractSolver {
 
     // build classifier for cost regression
     SMOreg smo = new SMOreg();
+    LibLINEAR libLINEAR = new LibLINEAR();
     try {
       smo.setOptions(Utils.splitOptions("-C 1.0 -N 0 " +
           "-I \"weka.classifiers.functions.supportVector.RegSMOImproved " +
@@ -334,7 +336,7 @@ public class ILPSolver2 extends AbstractSolver {
       e.printStackTrace();
       return false;
     }
-    GPDClassifier sr = new GPDClassifier(smo);
+    GPDClassifier sr = new GPDClassifier(libLINEAR);
     if (useRegression) {
       if (!sr.build(extractor.getTrainData())) {
         return false;
