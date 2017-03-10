@@ -8,10 +8,7 @@ import edu.umich.gpd.userinput.SampleInfo;
 import edu.umich.gpd.util.GPDLogger;
 import edu.umich.gpd.workload.Query;
 import edu.umich.gpd.workload.Workload;
-import weka.core.Attribute;
-import weka.core.DenseInstance;
-import weka.core.Instance;
-import weka.core.Instances;
+import weka.core.*;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -405,7 +402,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
           }
         }
 
-        Instance newInstance = new DenseInstance(trainData.numAttributes());
+        Instance newInstance = new SparseInstance(trainData.numAttributes());
         newInstance.setDataset(trainData);
         int idx = 0;
         for (Table t : s.getTables()) {
@@ -759,7 +756,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
 
         // 57 features + query time + configuration id + index size
 //        Instance newInstance = new DenseInstance(57 + 1);
-        Instance newInstance = new DenseInstance(trainData.numAttributes());
+        Instance newInstance = new SparseInstance(trainData.numAttributes());
         newInstance.setDataset(trainData);
         int idx = 0;
         for (Table t : s.getTables()) {
