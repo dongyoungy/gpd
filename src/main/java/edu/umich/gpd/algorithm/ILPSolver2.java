@@ -330,6 +330,7 @@ public class ILPSolver2 extends AbstractSolver {
     LibLINEAR libLINEAR = new LibLINEAR();
     LibSVM libSVM = new LibSVM();
     libSVM.setSVMType(new SelectedTag(LibSVM.SVMTYPE_EPSILON_SVR, LibSVM.TAGS_SVMTYPE));
+    libSVM.setCacheSize(4096);
     try {
       smo.setOptions(Utils.splitOptions("-C 1.0 -N 0 " +
           "-I \"weka.classifiers.functions.supportVector.RegSMOImproved " +
