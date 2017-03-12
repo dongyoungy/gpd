@@ -329,10 +329,13 @@ public class ILPSolver2 extends AbstractSolver {
     SMOreg smo = new SMOreg();
     LibLINEAR libLINEAR = new LibLINEAR();
     LibSVM libSVM = new LibSVM();
+    M5P m5p = new M5P();
     libSVM.setSVMType(new SelectedTag(LibSVM.SVMTYPE_EPSILON_SVR, LibSVM.TAGS_SVMTYPE));
     libSVM.setCacheSize(4096);
     libLINEAR.setDebug(true);
     try {
+      m5p.setOptions(Utils.splitOptions("-R"));
+      libLINEAR.setOptions(Utils.splitOptions("-S 0"));
       smo.setOptions(Utils.splitOptions("-C 1.0 -N 0 " +
           "-I \"weka.classifiers.functions.supportVector.RegSMOImproved " +
           "-T 0.001 -V -P 1.0E-12 -L 0.001 -W 1\" " +
@@ -342,7 +345,7 @@ public class ILPSolver2 extends AbstractSolver {
       e.printStackTrace();
       return false;
     }
-    GPDClassifier sr = new GPDClassifier(libLINEAR);
+    GPDClassifier sr = new GPDClassifier(m5p);
     if (useRegression) {
       if (!sr.build(extractor.getTrainData())) {
         return false;
