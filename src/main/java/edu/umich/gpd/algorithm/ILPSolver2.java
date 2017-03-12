@@ -331,6 +331,7 @@ public class ILPSolver2 extends AbstractSolver {
     LibSVM libSVM = new LibSVM();
     libSVM.setSVMType(new SelectedTag(LibSVM.SVMTYPE_EPSILON_SVR, LibSVM.TAGS_SVMTYPE));
     libSVM.setCacheSize(4096);
+    libLINEAR.setDebug(true);
     try {
       smo.setOptions(Utils.splitOptions("-C 1.0 -N 0 " +
           "-I \"weka.classifiers.functions.supportVector.RegSMOImproved " +
@@ -341,7 +342,7 @@ public class ILPSolver2 extends AbstractSolver {
       e.printStackTrace();
       return false;
     }
-    GPDClassifier sr = new GPDClassifier(libSVM);
+    GPDClassifier sr = new GPDClassifier(libLINEAR);
     if (useRegression) {
       if (!sr.build(extractor.getTrainData())) {
         return false;
