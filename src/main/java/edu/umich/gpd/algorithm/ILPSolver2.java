@@ -334,7 +334,7 @@ public class ILPSolver2 extends AbstractSolver {
     libSVM.setCacheSize(4096);
     libLINEAR.setDebug(true);
     try {
-      m5p.setOptions(Utils.splitOptions("-R"));
+//      m5p.setOptions(Utils.splitOptions("-R"));
       libLINEAR.setOptions(Utils.splitOptions("-S 0"));
       smo.setOptions(Utils.splitOptions("-C 1.0 -N 0 " +
           "-I \"weka.classifiers.functions.supportVector.RegSMOImproved " +
