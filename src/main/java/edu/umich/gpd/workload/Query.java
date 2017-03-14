@@ -61,5 +61,9 @@ public class Query {
   public Set<String> getTables() {
     return tables;
   }
+
+  public List<Configuration> getConfigurationList() {
+    return new ArrayList<>(configurations);
+  }
 }
 

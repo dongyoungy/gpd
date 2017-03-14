@@ -120,7 +120,7 @@ public class ILPSolver2 extends AbstractSolver {
         Query q = workload.getQueries().get(i);
         int numConfig = q.getConfigurations().size();
         for (int j = 0; j < numConfig; ++j) {
-          Configuration config = configurations.get(j);
+          Configuration config = q.getConfigurationList().get(j);
           for (Structure s : config.getStructures()) {
             if (s.getName().equals(y.getName())) {
               LPWizardConstraint c = lpw.addConstraint("c_3_" + constraintCount, 0, ">=");
