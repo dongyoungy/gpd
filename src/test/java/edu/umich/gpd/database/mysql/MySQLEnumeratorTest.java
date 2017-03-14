@@ -23,16 +23,19 @@ public class MySQLEnumeratorTest {
     File file = new File("/Users/dyoon/work/gpd/examples/tpch-schema.sql");
     SchemaParser parser = new SchemaParser("@@@");
     Schema s = parser.parse(file);
-    file = new File("/Users/dyoon/work/gpd/examples/tpch-workload-test2.sql");
+    file = new File("/Users/dyoon/work/gpd/examples/tpch-workload.sql");
     WorkloadParser parser2 = new WorkloadParser("@@@");
     Workload w = parser2.parse(file);
 
     MySQLEnumerator enumerator = new MySQLEnumerator();
 
+    GPDMain.userInput.getSetting().setMaxNumColumn(100);
+    GPDMain.userInput.getSetting().setDebug(true);
+    GPDMain.userInput.getSetting().setMaxNumColumnPerStructure(3);
     Set<Configuration> configurations = enumerator.enumerateStructures(s,w);
     while (configurations == null) {
       int prevMaxNumColumn = GPDMain.userInput.getSetting().getMaxNumColumn();
-      GPDMain.userInput.getSetting().setMaxNumColumn(prevMaxNumColumn-1);
+
       Log.info("MySQLEnumeratorTest",
           "Reducing the number of columns to consider to: " +
           (prevMaxNumColumn-1));

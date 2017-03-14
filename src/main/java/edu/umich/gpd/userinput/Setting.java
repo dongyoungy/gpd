@@ -47,6 +47,15 @@ public class Setting {
         '}';
   }
 
+  public void setMaxNumColumnPerStructure(int maxNumColumnPerStructure) {
+    this.maxNumColumnPerStructure = maxNumColumnPerStructure;
+  }
+
+  public void setDebug(boolean debug) {
+
+    this.debug = debug;
+  }
+
   public int getMaxNumColumnPerStructure() {
     return maxNumColumnPerStructure;
   }

@@ -232,7 +232,7 @@ public class ILPSolver extends AbstractSolver {
 
     if (useRegression || sizeLimit > 0) {
       extractor.initialize(sampleDBs, dbInfo.getTargetDBName(), schema,
-          structureStrList, configStrList);
+          structureStrList);
     }
 
     // fill cost array from each sample database.

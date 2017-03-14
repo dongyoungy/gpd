@@ -76,6 +76,7 @@ public class MySQLEnumerator extends StructureEnumerator {
             structureColumns.add(cd);
             structure.setColumns(structureColumns);
             interestingStructures.add(structure);
+            structuresForTable.add(structure);
           }
         } else {
           Set<Set<ColumnDefinition>> columnPowerSet = Sets.powerSet(columnsToAdd);
@@ -103,21 +104,34 @@ public class MySQLEnumerator extends StructureEnumerator {
               }
               structure.setColumns(perm);
               interestingStructures.add(structure);
+              structuresForTable.add(structure);
             }
           }
         }
+        structuresForQuery.add(structuresForTable);
       }
-      if (interestingStructures.size() > 30) {
-        GPDLogger.warn(this, "Too many interesting structures." +
-            " It must be less than 31. The current number is " + interestingStructures.size());
-        return null;
-      }
-      Set<Set<Structure>> structurePowersets = Sets.powerSet(interestingStructures);
-      for (Set<Structure> config : structurePowersets) {
+
+
+      // cartesian implementation
+      for (List<Structure> config : Sets.cartesianProduct(structuresForQuery)) {
         Configuration newConfig = new Configuration(new ArrayList(config));
         configurations.add(newConfig);
         q.addConfiguration(newConfig);
       }
+
+
+      // powerset implementation
+//      if (interestingStructures.size() > 30) {
+//        GPDLogger.warn(this, "Too many interesting structures." +
+//            " It must be less than 31. The current number is " + interestingStructures.size());
+//        return null;
+//      }
+//      Set<Set<Structure>> structurePowersets = Sets.powerSet(interestingStructures);
+//      for (Set<Structure> config : structurePowersets) {
+//        Configuration newConfig = new Configuration(new ArrayList(config));
+//        configurations.add(newConfig);
+//        q.addConfiguration(newConfig);
+//      }
     }
 
     return configurations;
