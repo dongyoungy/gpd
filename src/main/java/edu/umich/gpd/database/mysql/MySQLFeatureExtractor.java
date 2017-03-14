@@ -28,7 +28,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
 
   @Override
   public boolean initialize(List<SampleInfo> sampleDBs, String targetDBName, Schema s,
-                            List<String> structureStrList, List<String> configStrList) {
+                            List<String> structureStrList) {
 
     ArrayList<Attribute> attrList = new ArrayList<>();
     ArrayList<Attribute> attrListForSize = new ArrayList<>();

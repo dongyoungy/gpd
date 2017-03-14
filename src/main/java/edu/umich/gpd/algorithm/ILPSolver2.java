@@ -38,9 +38,8 @@ public class ILPSolver2 extends AbstractSolver {
   private double[][] rawCostArray;
   private int numQuery;
   private int numCostVariables;
-  private Set<String> configStrSet;
   private Set<String> structureStrSet;
-  private Map<String, Integer> configStrMap;
+  private List<String> structureStrList;
 
   public ILPSolver2(Connection conn, Workload workload, Schema schema,
                     Set<Configuration> configurations,
@@ -54,9 +53,7 @@ public class ILPSolver2 extends AbstractSolver {
         [numCostVariables];
     this.costArray = new double[numCostVariables];
     this.numQuery = workload.getQueries().size();
-    this.configStrSet = new HashSet<>();
     this.structureStrSet = new HashSet<>();
-    this.configStrMap = new HashMap<>();
   }
 
   public boolean solve() {
@@ -65,13 +62,10 @@ public class ILPSolver2 extends AbstractSolver {
 
     int count = 0;
     List<Structure> possibleStructures = getAllStructures(configurations);
-    for (Configuration c : configurations) {
-      configStrSet.add(c.getNonUniqueString());
-      configStrMap.put(c.getNonUniqueString(), count++);
-    }
     for (Structure s : possibleStructures) {
       structureStrSet.add(s.getNonUniqueString());
     }
+    structureStrList = new ArrayList(structureStrSet);
 
     // fill the cost array first.
     Stopwatch timetoFillCostArray = Stopwatch.createStarted();
@@ -250,8 +244,7 @@ public class ILPSolver2 extends AbstractSolver {
 
     if (useRegression || sizeLimit > 0) {
       extractor.initialize(sampleDBs, dbInfo.getTargetDBName(), schema,
-          new ArrayList<>(structureStrSet),
-          new ArrayList<>(configStrSet));
+          new ArrayList<>(structureStrSet));
     }
 
     // fill cost array from each sample database.
@@ -294,7 +287,6 @@ public class ILPSolver2 extends AbstractSolver {
           try {
             stmt.setQueryTimeout(GPDMain.userInput.getSetting().getQueryTimeout());
             stmt.execute(q.getContent());
-
           } catch (SQLException e) {
             GPDLogger.info(this, String.format("Query #%d has been timed out. Assigning " +
                 "maximum cost.", i));
@@ -308,10 +300,15 @@ public class ILPSolver2 extends AbstractSolver {
           else {
             rawCostArray[d][count] = (long) queryTime;
           }
-          if (useRegression)
+          if (useRegression) {
+            int configId = 0;
+            for (Structure s : configuration.getStructures()) {
+              configId += structureStrList.indexOf(s.getNonUniqueString());
+            }
             extractor.addTrainingData(dbName, schema, q,
-                configStrMap.get(configuration.getNonUniqueString()).intValue(),
+                configId,
                 queryTime);
+          }
 
           // remove structures
           GPDLogger.info(this, String.format(
@@ -330,8 +327,8 @@ public class ILPSolver2 extends AbstractSolver {
     LibLINEAR libLINEAR = new LibLINEAR();
     LibSVM libSVM = new LibSVM();
     M5P m5p = new M5P();
-    libSVM.setSVMType(new SelectedTag(LibSVM.SVMTYPE_EPSILON_SVR, LibSVM.TAGS_SVMTYPE));
-    libSVM.setCacheSize(4096);
+//    libSVM.setSVMType(new SelectedTag(LibSVM.SVMTYPE_EPSILON_SVR, LibSVM.TAGS_SVMTYPE));
+//    libSVM.setCacheSize(4096);
     libLINEAR.setDebug(true);
     try {
 //      m5p.setOptions(Utils.splitOptions("-R"));
@@ -356,8 +353,12 @@ public class ILPSolver2 extends AbstractSolver {
       Query q = queries.get(i);
       for (Configuration config : q.getConfigurations()) {
         if (useRegression) {
+          int configId = 0;
+          for (Structure s : config.getStructures()) {
+            configId += structureStrList.indexOf(s.getNonUniqueString());
+          }
           Instance testInstance = extractor.getTestInstance(dbInfo.getTargetDBName(),
-              schema, q, configStrMap.get(config.getNonUniqueString()).intValue());
+              schema, q, configId);
           costArray[count] = sr.regress(testInstance);
         } else {
           long total = 0;

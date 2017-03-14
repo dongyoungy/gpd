@@ -26,7 +26,7 @@ public abstract class FeatureExtractor {
   }
 
   public abstract boolean initialize(List<SampleInfo> sampleDBs, String targetDBName, Schema s,
-                                     List<String> structureStrList, List<String> configStrList);
+                                     List<String> structureStrList);
 
   public abstract boolean addTrainingData(String dbName, Schema s, Query q, int configId,
                                           double queryTime);

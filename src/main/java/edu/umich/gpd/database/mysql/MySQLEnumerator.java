@@ -30,6 +30,7 @@ public class MySQLEnumerator extends StructureEnumerator {
       return null;
     }
 
+    Set<String> feasibleColumnNameSet = finder.getFeasibleColumnNameSet();
     Set<Configuration> configurations = new HashSet<>();
 
     // add empty set first
@@ -48,7 +49,8 @@ public class MySQLEnumerator extends StructureEnumerator {
         Table t = s.getTable(tableName);
         Set<ColumnDefinition> columnsToAdd = new HashSet<>();
         for (ColumnDefinition cd : t.getColumns()) {
-          if (interestingColumnList.contains(cd.getColumnName())) {
+          if (interestingColumnList.contains(cd.getColumnName()) &&
+              feasibleColumnNameSet.contains(cd.getColumnName())) {
             columnsToAdd.add(cd);
           }
         }
@@ -59,7 +61,7 @@ public class MySQLEnumerator extends StructureEnumerator {
         }
 
         Structure structure;
-        if (columnsToAdd.size() > GPDMain.userInput.getSetting().getMaxNumColumn()) {
+        if (columnsToAdd.size() > GPDMain.userInput.getSetting().getMaxNumColumnPerStructure()) {
           for (ColumnDefinition cd : columnsToAdd) {
             if (t.getPrimaryKeys().contains(cd.getColumnName()) && t.getPrimaryKeys().size() == 1) {
               structure = new MySQLUniqueIndex(
@@ -78,7 +80,7 @@ public class MySQLEnumerator extends StructureEnumerator {
         } else {
           Set<Set<ColumnDefinition>> columnPowerSet = Sets.powerSet(columnsToAdd);
           for (Set<ColumnDefinition> columnSet : columnPowerSet) {
-            if (columnSet.size() > GPDMain.userInput.getSetting().getMaxNumColumn()) {
+            if (columnSet.size() > GPDMain.userInput.getSetting().getMaxNumColumnPerStructure()) {
               continue;
             }
             Collection<List<ColumnDefinition>> perms = Collections2.permutations(columnSet);

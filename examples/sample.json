@@ -2,7 +2,8 @@
   setting: {
     debug: false,
     algorithm: 'ILP',
-    maxNumColumn: 3,
+    maxNumColumn: 30,
+    maxNumColumnPerStructure: 2,
     minRowForSample: 1000,
     queryTimeout: 10,
     useSampling: true,

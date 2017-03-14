@@ -63,6 +63,8 @@ public class GPDMain {
       Log.set(Log.LEVEL_DEBUG);
     }
 
+    Log.debug("GPDMain", userInput.getSetting().toString());
+
     // parse schema
     String schemaDelimiter = "\n";
     if (schemaInfo.getDelimiter() != null) {

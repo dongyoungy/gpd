@@ -8,6 +8,7 @@ import java.util.List;
  */
 public class Setting {
   private int maxNumColumn;
+  private int maxNumColumnPerStructure;
   private int minRowForSample;
   private int queryTimeout;
   private long sizeLimit;
@@ -18,7 +19,8 @@ public class Setting {
   private String algorithm;
 
   public Setting() {
-    this.maxNumColumn = 2;
+    this.maxNumColumn = 30;
+    this.maxNumColumnPerStructure = 2;
     this.minRowForSample = 1000;
     this.queryTimeout = 30;
     this.sizeLimit = -1;
@@ -27,6 +29,26 @@ public class Setting {
     this.debug = false;
     this.algorithm = "ilp";
     this.samples = new ArrayList<>();
+  }
+
+  @Override
+  public String toString() {
+    return "Current Setting = {" +
+        "maxNumColumn=" + maxNumColumn +
+        ", maxNumColumnPerStructure=" + maxNumColumnPerStructure +
+        ", minRowForSample=" + minRowForSample +
+        ", queryTimeout=" + queryTimeout +
+        ", sizeLimit=" + sizeLimit +
+        ", useSampling=" + useSampling +
+        ", useRegression=" + useRegression +
+        ", debug=" + debug +
+        ", samples=" + samples +
+        ", algorithm='" + algorithm + '\'' +
+        '}';
+  }
+
+  public int getMaxNumColumnPerStructure() {
+    return maxNumColumnPerStructure;
   }
 
   public boolean isDebug() {

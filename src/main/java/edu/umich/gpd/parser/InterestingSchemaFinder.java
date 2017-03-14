@@ -45,6 +45,7 @@ public class InterestingSchemaFinder implements StatementVisitor, SelectVisitor,
   private Set<String> currentTableSet;
   private Set<Set<String>> interestingTableSets;
   private Set<String> tables;
+  private Set<String> feasibleColumnNameSet;
   private Multiset<String> columns;
   private boolean isInteresting;
   private boolean isJoin;
@@ -54,6 +55,7 @@ public class InterestingSchemaFinder implements StatementVisitor, SelectVisitor,
     this.tables = new LinkedHashSet<>();
     this.currentTableSet = new LinkedHashSet<>();
     this.interestingTableSets = new LinkedHashSet<>();
+    this.feasibleColumnNameSet = new HashSet<>();
     this.columns = ConcurrentHashMultiset.create();
     this.isInteresting = false;
     this.isJoin = false;
@@ -89,6 +91,7 @@ public class InterestingSchemaFinder implements StatementVisitor, SelectVisitor,
   }
 
   public boolean getInterestingSchema(Workload w) {
+    feasibleColumnNameSet.clear();
     for (Query q : w.getQueries()) {
       try {
         currentTableSet = new HashSet<>();
@@ -103,6 +106,17 @@ public class InterestingSchemaFinder implements StatementVisitor, SelectVisitor,
         e.printStackTrace();
         return false;
       }
+    }
+    ImmutableMultiset<String> sortedColumns = Multisets.copyHighestCountFirst(columns);
+    Set<String> sortedColumnSet = new LinkedHashSet<>();
+    for (String col : sortedColumns) {
+      sortedColumnSet.add(col);
+    }
+    UnmodifiableIterator<String> it = sortedColumns.iterator();
+    while (it.hasNext() && feasibleColumnNameSet.size() <
+        GPDMain.userInput.getSetting().getMaxNumColumn()) {
+      String columnName = it.next();
+      feasibleColumnNameSet.add(columnName);
     }
     return true;
   }
@@ -140,6 +154,11 @@ public class InterestingSchemaFinder implements StatementVisitor, SelectVisitor,
     }
     System.out.println();
   }
+  
+  public Set<String> getFeasibleColumnNameSet() {
+    return feasibleColumnNameSet;
+  }
+
 
   public void visitBinaryExpression(BinaryExpression binaryExpression) {
     binaryExpression.getLeftExpression().accept(this);
