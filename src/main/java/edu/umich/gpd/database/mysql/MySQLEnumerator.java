@@ -59,7 +59,7 @@ public class MySQLEnumerator extends StructureEnumerator {
         }
 
         Structure structure;
-        if (columnsToAdd.size() >= 3) {
+        if (columnsToAdd.size() > GPDMain.userInput.getSetting().getMaxNumColumn()) {
           for (ColumnDefinition cd : columnsToAdd) {
             if (t.getPrimaryKeys().contains(cd.getColumnName()) && t.getPrimaryKeys().size() == 1) {
               structure = new MySQLUniqueIndex(
@@ -104,6 +104,11 @@ public class MySQLEnumerator extends StructureEnumerator {
             }
           }
         }
+      }
+      if (interestingStructures.size() > 30) {
+        GPDLogger.warn(this, "Too many interesting structures." +
+            " It must be less than 31. The current number is " + interestingStructures.size());
+        return null;
       }
       Set<Set<Structure>> structurePowersets = Sets.powerSet(interestingStructures);
       for (Set<Structure> config : structurePowersets) {
