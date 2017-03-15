@@ -111,13 +111,18 @@ public class MySQLEnumerator extends StructureEnumerator {
         structuresForQuery.add(structuresForTable);
       }
 
+      Set<List<Structure>> cartesianSets = Sets.cartesianProduct(structuresForQuery);
 
       // cartesian implementation
-      for (List<Structure> config : Sets.cartesianProduct(structuresForQuery)) {
+      for (List<Structure> config : cartesianSets) {
         Configuration newConfig = new Configuration(new ArrayList(config));
         configurations.add(newConfig);
         q.addConfiguration(newConfig);
       }
+
+      Configuration emptyConfig = new Configuration(new ArrayList<Structure>());
+      configurations.add(emptyConfig);
+      q.addConfiguration(emptyConfig);
 
 
       // powerset implementation

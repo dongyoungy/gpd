@@ -29,13 +29,13 @@ public class Configuration {
 
     Configuration that = (Configuration) o;
 
-    if (id != that.id) return false;
+//    if (id != that.id) return false;
     return structures != null ? structures.equals(that.structures) : that.structures == null;
   }
 
   @Override
   public int hashCode() {
-    int result = id;
+    int result = 0;
     result = 31 * result + (structures != null ? structures.hashCode() : 0);
     return result;
   }
