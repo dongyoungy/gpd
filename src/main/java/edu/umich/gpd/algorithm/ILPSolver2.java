@@ -187,6 +187,19 @@ public class ILPSolver2 extends AbstractSolver {
       c.setAllVariablesBoolean();
     }
 
+    // if debug, print cost estimation
+    if (GPDMain.userInput.getSetting().isDebug()) {
+      GPDLogger.debug(this, "Cost Estimation:");
+      System.out.print("\t");
+      for (int i = 0; i < numCostVariables; ++i) {
+        System.out.print(costArray[i] + ",");
+        if ((i+1)%10 == 0) {
+          System.out.println();
+          System.out.print("\t");
+        }
+      }
+    }
+
     // now solve
     Stopwatch timeToSolve = Stopwatch.createStarted();
     LPSolution solution = lpw.solve();
