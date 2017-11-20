@@ -43,10 +43,10 @@ public class MySQLEnumerator extends StructureEnumerator {
     List<StructureInfo> structureInfos = GPDMain.userInput.getDatabaseInfo().getAvailableStructures();
     ListMultimap<String, String> uniqueIndexMap = ArrayListMultimap.create();
     for (StructureInfo structureInfo : structureInfos) {
+      GPDLogger.info(this,
+          "Unique index possible: " + structureInfo.getColumnName() + " on " +
+              structureInfo.getTableName());
       if (structureInfo.getType() == "unique_index") {
-        GPDLogger.info(this,
-            "Unique index possible: " + structureInfo.getColumnName() + " on " +
-                structureInfo.getTableName());
         uniqueIndexMap.put(structureInfo.getTableName(), structureInfo.getColumnName());
       }
     }
