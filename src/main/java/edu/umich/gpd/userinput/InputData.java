@@ -22,8 +22,15 @@ public class InputData {
     str += "databaseInfo:\n";
     str += "\ttype: " + databaseInfo.getType() + "\n";
     str += "\thost: " + databaseInfo.getHost() + "\n";
+    str += "\tid: " + databaseInfo.getId() + "\n";
+    str += "\tpw: " + databaseInfo.getPassword() + "\n";
     str += "\tport: " + databaseInfo.getPort() + "\n";
     str += "\ttargetDBName: " + databaseInfo.getTargetDBName() + "\n";
+    str += "\tavailableStructures:";
+    for (StructureInfo s : databaseInfo.getAvailableStructures()) {
+      str += "\n\t\t" + s.getType() + ", " + s.getTableName() + ", " + s.getColumnName();
+    }
+    str += "\n";
     str += "schemaInfo:\n";
     str += "\tpath: " + schemaInfo.getPath() + "\n";
     str += "\tdelimiter: " + schemaInfo.getDelimiter() + "\n";

@@ -64,6 +64,7 @@ public class GPDMain {
     }
 
     Log.debug("GPDMain", userInput.getSetting().toString());
+    Log.debug("GPDMain", userInput.toString());
 
     // parse schema
     String schemaDelimiter = "\n";
