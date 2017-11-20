@@ -45,7 +45,7 @@ public class MySQLEnumerator extends StructureEnumerator {
     for (StructureInfo structureInfo : structureInfos) {
       GPDLogger.info(this,
           "Unique index possible: " + structureInfo.getColumnName() + " on " +
-              structureInfo.getTableName());
+              structureInfo.getTableName() + ", " + structureInfo.getType());
       if (structureInfo.getType() == "unique_index") {
         uniqueIndexMap.put(structureInfo.getTableName(), structureInfo.getColumnName());
       }
