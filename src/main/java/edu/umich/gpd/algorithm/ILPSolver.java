@@ -38,10 +38,10 @@ public class ILPSolver extends AbstractSolver {
   private List<String> structureStrList;
 
   public ILPSolver(Connection conn, Workload workload, Schema schema,
-                   Set<Configuration> configurations,
-                   List<SampleInfo> sampleDBs,
-                   DatabaseInfo dbInfo,
-                   FeatureExtractor extractor, boolean useRegression) {
+      Set<Configuration> configurations,
+      List<SampleInfo> sampleDBs,
+      DatabaseInfo dbInfo,
+      FeatureExtractor extractor, boolean useRegression) {
 
     super(conn, workload, schema, configurations, sampleDBs, dbInfo, extractor, useRegression);
     this.rawCostArray = new double[sampleDBs.size()]
@@ -90,7 +90,6 @@ public class ILPSolver extends AbstractSolver {
     lpw.setAllVariablesInteger();
     lpw.setMinProblem(true);
 
-
     // add constraints
     for (int i = 0; i < numQuery; ++i) {
       LPWizardConstraint c1 = lpw.addConstraint("c_1_" + i, 1, "=");
@@ -110,13 +109,13 @@ public class ILPSolver extends AbstractSolver {
         List<Structure> structureSet = configurations.get(j).getStructures();
         for (Structure s : structureSet) {
           if (s.getName().equals(y.getName())) {
-           for (int i = 0; i < numQuery; ++i) {
-             LPWizardConstraint c = lpw.addConstraint("c_3_" + constraintCount, 0, ">=");
-             String xVarName = "x_" + i + "_" + j;
-             c = c.plus(xVarName, 1.0).plus(yVarName, -1.0);
-             c.setAllVariablesBoolean();
-             ++constraintCount;
-           }
+            for (int i = 0; i < numQuery; ++i) {
+              LPWizardConstraint c = lpw.addConstraint("c_3_" + constraintCount, 0, ">=");
+              String xVarName = "x_" + i + "_" + j;
+              c = c.plus(xVarName, 1.0).plus(yVarName, -1.0);
+              c.setAllVariablesBoolean();
+              ++constraintCount;
+            }
           }
         }
       }
@@ -124,9 +123,9 @@ public class ILPSolver extends AbstractSolver {
 
     // add constraints for compatibility matrix
     constraintCount = 0;
-    for (int i = 0; i < numStructures-1; ++i) {
+    for (int i = 0; i < numStructures - 1; ++i) {
       String var1 = "y_" + i;
-      for (int j = i+1; j < numStructures; ++j) {
+      for (int j = i + 1; j < numStructures; ++j) {
         String var2 = "y_" + j;
         int val = 0;
         if (compatibilityMatrix[i][j]) {
@@ -176,16 +175,16 @@ public class ILPSolver extends AbstractSolver {
     GPDLogger.info(this, String.format("took %d seconds to solve the problem.", timeTaken));
     timeTaken = entireTime.elapsed(TimeUnit.SECONDS);
     GPDLogger.info(this, String.format("took %d seconds for the entire process.",
-          timeTaken));
+        timeTaken));
     //for (int i = 0; i < numQuery; ++i) {
-      //for (int j = 0; j < numConfiguration; ++j) {
-        //String varName = "x_" + i + "_" + j;
-        //System.out.println(varName + " = " + solution.getInteger(varName));
-      //}
+    //for (int j = 0; j < numConfiguration; ++j) {
+    //String varName = "x_" + i + "_" + j;
+    //System.out.println(varName + " = " + solution.getInteger(varName));
+    //}
     //}
     //for (int t = 0; t < numStructures; ++t) {
-      //String varName = "y_" + t;
-      //System.out.println(varName + " = " + solution.getInteger(varName));
+    //String varName = "y_" + t;
+    //System.out.println(varName + " = " + solution.getInteger(varName));
     //}
     Set<Structure> optimalStructures = new LinkedHashSet<>();
     for (int t = 0; t < possibleStructures.size(); ++t) {
@@ -197,13 +196,13 @@ public class ILPSolver extends AbstractSolver {
 
     System.out.println("Optimal structures:");
     for (Structure s : optimalStructures) {
-      System.out.println("\t"+s.getQueryString());
+      System.out.println("\t" + s.getQueryString());
     }
     return true;
   }
 
   private void buildCompatibilityMatrix(List<Structure> possibleStructures,
-                                        boolean[][] compatibilityMatrix) {
+      boolean[][] compatibilityMatrix) {
     // initialize.
     for (int i = 0; i < possibleStructures.size(); ++i) {
       for (int j = 0; j < possibleStructures.size(); ++j) {
@@ -243,7 +242,7 @@ public class ILPSolver extends AbstractSolver {
         conn.setCatalog(dbName);
         stmt = conn.createStatement();
       } catch (SQLException e) {
-        GPDLogger.error(this,"A SQLException has been caught.");
+        GPDLogger.error(this, "A SQLException has been caught.");
         e.printStackTrace();
         return false;
       }
@@ -253,15 +252,16 @@ public class ILPSolver extends AbstractSolver {
         List<Structure> configuration = configurations.get(j).getStructures();
         // build structures
         GPDLogger.info(this, String.format(
-            "Building structures for configuration #%d out of %d.", j+1, configurations.size()));
+            "Building structures for configuration #%d out of %d.", j + 1, configurations.size()));
         for (Structure s : configuration) {
           s.create(conn);
-          if (useRegression || sizeLimit > 0)
+          if (useRegression || sizeLimit > 0) {
             extractor.addTrainingDataForSize(dbName, schema, s);
+          }
         }
 
         GPDLogger.info(this, String.format(
-            "Running queries for configuration #%d out of %d.", j+1, configurations.size()));
+            "Running queries for configuration #%d out of %d.", j + 1, configurations.size()));
         for (int i = 0; i < queries.size(); ++i) {
           Query q = queries.get(i);
           stopwatch = Stopwatch.createStarted();
@@ -283,13 +283,14 @@ public class ILPSolver extends AbstractSolver {
           } else {
             rawCostArray[d][i][j] = (long) queryTime;
           }
-          if (useRegression)
+          if (useRegression) {
             extractor.addTrainingData(dbName, schema, q, config.getId(), queryTime);
+          }
         }
 
         // remove structures
         GPDLogger.info(this, String.format(
-            "Removing structures for configuration #%d out of %d.", j+1, configurations.size()));
+            "Removing structures for configuration #%d out of %d.", j + 1, configurations.size()));
         for (Structure s : configuration) {
           s.drop(conn);
         }

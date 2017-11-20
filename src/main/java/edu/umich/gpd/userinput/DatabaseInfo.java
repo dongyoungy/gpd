@@ -1,5 +1,8 @@
 package edu.umich.gpd.userinput;
 
+import edu.umich.gpd.database.common.Structure;
+
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -12,6 +15,19 @@ public class DatabaseInfo {
   private String targetDBName;
   private String id;
   private String password;
+  private List<StructureInfo> availableStructures;
+
+  public DatabaseInfo() {
+    this.availableStructures = new ArrayList<>();
+  }
+
+  public List<StructureInfo> getAvailableStructures() {
+    return availableStructures;
+  }
+
+  public void setAvailableStructures(List<StructureInfo> availableStructures) {
+    this.availableStructures = availableStructures;
+  }
 
   public String getType() {
     return type;

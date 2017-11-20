@@ -34,6 +34,9 @@ public class InputData {
   }
 
   public DatabaseInfo getDatabaseInfo() {
+    if (databaseInfo == null) {
+      databaseInfo = new DatabaseInfo();
+    }
     return databaseInfo;
   }
 

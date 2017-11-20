@@ -1,6 +1,8 @@
 package edu.umich.gpd.database.mysql;
 
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Sets;
 import edu.umich.gpd.database.common.Configuration;
 import edu.umich.gpd.database.common.Structure;
@@ -9,6 +11,7 @@ import edu.umich.gpd.main.GPDMain;
 import edu.umich.gpd.schema.Schema;
 import edu.umich.gpd.schema.Table;
 import edu.umich.gpd.parser.InterestingSchemaFinder;
+import edu.umich.gpd.userinput.StructureInfo;
 import edu.umich.gpd.util.GPDLogger;
 import edu.umich.gpd.util.UniqueNumberGenerator;
 import edu.umich.gpd.util.UtilFunctions;
@@ -36,6 +39,15 @@ public class MySQLEnumerator extends StructureEnumerator {
     // add empty set first
 //    configurations.add(new Configuration());
 
+    // Get possible unique index
+    List<StructureInfo> structureInfos = GPDMain.userInput.getDatabaseInfo().getAvailableStructures();
+    ListMultimap<String, String> uniqueIndexMap = ArrayListMultimap.create();
+    for (StructureInfo structureInfo : structureInfos) {
+      if (structureInfo.getType() == "unique_index") {
+        uniqueIndexMap.put(structureInfo.getTableName(), structureInfo.getColumnName());
+      }
+    }
+
     // For each query, generate structures that are 'interesting'
     for (Query q : w.getQueries()) {
 
@@ -61,9 +73,40 @@ public class MySQLEnumerator extends StructureEnumerator {
         }
 
         Structure structure;
-        if (columnsToAdd.size() > GPDMain.userInput.getSetting().getMaxNumColumnPerStructure()) {
-          for (ColumnDefinition cd : columnsToAdd) {
-            if (t.getPrimaryKeys().contains(cd.getColumnName()) && t.getPrimaryKeys().size() == 1) {
+//        if (columnsToAdd.size() > GPDMain.userInput.getSetting().getMaxNumColumnPerStructure()) {
+//          for (ColumnDefinition cd : columnsToAdd) {
+//            if (t.getPrimaryKeys().contains(cd.getColumnName()) && t.getPrimaryKeys().size() == 1) {
+//              structure = new MySQLUniqueIndex(
+//                  t.getName() + "_unique_index_" + UniqueNumberGenerator.getUniqueID(),
+//                  t);
+//            } else {
+//              structure = new MySQLIndex(
+//                  t.getName() + "_index_" + UniqueNumberGenerator.getUniqueID(),
+//                  t);
+//            }
+//            ArrayList<ColumnDefinition> structureColumns = new ArrayList<>();
+//            structureColumns.add(cd);
+//            structure.setColumns(structureColumns);
+//            interestingStructures.add(structure);
+//            structuresForTable.add(structure);
+//          }
+//        } else {
+        Set<Set<ColumnDefinition>> columnPowerSet = Sets.powerSet(columnsToAdd);
+        for (Set<ColumnDefinition> columnSet : columnPowerSet) {
+          if (columnSet.size() > GPDMain.userInput.getSetting().getMaxNumColumnPerStructure()) {
+            continue;
+          }
+          Collection<List<ColumnDefinition>> perms = Collections2.permutations(columnSet);
+          Set<String> columnSetString = new LinkedHashSet<>();
+          for (ColumnDefinition cd : columnSet) {
+            columnSetString.add(cd.getColumnName());
+          }
+          for (List<ColumnDefinition> perm : perms) {
+            if (perm.isEmpty()) {
+              continue;
+            }
+            Set<String> uniqueColumnSet = new HashSet(uniqueIndexMap.get(tableName));
+            if (Sets.symmetricDifference(uniqueColumnSet, columnSetString).isEmpty()) {
               structure = new MySQLUniqueIndex(
                   t.getName() + "_unique_index_" + UniqueNumberGenerator.getUniqueID(),
                   t);
@@ -72,43 +115,13 @@ public class MySQLEnumerator extends StructureEnumerator {
                   t.getName() + "_index_" + UniqueNumberGenerator.getUniqueID(),
                   t);
             }
-            ArrayList<ColumnDefinition> structureColumns = new ArrayList<>();
-            structureColumns.add(cd);
-            structure.setColumns(structureColumns);
+            structure.setColumns(perm);
             interestingStructures.add(structure);
             structuresForTable.add(structure);
           }
-        } else {
-          Set<Set<ColumnDefinition>> columnPowerSet = Sets.powerSet(columnsToAdd);
-          for (Set<ColumnDefinition> columnSet : columnPowerSet) {
-            if (columnSet.size() > GPDMain.userInput.getSetting().getMaxNumColumnPerStructure()) {
-              continue;
-            }
-            Collection<List<ColumnDefinition>> perms = Collections2.permutations(columnSet);
-            Set<String> columnSetString = new LinkedHashSet<>();
-            for (ColumnDefinition cd : columnSet) {
-              columnSetString.add(cd.getColumnName());
-            }
-            for (List<ColumnDefinition> perm : perms) {
-              if (perm.isEmpty()) {
-                continue;
-              }
-              if (Sets.symmetricDifference(t.getPrimaryKeys(), columnSetString).isEmpty()) {
-                structure = new MySQLUniqueIndex(
-                    t.getName() + "_unique_index_" + UniqueNumberGenerator.getUniqueID(),
-                    t);
-              } else {
-                structure = new MySQLIndex(
-                    t.getName() + "_index_" + UniqueNumberGenerator.getUniqueID(),
-                    t);
-              }
-              structure.setColumns(perm);
-              interestingStructures.add(structure);
-              structuresForTable.add(structure);
-            }
-          }
         }
-        structuresForQuery.add(structuresForTable);
+//      }
+      structuresForQuery.add(structuresForTable);
       }
 
       Set<List<Structure>> cartesianSets = Sets.cartesianProduct(structuresForQuery);

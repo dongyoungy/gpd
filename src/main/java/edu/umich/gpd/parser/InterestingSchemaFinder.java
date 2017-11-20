@@ -36,8 +36,8 @@ import net.sf.jsqlparser.statement.update.Update;
 import java.util.*;
 
 /**
- * Find tables with their columns, which are in their 'interesting order'.
- * Created by Dong Young Yoon on 2/13/17.
+ * Find tables with their columns, which are in their 'interesting order'. Created by Dong Young
+ * Yoon on 2/13/17.
  */
 public class InterestingSchemaFinder implements StatementVisitor, SelectVisitor, OrderByVisitor,
     FromItemVisitor, ExpressionVisitor, ItemsListVisitor, IntoTableVisitor {
@@ -67,7 +67,7 @@ public class InterestingSchemaFinder implements StatementVisitor, SelectVisitor,
     }
 
     try {
-      Schema filteredSchema = (Schema)s.clone();
+      Schema filteredSchema = (Schema) s.clone();
       ImmutableMultiset<String> sortedColumns = Multisets.copyHighestCountFirst(columns);
       Set<String> sortedColumnSet = new LinkedHashSet<>();
       for (String col : sortedColumns) {
@@ -154,7 +154,7 @@ public class InterestingSchemaFinder implements StatementVisitor, SelectVisitor,
     }
     System.out.println();
   }
-  
+
   public Set<String> getFeasibleColumnNameSet() {
     return feasibleColumnNameSet;
   }
@@ -477,17 +477,17 @@ public class InterestingSchemaFinder implements StatementVisitor, SelectVisitor,
 
   @Override
   public void visit(ExpressionList expressionList) {
-    for (Iterator iter = expressionList.getExpressions().iterator(); iter.hasNext();) {
-      Expression expression = (Expression) iter.next();
+    for (Iterator it = expressionList.getExpressions().iterator(); it.hasNext(); ) {
+      Expression expression = (Expression) it.next();
       expression.accept(this);
     }
   }
 
   @Override
   public void visit(MultiExpressionList multiExpressionList) {
-    for (Iterator iter = multiExpressionList.getExprList().iterator(); iter.hasNext();) {
+    for (Iterator iter = multiExpressionList.getExprList().iterator(); iter.hasNext(); ) {
       ExpressionList expressionList = (ExpressionList) iter.next();
-      for (Iterator iter2 = expressionList.getExpressions().iterator(); iter2.hasNext();) {
+      for (Iterator iter2 = expressionList.getExpressions().iterator(); iter2.hasNext(); ) {
         Expression expression = (Expression) iter2.next();
         expression.accept(this);
       }
@@ -533,12 +533,13 @@ public class InterestingSchemaFinder implements StatementVisitor, SelectVisitor,
     plainSelect.getFromItem().accept(this);
 
     if (plainSelect.getJoins() != null) {
-      for (Iterator joinsIt = plainSelect.getJoins().iterator(); joinsIt.hasNext();) {
+      for (Iterator joinsIt = plainSelect.getJoins().iterator(); joinsIt.hasNext(); ) {
         Join join = (Join) joinsIt.next();
         isJoin = true;
         join.getRightItem().accept(this);
-        if (join.getOnExpression() != null)
+        if (join.getOnExpression() != null) {
           join.getOnExpression().accept(this);
+        }
         if (plainSelect.getWhere() != null) {
           plainSelect.getWhere().accept(this);
         }
@@ -547,8 +548,7 @@ public class InterestingSchemaFinder implements StatementVisitor, SelectVisitor,
     }
 
     if (plainSelect.getGroupByColumnReferences() != null) {
-      for (Expression expression : plainSelect.getGroupByColumnReferences())
-      {
+      for (Expression expression : plainSelect.getGroupByColumnReferences()) {
         isInteresting = true;
         expression.accept(this);
         isInteresting = false;
@@ -602,8 +602,9 @@ public class InterestingSchemaFinder implements StatementVisitor, SelectVisitor,
 
   @Override
   public void visit(Insert insert) {
-    if (insert.getSelect() != null)
+    if (insert.getSelect() != null) {
       insert.getSelect().getSelectBody().accept(this);
+    }
   }
 
   @Override
