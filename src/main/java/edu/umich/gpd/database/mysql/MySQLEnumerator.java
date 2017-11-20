@@ -44,6 +44,9 @@ public class MySQLEnumerator extends StructureEnumerator {
     ListMultimap<String, String> uniqueIndexMap = ArrayListMultimap.create();
     for (StructureInfo structureInfo : structureInfos) {
       if (structureInfo.getType() == "unique_index") {
+        GPDLogger.info(this,
+            "Unique index possible: " + structureInfo.getColumnName() + " on " +
+                structureInfo.getTableName());
         uniqueIndexMap.put(structureInfo.getTableName(), structureInfo.getColumnName());
       }
     }

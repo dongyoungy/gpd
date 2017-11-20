@@ -7,6 +7,7 @@ import edu.umich.gpd.parser.SchemaParser;
 import edu.umich.gpd.parser.WorkloadParser;
 import edu.umich.gpd.database.common.Structure;
 import edu.umich.gpd.schema.Schema;
+import edu.umich.gpd.userinput.StructureInfo;
 import edu.umich.gpd.workload.Workload;
 
 import java.io.File;
@@ -31,7 +32,10 @@ public class MySQLEnumeratorTest {
 
     GPDMain.userInput.getSetting().setMaxNumColumn(100);
     GPDMain.userInput.getSetting().setDebug(true);
-    GPDMain.userInput.getSetting().setMaxNumColumnPerStructure(3);
+    GPDMain.userInput.getSetting().setMaxNumColumnPerStructure(2);
+    GPDMain.userInput.getDatabaseInfo().getAvailableStructures().add(
+        new StructureInfo("unique_index", "customer" ,"c_custkey")
+    );
     Set<Configuration> configurations = enumerator.enumerateStructures(s,w);
     while (configurations == null) {
       int prevMaxNumColumn = GPDMain.userInput.getSetting().getMaxNumColumn();
