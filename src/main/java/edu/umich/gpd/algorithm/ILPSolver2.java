@@ -44,7 +44,7 @@ public class ILPSolver2 extends AbstractSolver {
   private Set<String> structureStrSet;
   private List<String> structureStrList;
   private static final String[] regressionStrList = {"NoRegression",
-    "Linear", "SMO", "M5P"};
+    "SMO", "M5P"};
 
   public ILPSolver2(Connection conn, Workload workload, Schema schema,
                     Set<Configuration> configurations,
@@ -384,13 +384,9 @@ public class ILPSolver2 extends AbstractSolver {
       return false;
     }
     GPDClassifier m5pClassifier = new GPDClassifier(m5p);
-    GPDClassifier linearClassifier = new GPDClassifier(libLINEAR);
     GPDClassifier SMOClassifier = new GPDClassifier(smo);
 
     if (!m5pClassifier.build(extractor.getTrainData())) {
-      return false;
-    }
-    if (!linearClassifier.build(extractor.getTrainData())) {
       return false;
     }
     if (!SMOClassifier.build(extractor.getTrainData())) {
@@ -407,7 +403,6 @@ public class ILPSolver2 extends AbstractSolver {
         Instance testInstance = extractor.getTestInstance(dbInfo.getTargetDBName(),
             schema, q, configId);
         costArrayM5P[count] = m5pClassifier.regress(testInstance);
-        costArrayLinear[count] = linearClassifier.regress(testInstance);
         costArraySMO[count] = SMOClassifier.regress(testInstance);
         long total = 0;
         for (int d = 0; d < numSampleDBs; ++d) {

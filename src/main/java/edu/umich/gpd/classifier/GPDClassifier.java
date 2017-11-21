@@ -23,7 +23,7 @@ public class GPDClassifier {
       trainData.setClassIndex(trainData.numAttributes() - 1);
       classifier.buildClassifier(trainData);
     } catch (Exception e) {
-      Log.error("GPDRegression", "Error while building classifier with SMOReg.");
+      Log.error("GPDRegression", "Error while building classifier.");
       e.printStackTrace();
       return false;
     }
@@ -34,7 +34,7 @@ public class GPDClassifier {
     try {
       return classifier.classifyInstance(testInstance);
     } catch (Exception e) {
-      Log.error("GPDRegression", "Error while performing regression with SMOReg.");
+      Log.error("GPDRegression", "Error while performing regression.");
       e.printStackTrace();
       return -1;
     }
