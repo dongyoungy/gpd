@@ -3,6 +3,7 @@ package edu.umich.gpd.database.mysql;
 import com.esotericsoftware.minlog.Log;
 import edu.umich.gpd.database.common.Configuration;
 import edu.umich.gpd.main.GPDMain;
+import edu.umich.gpd.parser.InputDataParser;
 import edu.umich.gpd.parser.SchemaParser;
 import edu.umich.gpd.parser.WorkloadParser;
 import edu.umich.gpd.database.common.Structure;
@@ -30,12 +31,15 @@ public class MySQLEnumeratorTest {
 
     MySQLEnumerator enumerator = new MySQLEnumerator();
 
+    file = new File("/Users/dyoon/work/gpd/examples/sample.json");
+    GPDMain.userInput = InputDataParser.parse(file);
+
     GPDMain.userInput.getSetting().setMaxNumColumn(100);
     GPDMain.userInput.getSetting().setDebug(true);
     GPDMain.userInput.getSetting().setMaxNumColumnPerStructure(2);
-    GPDMain.userInput.getDatabaseInfo().getAvailableStructures().add(
-        new StructureInfo("unique_index", "customer" ,"c_custkey")
-    );
+//    GPDMain.userInput.getDatabaseInfo().getAvailableStructures().add(
+//        new StructureInfo("unique_index", "customer" ,"c_custkey")
+//    );
     Set<Configuration> configurations = enumerator.enumerateStructures(s,w);
     while (configurations == null) {
       int prevMaxNumColumn = GPDMain.userInput.getSetting().getMaxNumColumn();

@@ -334,9 +334,9 @@ public class ILPSolver2 extends AbstractSolver {
             isTimedOut = true;
           }
           double queryTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
-          // when query times out, we assign INT_MAX to its cost.
+          // when query times out, we assign 'timeout' seconds to its cost.
           if (isTimedOut) {
-            rawCostArray[d][count] = (long) Integer.MAX_VALUE;
+            rawCostArray[d][count] = (long) GPDMain.userInput.getSetting().getQueryTimeout();
           }
           else {
             rawCostArray[d][count] = (long) queryTime;
