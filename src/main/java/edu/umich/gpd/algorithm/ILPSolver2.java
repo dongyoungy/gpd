@@ -343,8 +343,12 @@ public class ILPSolver2 extends AbstractSolver {
           }
           if (useRegression) {
             int configId = 0;
+            int structureCount = 0;
+            int structureSize = structureStrList.size();
             for (Structure s : configuration.getStructures()) {
-              configId += structureStrList.indexOf(s.getNonUniqueString());
+              configId += Math.pow(structureSize, structureCount) *
+                  structureStrList.indexOf(s.getNonUniqueString());
+              ++structureCount;
             }
             extractor.addTrainingData(dbName, schema, q,
                 configId,
@@ -397,8 +401,12 @@ public class ILPSolver2 extends AbstractSolver {
       Query q = queries.get(i);
       for (Configuration config : q.getConfigurations()) {
           int configId = 0;
+          int structureCount = 0;
+          int structureSize = structureStrList.size();
           for (Structure s : config.getStructures()) {
-            configId += structureStrList.indexOf(s.getNonUniqueString());
+            configId += Math.pow(structureSize, structureCount) *
+                structureStrList.indexOf(s.getNonUniqueString());
+            ++structureCount;
           }
         Instance testInstance = extractor.getTestInstance(dbInfo.getTargetDBName(),
             schema, q, configId);
