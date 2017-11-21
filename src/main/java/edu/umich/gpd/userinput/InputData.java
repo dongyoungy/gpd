@@ -14,6 +14,14 @@ public class InputData {
     String str = "";
     str += "setting:\n";
     str += "\tmaxNumColumn: " + setting.getMaxNumColumn() + "\n";
+    str += "\tmaxColumnPerStructure: " + setting.getMaxNumColumnPerStructure() + "\n";
+    str += "\tminRowForSample: " + setting.getMinRowForSample() + "\n";
+    str += "\tqueryTimeout: " + setting.getQueryTimeout() + "\n";
+    str += "\tsizeLimit: " + setting.getSizeLimit() + "\n";
+    str += "\tuseSampling: " + setting.useSampling() + "\n";
+    str += "\tuseRegression: " + setting.useRegression() + "\n";
+    str += "\tdebug: " + setting.isDebug() + "\n";
+    str += "\talgorithm: " + setting.getAlgorithm() + "\n";
     str += "\tsamples:";
     for (SampleInfo s : setting.getSamples()) {
       str += "\n\t\t" + s.getDbName() + ", " + s.getRatio();

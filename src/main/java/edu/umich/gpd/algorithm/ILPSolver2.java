@@ -34,12 +34,17 @@ import java.util.concurrent.TimeUnit;
  */
 public class ILPSolver2 extends AbstractSolver {
 
-  private double[] costArray;
+  private double[] costArrayNoRegression;
+  private double[] costArraySMO;
+  private double[] costArrayLinear;
+  private double[] costArrayM5P;
   private double[][] rawCostArray;
   private int numQuery;
   private int numCostVariables;
   private Set<String> structureStrSet;
   private List<String> structureStrList;
+  private static final String[] regressionStrList = {"NoRegression",
+    "Linear", "SMO", "M5P"};
 
   public ILPSolver2(Connection conn, Workload workload, Schema schema,
                     Set<Configuration> configurations,
@@ -51,7 +56,10 @@ public class ILPSolver2 extends AbstractSolver {
     this.numCostVariables = workload.getTotalConfigurationCount();
     this.rawCostArray = new double[sampleDBs.size()]
         [numCostVariables];
-    this.costArray = new double[numCostVariables];
+    this.costArrayNoRegression = new double[numCostVariables];
+    this.costArraySMO = new double[numCostVariables];
+    this.costArrayLinear = new double[numCostVariables];
+    this.costArrayM5P = new double[numCostVariables];
     this.numQuery = workload.getQueries().size();
     this.structureStrSet = new HashSet<>();
   }
@@ -84,157 +92,177 @@ public class ILPSolver2 extends AbstractSolver {
     // TODO: make this function to be implemented as platform-specific.
     buildCompatibilityMatrix(possibleStructures, compatibilityMatrix);
 
-    count = 0;
-    LPWizard lpw = new LPWizard();
-    for (int i = 0; i < numQuery; ++i) {
-      Query q = workload.getQueries().get(i);
-      int numConfig = q.getConfigurations().size();
-      for (int j = 0; j < numConfig; ++j) {
-        String varName = "x_" + i + "_" + j;
-        lpw = lpw.plus(varName, costArray[count]);
-        ++count;
+    for (String regressionStr : regressionStrList) {
+      GPDLogger.info(this, "Solving for" + regressionStr);
+      double[] costArray;
+      if (regressionStr.equalsIgnoreCase("NoRegression")) {
+        costArray = costArrayNoRegression;
+      } else if (regressionStr.equalsIgnoreCase("Linear")) {
+        costArray = costArrayLinear;
+      } else if (regressionStr.equalsIgnoreCase("SMO")) {
+        costArray = costArraySMO;
+      } else if (regressionStr.equalsIgnoreCase("M5P")) {
+        costArray = costArrayM5P;
+      } else {
+        GPDLogger.error(this, "Unsupported regression: " + regressionStr);
+        return false;
       }
-    }
-    lpw.setAllVariablesInteger();
-    lpw.setMinProblem(true);
-
-
-    // add constraints
-    for (int i = 0; i < numQuery; ++i) {
-      Query q = workload.getQueries().get(i);
-      int numConfig = q.getConfigurations().size();
-      LPWizardConstraint c1 = lpw.addConstraint("c_1_" + i, 1, "=");
-      for (int j = 0; j < numConfig; ++j) {
-        String varName = "x_" + i + "_" + j;
-        c1 = c1.plus(varName, 1.0);
-      }
-      c1.setAllVariablesBoolean();
-    }
-
-    // add constaints for x_ij <= y_t
-    int constraintCount = 0;
-    for (int t = 0; t < possibleStructures.size(); ++t) {
-      Structure y = possibleStructures.get(t);
-      String yVarName = "y_" + t;
+      count = 0;
+      LPWizard lpw = new LPWizard();
       for (int i = 0; i < numQuery; ++i) {
         Query q = workload.getQueries().get(i);
         int numConfig = q.getConfigurations().size();
         for (int j = 0; j < numConfig; ++j) {
-          Configuration config = q.getConfigurationList().get(j);
-          for (Structure s : config.getStructures()) {
-            if (s.getName().equals(y.getName())) {
-              LPWizardConstraint c = lpw.addConstraint("c_3_" + constraintCount, 0, ">=");
-              String xVarName = "x_" + i + "_" + j;
-              c = c.plus(xVarName, 1.0).plus(yVarName, -1.0);
-              c.setAllVariablesBoolean();
-              ++constraintCount;
+          String varName = "x_" + i + "_" + j;
+          lpw = lpw.plus(varName, costArray[count]);
+          ++count;
+        }
+      }
+      lpw.setAllVariablesInteger();
+      lpw.setMinProblem(true);
+
+
+      // add constraints
+      for (int i = 0; i < numQuery; ++i) {
+        Query q = workload.getQueries().get(i);
+        int numConfig = q.getConfigurations().size();
+        LPWizardConstraint c1 = lpw.addConstraint("c_1_" + i, 1, "=");
+        for (int j = 0; j < numConfig; ++j) {
+          String varName = "x_" + i + "_" + j;
+          c1 = c1.plus(varName, 1.0);
+        }
+        c1.setAllVariablesBoolean();
+      }
+
+      // add constaints for x_ij <= y_t
+      int constraintCount = 0;
+      for (int t = 0; t < possibleStructures.size(); ++t) {
+        Structure y = possibleStructures.get(t);
+        String yVarName = "y_" + t;
+        for (int i = 0; i < numQuery; ++i) {
+          Query q = workload.getQueries().get(i);
+          int numConfig = q.getConfigurations().size();
+          for (int j = 0; j < numConfig; ++j) {
+            Configuration config = q.getConfigurationList().get(j);
+            for (Structure s : config.getStructures()) {
+              if (s.getName().equals(y.getName())) {
+                LPWizardConstraint c =
+                    lpw.addConstraint("c_3_" + constraintCount, 0, ">=");
+                String xVarName = "x_" + i + "_" + j;
+                c = c.plus(xVarName, 1.0).plus(yVarName, -1.0);
+                c.setAllVariablesBoolean();
+                ++constraintCount;
+              }
             }
           }
         }
       }
-    }
 
-    // add constraints for compatibility matrix
-    constraintCount = 0;
-    for (int i = 0; i < numStructures-1; ++i) {
-      String var1 = "y_" + i;
-      for (int j = i+1; j < numStructures; ++j) {
-        String var2 = "y_" + j;
-        int val = 0;
-        if (compatibilityMatrix[i][j]) {
-          // if compatible
-          val = 2;
-        } else {
-          // if NOT compatible
-          val = 1;
+      // add constraints for compatibility matrix
+      constraintCount = 0;
+      for (int i = 0; i < numStructures-1; ++i) {
+        String var1 = "y_" + i;
+        for (int j = i+1; j < numStructures; ++j) {
+          String var2 = "y_" + j;
+          int val = 0;
+          if (compatibilityMatrix[i][j]) {
+            // if compatible
+            val = 2;
+          } else {
+            // if NOT compatible
+            val = 1;
+          }
+          LPWizardConstraint c = lpw.addConstraint("c_4_" + constraintCount, val, ">=");
+          c = c.plus(var1, 1.0).plus(var2, 1.0);
+          c.setAllVariablesBoolean();
+          ++constraintCount;
         }
-        LPWizardConstraint c = lpw.addConstraint("c_4_" + constraintCount, val, ">=");
-        c = c.plus(var1, 1.0).plus(var2, 1.0);
+      }
+
+      // if size limit exists, add it as a constraint
+      if (sizeLimit > 0) {
+        LPWizardConstraint c = lpw.addConstraint("c_size", sizeLimit, ">=");
+        // build classifier for structure size regression
+        SMOreg smo = new SMOreg();
+        M5P m5p = new M5P();
+        try {
+          smo.setOptions(Utils.splitOptions("-C 1.0 -N 0 " +
+              "-I \"weka.classifiers.functions.supportVector.RegSMOImproved " +
+              "-T 0.001 -V -P 1.0E-12 -L 0.001 -W 1\" " +
+              "-K \"weka.classifiers.functions.supportVector.PolyKernel -E 1.0 -C 0\""));
+          m5p.setOptions(Utils.splitOptions("-R -M 1"));
+        } catch (Exception e) {
+          GPDLogger.error(this, "Failed to set options for the classifier.");
+          e.printStackTrace();
+          return false;
+        }
+        GPDClassifier sr = new GPDClassifier(smo);
+        sr.build(extractor.getTrainDataForSize());
+        for (int j = 0; j < numStructures; ++j) {
+          String var = "y_" + j;
+          Structure s = possibleStructures.get(j);
+          Instance testInstance = extractor.getTestInstanceForSize(
+              dbInfo.getTargetDBName(), schema, s);
+          double structureSize = sr.regress(testInstance);
+          GPDLogger.debug(this, String.format("Estimated Structure Size = %f (%s)",
+              structureSize, s.getQueryString()));
+          c = c.plus(var, structureSize);
+        }
         c.setAllVariablesBoolean();
-        ++constraintCount;
       }
-    }
 
-    // if size limit exists, add it as a constraint
-    if (sizeLimit > 0) {
-      LPWizardConstraint c = lpw.addConstraint("c_size", sizeLimit, ">=");
-      // build classifier for structure size regression
-      SMOreg smo = new SMOreg();
-      M5P m5p = new M5P();
-      try {
-        smo.setOptions(Utils.splitOptions("-C 1.0 -N 0 " +
-            "-I \"weka.classifiers.functions.supportVector.RegSMOImproved " +
-            "-T 0.001 -V -P 1.0E-12 -L 0.001 -W 1\" " +
-            "-K \"weka.classifiers.functions.supportVector.PolyKernel -E 1.0 -C 0\""));
-        m5p.setOptions(Utils.splitOptions("-R -M 1"));
-      } catch (Exception e) {
-        GPDLogger.error(this, "Failed to set options for the classifier.");
-        e.printStackTrace();
-        return false;
-      }
-      GPDClassifier sr = new GPDClassifier(smo);
-      sr.build(extractor.getTrainDataForSize());
-      for (int j = 0; j < numStructures; ++j) {
-        String var = "y_" + j;
-        Structure s = possibleStructures.get(j);
-        Instance testInstance = extractor.getTestInstanceForSize(
-            dbInfo.getTargetDBName(), schema, s);
-        double structureSize = sr.regress(testInstance);
-        GPDLogger.debug(this, String.format("Estimated Structure Size = %f (%s)",
-            structureSize, s.getQueryString()));
-        c = c.plus(var, structureSize);
-      }
-      c.setAllVariablesBoolean();
-    }
+      // if debug, print cost estimation
+//    if (GPDMain.userInput.getSetting().isDebug()) {
+//      GPDLogger.debug(this, "Cost Estimation:");
+//      System.out.print("\t");
+//      for (int i = 0; i < numCostVariables; ++i) {
+//        System.out.print(costArray[i] + ",");
+//        if ((i+1)%10 == 0) {
+//          System.out.println();
+//          System.out.print("\t");
+//        }
+//      }
+//    }
 
-    // if debug, print cost estimation
-    if (GPDMain.userInput.getSetting().isDebug()) {
-      GPDLogger.debug(this, "Cost Estimation:");
-      System.out.print("\t");
-      for (int i = 0; i < numCostVariables; ++i) {
-        System.out.print(costArray[i] + ",");
-        if ((i+1)%10 == 0) {
-          System.out.println();
-          System.out.print("\t");
-        }
+      // now solve
+      Stopwatch timeToSolve = Stopwatch.createStarted();
+      LPSolution solution = lpw.solve();
+      if (solution == null) {
+        GPDLogger.info(this, "No feasible solution found.");
+      } else {
+        GPDLogger.info(this, "Objective Value = " + solution.getObjectiveValue());
+        timeTaken = timeToSolve.elapsed(TimeUnit.SECONDS);
+        GPDLogger.info(this,
+            String.format("took %d seconds to solve the problem.", timeTaken));
       }
-    }
-
-    // now solve
-    Stopwatch timeToSolve = Stopwatch.createStarted();
-    LPSolution solution = lpw.solve();
-    if (solution == null) {
-      GPDLogger.info(this, "No feasible solution found.");
-    } else {
-      GPDLogger.info(this, "Objective Value = " + solution.getObjectiveValue());
-      timeTaken = timeToSolve.elapsed(TimeUnit.SECONDS);
-      GPDLogger.info(this, String.format("took %d seconds to solve the problem.", timeTaken));
-      timeTaken = entireTime.elapsed(TimeUnit.SECONDS);
-      GPDLogger.info(this, String.format("took %d seconds for the entire process.",
-          timeTaken));
-    }
-    //for (int i = 0; i < numQuery; ++i) {
+      //for (int i = 0; i < numQuery; ++i) {
       //for (int j = 0; j < numConfiguration; ++j) {
-        //String varName = "x_" + i + "_" + j;
-        //System.out.println(varName + " = " + solution.getInteger(varName));
+      //String varName = "x_" + i + "_" + j;
+      //System.out.println(varName + " = " + solution.getInteger(varName));
       //}
-    //}
-    //for (int t = 0; t < numStructures; ++t) {
+      //}
+      //for (int t = 0; t < numStructures; ++t) {
       //String varName = "y_" + t;
       //System.out.println(varName + " = " + solution.getInteger(varName));
-    //}
-    Set<Structure> optimalStructures = new LinkedHashSet<>();
-    for (int t = 0; t < possibleStructures.size(); ++t) {
-      String varName = "y_" + t;
-      if (solution.getInteger(varName) == 1) {
-        optimalStructures.add(possibleStructures.get(t));
+      //}
+      Set<Structure> optimalStructures = new LinkedHashSet<>();
+      for (int t = 0; t < possibleStructures.size(); ++t) {
+        String varName = "y_" + t;
+        if (solution.getInteger(varName) == 1) {
+          optimalStructures.add(possibleStructures.get(t));
+        }
+      }
+
+      System.out.println("Optimal structures with " + regressionStr
+          + ":");
+      for (Structure s : optimalStructures) {
+        System.out.println("\t"+s.getQueryString());
       }
     }
-
-    System.out.println("Optimal structures:");
-    for (Structure s : optimalStructures) {
-      System.out.println("\t"+s.getQueryString());
-    }
+    timeTaken = entireTime.elapsed(TimeUnit.SECONDS);
+    GPDLogger.info(this,
+        String.format("took %d seconds for the entire process.",
+        timeTaken));
     return true;
   }
 
@@ -355,35 +383,40 @@ public class ILPSolver2 extends AbstractSolver {
       e.printStackTrace();
       return false;
     }
-    GPDClassifier sr = new GPDClassifier(m5p);
-    if (useRegression) {
-      if (!sr.build(extractor.getTrainData())) {
-        return false;
-      }
+    GPDClassifier m5pClassifier = new GPDClassifier(m5p);
+    GPDClassifier linearClassifier = new GPDClassifier(libLINEAR);
+    GPDClassifier SMOClassifier = new GPDClassifier(smo);
+
+    if (!m5pClassifier.build(extractor.getTrainData())) {
+      return false;
+    }
+    if (!linearClassifier.build(extractor.getTrainData())) {
+      return false;
+    }
+    if (!SMOClassifier.build(extractor.getTrainData())) {
+      return false;
     }
     int count = 0;
     for (int i = 0; i < queries.size(); ++i) {
       Query q = queries.get(i);
       for (Configuration config : q.getConfigurations()) {
-        if (useRegression) {
           int configId = 0;
           for (Structure s : config.getStructures()) {
             configId += structureStrList.indexOf(s.getNonUniqueString());
           }
-          Instance testInstance = extractor.getTestInstance(dbInfo.getTargetDBName(),
-              schema, q, configId);
-          costArray[count] = sr.regress(testInstance);
-        } else {
-          long total = 0;
-          for (int d = 0; d < numSampleDBs; ++d) {
-            total += rawCostArray[d][count];
-          }
-          costArray[count] = total / numSampleDBs;
+        Instance testInstance = extractor.getTestInstance(dbInfo.getTargetDBName(),
+            schema, q, configId);
+        costArrayM5P[count] = m5pClassifier.regress(testInstance);
+        costArrayLinear[count] = linearClassifier.regress(testInstance);
+        costArraySMO[count] = SMOClassifier.regress(testInstance);
+        long total = 0;
+        for (int d = 0; d < numSampleDBs; ++d) {
+          total += rawCostArray[d][count];
         }
+        costArrayNoRegression[count] = total / numSampleDBs;
         ++count;
       }
     }
-
     return true;
   }
 }

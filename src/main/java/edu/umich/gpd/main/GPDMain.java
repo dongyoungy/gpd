@@ -182,7 +182,8 @@ public class GPDMain {
               extractor, useRegression);
           break;
         default:
-          Log.error("GPDMain", "Unsupported algorithm: " + setting.getAlgorithm());
+          Log.error("GPDMain", "Unsupported algorithm: " +
+              setting.getAlgorithm());
           System.exit(-1);
       }
 

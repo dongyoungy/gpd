@@ -1,6 +1,5 @@
 package edu.umich.gpd.database.mysql;
 
-import com.esotericsoftware.minlog.Log;
 import edu.umich.gpd.userinput.SampleInfo;
 import edu.umich.gpd.database.common.Sampler;
 import edu.umich.gpd.schema.Schema;
@@ -15,9 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by Dong Young Yoon on 2/19/17.
- */
+/** Created by Dong Young Yoon on 2/19/17. */
 public class MySQLSampler extends Sampler {
 
   public MySQLSampler(String originalDBName) {
@@ -25,11 +22,10 @@ public class MySQLSampler extends Sampler {
   }
 
   @Override
-  public boolean sample(Connection conn, Schema schema, long minRow,
-                        List<SampleInfo> sampleInfoList) {
+  public boolean sample(
+      Connection conn, Schema schema, long minRow, List<SampleInfo> sampleInfoList) {
     if (sampleInfoList.isEmpty()) {
-      GPDLogger.error(this,
-          "Empty sampling information.");
+      GPDLogger.error(this, "Empty sampling information.");
       return false;
     }
     try {
@@ -76,14 +72,17 @@ public class MySQLSampler extends Sampler {
           stmt.execute(t.getCreateStatement());
 
           long rowCount = tableRowCounts.get(t);
-          if (rowCount <= minRow) {
+          if (rowCount * sampleRatio <= minRow) {
             // copy as-is
-            stmt.execute(String.format("INSERT INTO %s SELECT * FROM %s.%s", tableName,
-                originalDBName, tableName));
+            stmt.execute(
+                String.format(
+                    "INSERT INTO %s SELECT * FROM %s.%s", tableName, originalDBName, tableName));
           } else {
             // copy using sample ratio (approx.)
-            stmt.execute(String.format("INSERT INTO %s SELECT * FROM %s.%s WHERE rand() <= %f",
-                tableName, originalDBName, tableName, sampleRatio));
+            stmt.execute(
+                String.format(
+                    "INSERT INTO %s SELECT * FROM %s.%s WHERE rand() <= %f",
+                    tableName, originalDBName, tableName, sampleRatio));
           }
         }
       }
