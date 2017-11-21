@@ -23,9 +23,15 @@ import weka.core.Instance;
 import weka.core.SelectedTag;
 import weka.core.Utils;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.Buffer;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -397,6 +403,17 @@ public class ILPSolver2 extends AbstractSolver {
       return false;
     }
     int count = 0;
+    Date date = new Date();
+    SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd-hhmmss");
+    String formattedDate = sdf.format(date);
+    BufferedWriter noRegCostWriter = null, m5pCostWriter = null, smoCostWriter = null;
+    try {
+      noRegCostWriter = new BufferedWriter(new FileWriter(new File("./noreg-" + formattedDate)));
+      m5pCostWriter = new BufferedWriter(new FileWriter(new File("./m5p-" + formattedDate)));
+      smoCostWriter = new BufferedWriter(new FileWriter(new File("./smo-" + formattedDate)));
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
     for (int i = 0; i < queries.size(); ++i) {
       Query q = queries.get(i);
       for (Configuration config : q.getConfigurations()) {
@@ -417,8 +434,22 @@ public class ILPSolver2 extends AbstractSolver {
           total += rawCostArray[d][count];
         }
         costArrayNoRegression[count] = total / numSampleDBs;
+        try {
+          noRegCostWriter.write(String.valueOf(costArrayNoRegression[count]) + "\n");
+          m5pCostWriter.write(String.valueOf(costArrayM5P[count]) + "\n");
+          smoCostWriter.write(String.valueOf(costArraySMO[count]) + "\n");
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
         ++count;
       }
+    }
+    try {
+      noRegCostWriter.close();
+      smoCostWriter.close();
+      m5pCostWriter.close();
+    } catch (IOException e) {
+      e.printStackTrace();
     }
     return true;
   }
