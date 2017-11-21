@@ -93,7 +93,7 @@ public class ILPSolver2 extends AbstractSolver {
     buildCompatibilityMatrix(possibleStructures, compatibilityMatrix);
 
     for (String regressionStr : regressionStrList) {
-      GPDLogger.info(this, "Solving for" + regressionStr);
+      GPDLogger.info(this, "Solving for " + regressionStr);
       double[] costArray;
       if (regressionStr.equalsIgnoreCase("NoRegression")) {
         costArray = costArrayNoRegression;
@@ -366,7 +366,7 @@ public class ILPSolver2 extends AbstractSolver {
     // build classifier for cost regression
     SMOreg smo = new SMOreg();
     LibLINEAR libLINEAR = new LibLINEAR();
-    LibSVM libSVM = new LibSVM();
+//    LibSVM libSVM = new LibSVM();
     M5P m5p = new M5P();
 //    libSVM.setSVMType(new SelectedTag(LibSVM.SVMTYPE_EPSILON_SVR, LibSVM.TAGS_SVMTYPE));
 //    libSVM.setCacheSize(4096);
