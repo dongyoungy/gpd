@@ -49,8 +49,7 @@ public class ILPSolver2 extends AbstractSolver {
   private int numCostVariables;
   private Set<String> structureStrSet;
   private List<String> structureStrList;
-  private static final String[] regressionStrList = {"NoRegression",
-    "SMO", "M5P"};
+  private static final String[] regressionStrList = {"NoRegression", "M5P"};
 
   public ILPSolver2(Connection conn, Workload workload, Schema schema,
                     Set<Configuration> configurations,
@@ -202,7 +201,7 @@ public class ILPSolver2 extends AbstractSolver {
           e.printStackTrace();
           return false;
         }
-        GPDClassifier sr = new GPDClassifier(smo);
+        GPDClassifier sr = new GPDClassifier(m5p);
         sr.build(extractor.getTrainDataForSize());
         for (int j = 0; j < numStructures; ++j) {
           String var = "y_" + j;
@@ -394,23 +393,18 @@ public class ILPSolver2 extends AbstractSolver {
       return false;
     }
     GPDClassifier m5pClassifier = new GPDClassifier(m5p);
-    GPDClassifier SMOClassifier = new GPDClassifier(smo);
 
     if (!m5pClassifier.build(extractor.getTrainData())) {
-      return false;
-    }
-    if (!SMOClassifier.build(extractor.getTrainData())) {
       return false;
     }
     int count = 0;
     Date date = new Date();
     SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd-hhmmss");
     String formattedDate = sdf.format(date);
-    BufferedWriter noRegCostWriter = null, m5pCostWriter = null, smoCostWriter = null;
+    BufferedWriter noRegCostWriter = null, m5pCostWriter = null;
     try {
       noRegCostWriter = new BufferedWriter(new FileWriter(new File("./noreg-" + formattedDate)));
       m5pCostWriter = new BufferedWriter(new FileWriter(new File("./m5p-" + formattedDate)));
-      smoCostWriter = new BufferedWriter(new FileWriter(new File("./smo-" + formattedDate)));
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -428,7 +422,6 @@ public class ILPSolver2 extends AbstractSolver {
         Instance testInstance = extractor.getTestInstance(dbInfo.getTargetDBName(),
             schema, q, configId);
         costArrayM5P[count] = m5pClassifier.regress(testInstance);
-        costArraySMO[count] = SMOClassifier.regress(testInstance);
         long total = 0;
         for (int d = 0; d < numSampleDBs; ++d) {
           total += rawCostArray[d][count];
@@ -437,7 +430,6 @@ public class ILPSolver2 extends AbstractSolver {
         try {
           noRegCostWriter.write(String.valueOf(costArrayNoRegression[count]) + "\n");
           m5pCostWriter.write(String.valueOf(costArrayM5P[count]) + "\n");
-          smoCostWriter.write(String.valueOf(costArraySMO[count]) + "\n");
         } catch (IOException e) {
           e.printStackTrace();
         }
@@ -446,7 +438,6 @@ public class ILPSolver2 extends AbstractSolver {
     }
     try {
       noRegCostWriter.close();
-      smoCostWriter.close();
       m5pCostWriter.close();
     } catch (IOException e) {
       e.printStackTrace();
