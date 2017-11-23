@@ -72,11 +72,18 @@ public class MySQLSampler extends Sampler {
           stmt.execute(t.getCreateStatement());
 
           long rowCount = tableRowCounts.get(t);
-          if (rowCount * sampleRatio <= minRow) {
+          if (rowCount <= minRow) {
             // copy as-is
             stmt.execute(
                 String.format(
                     "INSERT INTO %s SELECT * FROM %s.%s", tableName, originalDBName, tableName));
+          } else if (rowCount * sampleRatio <= minRow) {
+            // use a new sample ratio
+            double newRatio = (double)minRow / (double)rowCount;
+            stmt.execute(
+                String.format(
+                    "INSERT INTO %s SELECT * FROM %s.%s WHERE rand() <= %f",
+                    tableName, originalDBName, tableName, newRatio));
           } else {
             // copy using sample ratio (approx.)
             stmt.execute(
