@@ -308,8 +308,10 @@ public class ILPSolver2 extends AbstractSolver {
     String formattedDate = sdf.format(date);
     BufferedWriter noRegCostWriter = null, m5pCostWriter = null;
     try {
-      noRegCostWriter = new BufferedWriter(new FileWriter(new File("./noreg-" + formattedDate)));
-      m5pCostWriter = new BufferedWriter(new FileWriter(new File("./m5p-" + formattedDate)));
+      File resultDir = new File("./results");
+      resultDir.mkdirs();
+      noRegCostWriter = new BufferedWriter(new FileWriter(new File("./results/noreg-" + formattedDate)));
+      m5pCostWriter = new BufferedWriter(new FileWriter(new File("./results/m5p-" + formattedDate)));
     } catch (IOException e) {
       e.printStackTrace();
     }
