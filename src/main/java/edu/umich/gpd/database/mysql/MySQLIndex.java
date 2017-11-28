@@ -116,6 +116,7 @@ public class MySQLIndex extends Structure {
     try {
       Statement stmt = conn.createStatement();
       stmt.execute(String.format("CREATE INDEX %s ON %s (%s)", this.name, table.getName(), columnStr));
+      GPDLogger.debug(this, "Executed: " + String.format("CREATE INDEX %s ON %s (%s)", this.name, table.getName(), columnStr));
 
       String dbName = conn.getCatalog();
       ResultSet res = stmt.executeQuery(String.format("SELECT stat_value*@@innodb_page_size FROM " +
