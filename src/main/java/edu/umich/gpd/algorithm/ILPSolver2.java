@@ -451,12 +451,12 @@ public class ILPSolver2 extends AbstractSolver {
               TemporalCostArray m5pArray = new TemporalCostArray(m5p, elapsed, "M5P");
               costArrays.add(noRegressionArray);
               costArrays.add(m5pArray);
-              incrementalRunTime += incrementalRunTime;
             } else {
               GPDLogger.error(this, "Failed to fill cost array.");
               return false;
             }
             GPDLogger.info(this, "Incrementally filled cost array for time = " + incrementalRunTime);
+            incrementalRunTime += incrementalRunTime;
           }
         }
       }
