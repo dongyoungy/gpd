@@ -443,12 +443,6 @@ public class ILPSolver2 extends AbstractSolver {
           long elapsed = runTime.elapsed(TimeUnit.SECONDS);
           if (isIncrementalRun && elapsed >= incrementalRunTime) {
             // create cost array for the time.
-            try {
-              stmt.setQueryTimeout(0);
-            } catch (Exception e) {
-              GPDLogger.error(this, "Failed to set query timeout to 0.");
-              e.printStackTrace();
-            }
             GPDLogger.info(this, "Incrementally filling cost array for time = " + incrementalRunTime);
             if (fillCostArray()) {
               double[] noRegression = Arrays.copyOf(costArrayNoRegression, costArrayNoRegression.length);
@@ -463,6 +457,12 @@ public class ILPSolver2 extends AbstractSolver {
             }
             GPDLogger.info(this, "Incrementally filled cost array for time = " + incrementalRunTime);
             incrementalRunTime += incrementalRunTime;
+            // reset catalog.
+            try {
+              conn.setCatalog(dbName);
+            } catch (Exception e) {
+              e.printStackTrace();
+            }
           }
         }
       }
