@@ -129,7 +129,7 @@ public class MySQLIndex extends Structure {
         GPDLogger.info(this, "Failed to obtain the size of this physical " +
             "structure: " + name);
       }
-    } catch (SQLException e) {
+    } catch (Exception e) {
       e.printStackTrace();
       return false;
     }
@@ -141,7 +141,7 @@ public class MySQLIndex extends Structure {
       Statement stmt = conn.createStatement();
       stmt.execute(String.format("DROP INDEX %s ON %s", this.name, table.getName()));
       GPDLogger.debug(this, "Executed: " + String.format("DROP INDEX %s ON %s", this.name, table.getName()));
-    } catch (SQLException e) {
+    } catch (Exception e) {
       e.printStackTrace();
       return false;
     }

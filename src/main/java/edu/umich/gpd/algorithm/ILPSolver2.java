@@ -445,7 +445,7 @@ public class ILPSolver2 extends AbstractSolver {
             // create cost array for the time.
             try {
               stmt.setQueryTimeout(0);
-            } catch (SQLException e) {
+            } catch (Exception e) {
               GPDLogger.error(this, "Failed to set query timeout to 0.");
               e.printStackTrace();
             }
