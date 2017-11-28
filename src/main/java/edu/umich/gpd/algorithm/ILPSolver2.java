@@ -456,6 +456,7 @@ public class ILPSolver2 extends AbstractSolver {
               GPDLogger.error(this, "Failed to fill cost array.");
               return false;
             }
+            GPDLogger.info(this, "Incrementally filled cost array for time = " + incrementalRunTime);
           }
         }
       }
