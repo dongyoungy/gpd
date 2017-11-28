@@ -115,10 +115,10 @@ public class MySQLIndex extends Structure {
     }
     try {
       Statement stmt = conn.createStatement();
-      stmt.execute(String.format("CREATE INDEX %s ON %s (%s)", this.name, table.getName(), columnStr));
-      GPDLogger.debug(this, "Executed: " + String.format("CREATE INDEX %s ON %s (%s)", this.name, table.getName(), columnStr));
-
       String dbName = conn.getCatalog();
+      stmt.execute(String.format("CREATE INDEX %s ON %s (%s)", this.name, table.getName(), columnStr));
+      GPDLogger.debug(this, "Executed: " + String.format("CREATE INDEX %s ON %s (%s) @ %s", this.name, table.getName(), columnStr, dbName));
+
       ResultSet res = stmt.executeQuery(String.format("SELECT stat_value*@@innodb_page_size FROM " +
           "mysql.innodb_index_stats WHERE stat_name = 'size' and database_name = '%s' and " +
           "index_name = '%s'", dbName, this.name));
@@ -139,8 +139,9 @@ public class MySQLIndex extends Structure {
   public boolean drop(Connection conn) {
     try {
       Statement stmt = conn.createStatement();
+      String dbName = conn.getCatalog();
       stmt.execute(String.format("DROP INDEX %s ON %s", this.name, table.getName()));
-      GPDLogger.debug(this, "Executed: " + String.format("DROP INDEX %s ON %s", this.name, table.getName()));
+      GPDLogger.debug(this, "Executed: " + String.format("DROP INDEX %s ON %s @ %s", this.name, table.getName(), dbName));
     } catch (Exception e) {
       e.printStackTrace();
       return false;
