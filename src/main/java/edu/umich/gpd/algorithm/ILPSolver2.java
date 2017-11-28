@@ -443,11 +443,12 @@ public class ILPSolver2 extends AbstractSolver {
           long elapsed = runTime.elapsed(TimeUnit.SECONDS);
           if (isIncrementalRun && elapsed >= incrementalRunTime) {
             // create cost array for the time.
+            GPDLogger.info(this, "Incrementally filling cost array for time = " + incrementalRunTime);
             if (fillCostArray()) {
               double[] noRegression = Arrays.copyOf(costArrayNoRegression, costArrayNoRegression.length);
               double[] m5p = Arrays.copyOf(costArrayM5P, costArrayM5P.length);
-              TemporalCostArray noRegressionArray = new TemporalCostArray(noRegression, incrementalRunTime, "NoRegression");
-              TemporalCostArray m5pArray = new TemporalCostArray(m5p, incrementalRunTime, "M5P");
+              TemporalCostArray noRegressionArray = new TemporalCostArray(noRegression, elapsed, "NoRegression");
+              TemporalCostArray m5pArray = new TemporalCostArray(m5p, elapsed, "M5P");
               costArrays.add(noRegressionArray);
               costArrays.add(m5pArray);
               incrementalRunTime += incrementalRunTime;

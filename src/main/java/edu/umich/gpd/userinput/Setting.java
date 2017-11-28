@@ -28,6 +28,8 @@ public class Setting {
     this.sizeLimits = new long[1];
     this.useSampling = false;
     this.useRegression = false;
+    this.incrementalRun = false;
+    this.incrementalRunTime = 0;
     this.debug = false;
     this.algorithm = "ilp";
     this.samples = new ArrayList<>();
