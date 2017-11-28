@@ -28,7 +28,7 @@ public abstract class AbstractSolver {
   protected FeatureExtractor extractor;
   protected int numSampleDBs;
   protected boolean useRegression;
-  protected long sizeLimit;
+  protected long[] sizeLimits;
 
   public AbstractSolver(Connection conn, Workload workload, Schema schema,
                         Set<Configuration> configurations, List<SampleInfo> sampleDBs,

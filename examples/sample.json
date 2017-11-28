@@ -12,7 +12,8 @@
       {dbName: 'tpch_sample_1', ratio: 0.01},
       {dbName: 'tpch_sample_2', ratio: 0.001},
       {dbName: 'tpch_sample_3', ratio: 0.0001}
-    ]
+    ],
+    sizeLimits: [0, 1000000]
   },
   databaseInfo: {
     type: 'mysql',
@@ -20,7 +21,17 @@
     port: 3400,
     targetDBName: 'tpcc',
     id: 'root',
-    password: 'root'
+    password: 'root',
+    availableStructures: [
+      {type: 'unique_index', tableName: 'customer', columnName: 'c_custkey'},
+      {type: 'unique_index', tableName: 'part', columnName: 'p_partkey'},
+      {type: 'unique_index', tableName: 'supplier', columnName: 's_suppkey'},
+      {type: 'unique_index', tableName: 'partsupp', columnName: 'ps_partkey'},
+      {type: 'unique_index', tableName: 'partsupp', columnName: 'ps_suppkey'},
+      {type: 'unique_index', tableName: 'orders', columnName: 'o_orderkey'},
+      {type: 'unique_index', tableName: 'nation', columnName: 'n_nationkey'},
+      {type: 'unique_index', tableName: 'region', columnName: 'r_regionkey'}
+    ]
   },
   schemaInfo: {
     path: '/Users/dyoon/work/gpd/examples/tpcc-schema.sql',

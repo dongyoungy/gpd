@@ -11,10 +11,12 @@ public class Setting {
   private int maxNumColumnPerStructure;
   private int minRowForSample;
   private int queryTimeout;
-  private long sizeLimit;
+  private long[] sizeLimits;
+  private long incrementalRunTime;
   private boolean useSampling;
   private boolean useRegression;
   private boolean debug;
+  private boolean incrementalRun;
   private List<SampleInfo> samples;
   private String algorithm;
 
@@ -23,7 +25,7 @@ public class Setting {
     this.maxNumColumnPerStructure = 2;
     this.minRowForSample = 1000;
     this.queryTimeout = 30;
-    this.sizeLimit = -1;
+    this.sizeLimits = new long[1];
     this.useSampling = false;
     this.useRegression = false;
     this.debug = false;
@@ -33,14 +35,22 @@ public class Setting {
 
   @Override
   public String toString() {
+    String sizeLimitStr = "{";
+    for (long sz : sizeLimits) {
+      sizeLimitStr += sz;
+      sizeLimitStr += ",";
+    }
+    sizeLimitStr += "}";
     return "Current Setting = {" +
         "maxNumColumn=" + maxNumColumn +
         ", maxNumColumnPerStructure=" + maxNumColumnPerStructure +
         ", minRowForSample=" + minRowForSample +
         ", queryTimeout=" + queryTimeout +
-        ", sizeLimit=" + sizeLimit +
+        ", sizeLimits=" + sizeLimitStr +
         ", useSampling=" + useSampling +
         ", useRegression=" + useRegression +
+        ", incrementalRun=" + incrementalRun +
+        ", incrementalRunTime=" + incrementalRunTime +
         ", debug=" + debug +
         ", samples=" + samples +
         ", algorithm='" + algorithm + '\'' +
@@ -84,8 +94,8 @@ public class Setting {
     this.maxNumColumn = maxNumColumn;
   }
 
-  public long getSizeLimit() {
-    return sizeLimit;
+  public long[] getSizeLimits() {
+    return sizeLimits;
   }
 
   public boolean useRegression() {
@@ -106,5 +116,21 @@ public class Setting {
 
   public void setAlgorithm(String algorithm) {
     this.algorithm = algorithm;
+  }
+
+  public boolean isIncrementalRun() {
+    return incrementalRun;
+  }
+
+  public long getIncrementalRunTime() {
+    return incrementalRunTime;
+  }
+
+  public void setIncrementalRunTime(long incrementalRunTime) {
+    this.incrementalRunTime = incrementalRunTime;
+  }
+
+  public void setIncrementalRun(boolean incrementalRun) {
+    this.incrementalRun = incrementalRun;
   }
 }

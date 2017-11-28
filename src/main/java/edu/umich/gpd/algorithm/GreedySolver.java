@@ -31,11 +31,11 @@ public class GreedySolver extends AbstractSolver {
   @Override
   public boolean solve() {
     List<Structure> possibleStructures = getAllStructures(configurations);
-    this.sizeLimit = GPDMain.userInput.getSetting().getSizeLimit();
+    this.sizeLimits = GPDMain.userInput.getSetting().getSizeLimits();
     int numStructures = possibleStructures.size();
     int numSampleDBs = sampleDBs.size();
 
-    if (sizeLimit <= 0) {
+    if (sizeLimits[0] <= 0) {
       System.out.println("Optimal structures:");
       for (int t = 0; t < numStructures; ++t) {
         System.out.println("\t"+possibleStructures.get(t).getQueryString());

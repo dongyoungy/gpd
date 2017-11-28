@@ -17,7 +17,11 @@ public class InputData {
     str += "\tmaxColumnPerStructure: " + setting.getMaxNumColumnPerStructure() + "\n";
     str += "\tminRowForSample: " + setting.getMinRowForSample() + "\n";
     str += "\tqueryTimeout: " + setting.getQueryTimeout() + "\n";
-    str += "\tsizeLimit: " + setting.getSizeLimit() + "\n";
+    str += "\tsizeLimit: ";
+    for (long sz : setting.getSizeLimits()) {
+      str += "\n\t\t" + sz;
+    }
+    str += "\n";
     str += "\tuseSampling: " + setting.useSampling() + "\n";
     str += "\tuseRegression: " + setting.useRegression() + "\n";
     str += "\tdebug: " + setting.isDebug() + "\n";
