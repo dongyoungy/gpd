@@ -17,6 +17,7 @@ public class Setting {
   private boolean useRegression;
   private boolean debug;
   private boolean incrementalRun;
+  private int ilpTimeLimit;
   private List<SampleInfo> samples;
   private String algorithm;
 
@@ -30,6 +31,7 @@ public class Setting {
     this.useRegression = false;
     this.incrementalRun = false;
     this.incrementalRunTime = 0;
+    this.ilpTimeLimit = 1800;
     this.debug = false;
     this.algorithm = "ilp";
     this.samples = new ArrayList<>();
@@ -53,6 +55,7 @@ public class Setting {
         ", useRegression=" + useRegression +
         ", incrementalRun=" + incrementalRun +
         ", incrementalRunTime=" + incrementalRunTime +
+        ", ilpTimeLimit=" + ilpTimeLimit +
         ", debug=" + debug +
         ", samples=" + samples +
         ", algorithm='" + algorithm + '\'' +
@@ -130,6 +133,14 @@ public class Setting {
 
   public void setIncrementalRunTime(long incrementalRunTime) {
     this.incrementalRunTime = incrementalRunTime;
+  }
+
+  public int getIlpTimeLimit() {
+    return ilpTimeLimit;
+  }
+
+  public void setIlpTimeLimit(int ilpTimeLimit) {
+    this.ilpTimeLimit = ilpTimeLimit;
   }
 
   public void setIncrementalRun(boolean incrementalRun) {

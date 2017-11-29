@@ -13,6 +13,8 @@ import edu.umich.gpd.userinput.SampleInfo;
 import edu.umich.gpd.util.GPDLogger;
 import edu.umich.gpd.workload.Query;
 import edu.umich.gpd.workload.Workload;
+import scpsolver.lpsolver.LinearProgramSolver;
+import scpsolver.lpsolver.SolverFactory;
 import scpsolver.problems.LPSolution;
 import scpsolver.problems.LPWizard;
 import scpsolver.problems.LPWizardConstraint;
@@ -225,7 +227,9 @@ public class ILPSolver2 extends AbstractSolver {
 
           // now solve
           Stopwatch timeToSolve = Stopwatch.createStarted();
-          LPSolution solution = lpw.solve();
+          LinearProgramSolver solver  = SolverFactory.newDefault();
+          solver.setTimeconstraint(GPDMain.userInput.getSetting().getIlpTimeLimit());
+          LPSolution solution = lpw.solve(solver);
           if (solution == null) {
             GPDLogger.info(this, "No feasible solution found.");
           } else {
