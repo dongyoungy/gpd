@@ -24,6 +24,8 @@ public class InputData {
     str += "\n";
     str += "\tuseSampling: " + setting.useSampling() + "\n";
     str += "\tuseRegression: " + setting.useRegression() + "\n";
+    str += "\tincrementalRun: " + setting.isIncrementalRun() + "\n";
+    str += "\tincrementalRunTime: " + setting.getIncrementalRunTime() + "\n";
     str += "\tdebug: " + setting.isDebug() + "\n";
     str += "\talgorithm: " + setting.getAlgorithm() + "\n";
     str += "\tsamples:";

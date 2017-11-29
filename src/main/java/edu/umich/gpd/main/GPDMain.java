@@ -63,8 +63,8 @@ public class GPDMain {
       Log.set(Log.LEVEL_DEBUG);
     }
 
-    Log.debug("GPDMain", userInput.getSetting().toString());
-    Log.debug("GPDMain", userInput.toString());
+    Log.info("GPDMain", userInput.getSetting().toString());
+    Log.info("GPDMain", userInput.toString());
 
     // parse schema
     String schemaDelimiter = "\n";
@@ -135,11 +135,9 @@ public class GPDMain {
     Log.info("GPDMain", String.format("Total number of physical design structures " +
         "= %d", UtilFunctions.getPossibleStructures(configurations).size()));
 
-    if (userInput.getSetting().isDebug()) {
-      Log.debug("GPDMain", "Possible design structures:");
-      for (Structure s : UtilFunctions.getPossibleStructures(configurations)) {
-        System.out.println("\t" + s.getQueryString());
-      }
+    Log.info("GPDMain", "Possible design structures:");
+    for (Structure s : UtilFunctions.getPossibleStructures(configurations)) {
+      System.out.println("\t" + s.getQueryString());
     }
 
     Setting setting = userInput.getSetting();

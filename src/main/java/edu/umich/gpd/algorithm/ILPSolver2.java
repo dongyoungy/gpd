@@ -197,17 +197,18 @@ public class ILPSolver2 extends AbstractSolver {
             SMOreg smo = new SMOreg();
             M5P m5p = new M5P();
             try {
-              smo.setOptions(Utils.splitOptions("-C 1.0 -N 0 " +
-                  "-I \"weka.classifiers.functions.supportVector.RegSMOImproved " +
-                  "-T 0.001 -V -P 1.0E-12 -L 0.001 -W 1\" " +
-                  "-K \"weka.classifiers.functions.supportVector.PolyKernel -E 1.0 -C 0\""));
+//              smo.setOptions(Utils.splitOptions("-C 1.0 -N 0 " +
+//                  "-I \"weka.classifiers.functions.supportVector.RegSMOImproved " +
+//                  "-T 0.001 -V -P 1.0E-12 -L 0.001 -W 1\" " +
+//                  "-K \"weka.classifiers.functions.supportVector.PolyKernel -E 1.0 -C 0\""));
+              smo.setOptions(Utils.splitOptions("-C 0"));
               m5p.setOptions(Utils.splitOptions("-R -M 1"));
             } catch (Exception e) {
               GPDLogger.error(this, "Failed to set options for the classifier.");
               e.printStackTrace();
               return false;
             }
-            GPDClassifier sr = new GPDClassifier(smo);
+            GPDClassifier sr = new GPDClassifier(m5p);
             sr.build(extractor.getTrainDataForSize());
             for (int j = 0; j < numStructures; ++j) {
               String var = "y_" + j;
