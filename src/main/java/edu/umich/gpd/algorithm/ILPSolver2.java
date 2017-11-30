@@ -414,8 +414,8 @@ public class ILPSolver2 extends AbstractSolver {
         for (Configuration configuration : q.getConfigurations()) {
           // build structures
           GPDLogger.info(this, String.format(
-              "Building structures for configuration #%d out of %d.", configuration.getId() + 1,
-              numCostVariables));
+              "Building structures for configuration #%d out of %d. (sample DB #%d out of #%d)", configuration.getId() + 1,
+              numCostVariables, d+1, numSampleDBs));
           for (Structure s : configuration.getStructures()) {
             s.create(conn);
             if (trainedSet.add(s)) {
@@ -424,8 +424,8 @@ public class ILPSolver2 extends AbstractSolver {
           }
 
           GPDLogger.info(this, String.format(
-              "Running queries for configuration #%d out of %d.", configuration.getId() + 1,
-              numCostVariables));
+              "Running queries for configuration #%d out of %d. (sample DB #%d out of #%d)", configuration.getId() + 1,
+              numCostVariables, d+1, numSampleDBs));
           stopwatch = Stopwatch.createStarted();
 
           boolean isTimedOut = false;
@@ -438,9 +438,9 @@ public class ILPSolver2 extends AbstractSolver {
             isTimedOut = true;
           }
           double queryTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
-          // when query times out, we assign 'timeout' seconds to its cost.
+          // when query times out, we assign 'MAX_QUERY_TIME' seconds to its cost.
           if (isTimedOut) {
-            rawCostArray[d][count] = (long) GPDMain.userInput.getSetting().getQueryTimeout();
+            rawCostArray[d][count] = (long) MAX_QUERY_TIME;
           }
           else {
             rawCostArray[d][count] = (long) queryTime;
@@ -461,8 +461,8 @@ public class ILPSolver2 extends AbstractSolver {
 
           // remove structures
           GPDLogger.info(this, String.format(
-              "Removing structures for configuration #%d out of %d.", configuration.getId()+1,
-              numCostVariables));
+              "Removing structures for configuration #%d out of %d. (sample DB #%d out of #%d)", configuration.getId()+1,
+              numCostVariables, d+1, numSampleDBs));
           for (Structure s : configuration.getStructures()) {
             s.drop(conn);
           }
