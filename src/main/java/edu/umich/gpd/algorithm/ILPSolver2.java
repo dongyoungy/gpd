@@ -221,7 +221,7 @@ public class ILPSolver2 extends AbstractSolver {
               Instance testInstance = extractor.getTestInstanceForSize(
                   dbInfo.getTargetDBName(), schema, s);
               double structureSize = sr.regress(testInstance);
-              GPDLogger.debug(this, String.format("Estimated Structure Size = %f (%s)",
+              GPDLogger.info(this, String.format("Estimated Structure Size = %f (%s)",
                   structureSize, s.getQueryString()));
               c = c.plus(var, structureSize);
             }
@@ -420,7 +420,8 @@ public class ILPSolver2 extends AbstractSolver {
             s.create(conn);
             if (trainedSet.add(s)) {
               extractor.addTrainingDataForSize(dbName, schema, s);
-              GPDLogger.info(this, "TrainedSet Size = " + trainedSet.size());
+              GPDLogger.debug(this,
+                  String.format("Added training data for size: %s = %d @ %s", s.getQueryString(), s.getSize(), dbName));
             }
           }
 
