@@ -204,7 +204,7 @@ public class ILPSolver2 extends AbstractSolver {
             try {
               smo.setOptions(Utils.splitOptions("-C 1.0 -N 0 " +
                   "-I \"weka.classifiers.functions.supportVector.RegSMOImproved " +
-                  "-T 0.01 -V -P 1.0E-12 -L 0.01 -W 1\" " +
+                  "-T 0.001 -V -P 1.0E-12 -L 0.001 -W 1\" " +
                   "-K \"weka.classifiers.functions.supportVector.PolyKernel -E 1.0 -C 0\""));
 //              smo.setOptions(Utils.splitOptions("-C 0.1"));
               m5p.setOptions(Utils.splitOptions("-R -M 1"));
@@ -419,7 +419,7 @@ public class ILPSolver2 extends AbstractSolver {
           for (Structure s : configuration.getStructures()) {
             s.create(conn);
             if (trainedSet.add(s)) {
-              for (int k = 0;k<100;++k) {
+              for (int k = 0;k<2000;++k) {
                 extractor.addTrainingDataForSize(dbName, schema, s);
               }
             }
