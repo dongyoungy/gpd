@@ -47,6 +47,7 @@ public class MySQLSampler extends Sampler {
       }
 
       // create sample DBs
+      int sampleDBCount = 1;
       for (SampleInfo sampleInfo : sampleInfoList) {
         String sampleDBName = sampleInfo.getDbName();
         double sampleRatio = sampleInfo.getRatio();
@@ -77,13 +78,13 @@ public class MySQLSampler extends Sampler {
             stmt.execute(
                 String.format(
                     "INSERT INTO %s SELECT * FROM %s.%s", tableName, originalDBName, tableName));
-          } else if (rowCount * sampleRatio <= minRow) {
-            // use a new sample ratio
-            double newRatio = (double)minRow / (double)rowCount;
-            stmt.execute(
-                String.format(
-                    "INSERT INTO %s SELECT * FROM %s.%s WHERE rand() <= %f",
-                    tableName, originalDBName, tableName, newRatio));
+//          } else if (rowCount * sampleRatio <= minRow) {
+//            // use a new sample ratio
+//            double newRatio = (double)(minRow * sampleDBCount) / (double)rowCount;
+//            stmt.execute(
+//                String.format(
+//                    "INSERT INTO %s SELECT * FROM %s.%s WHERE rand() <= %f",
+//                    tableName, originalDBName, tableName, newRatio));
           } else {
             // copy using sample ratio (approx.)
             stmt.execute(
@@ -92,6 +93,7 @@ public class MySQLSampler extends Sampler {
                     tableName, originalDBName, tableName, sampleRatio));
           }
         }
+        ++sampleDBCount;
       }
     } catch (SQLException e) {
       GPDLogger.error(this, "A SQLException has been caught.");

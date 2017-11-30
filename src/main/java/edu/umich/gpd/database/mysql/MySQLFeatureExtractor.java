@@ -56,7 +56,6 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
         }
         attrList.add(new Attribute("numRow_" + t.getName()));
         attrListForSize.add(new Attribute("numRow_" + t.getName()));
-        GPDLogger.info(this, "Feature extractor with table name = " + t.getName());
 //
 //        String dbName = targetDBName;
 //        conn.setCatalog(dbName);
@@ -485,7 +484,6 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
     newInstance.setDataset(trainDataForSize);
     int idx = 0;
     for (Table t : s.getTables()) {
-      GPDLogger.info(this, "Adding training data for table = " + t.getName());
       newInstance.setValue(idx++, t.getRowCount(dbName));
     }
     newInstance.setValue(idx++, structure.getNonUniqueString());
@@ -844,7 +842,6 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
     int idx = 0;
     for (Table t : s.getTables()) {
       newInstance.setValue(idx++, t.getRowCount(dbName));
-      GPDLogger.info(this, "Getting test data for table = " + t.getName());
     }
     newInstance.setValue(idx++, structure.getNonUniqueString());
     return newInstance;
