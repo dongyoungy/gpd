@@ -90,6 +90,9 @@ public class ILPSolver2 extends AbstractSolver {
       structureStrSet.add(s.getNonUniqueString());
     }
     structureStrList = new ArrayList(structureStrSet);
+    Date date = new Date();
+    SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd-hhmmss");
+    String formattedDate = sdf.format(date);
 
     // fill the cost array first.
     Stopwatch timetoFillCostArray = Stopwatch.createStarted();
@@ -147,7 +150,7 @@ public class ILPSolver2 extends AbstractSolver {
             c1.setAllVariablesBoolean();
           }
 
-          // add constaints for x_ij <= y_t
+          // add constraints for x_ij <= y_t
           int constraintCount = 0;
           for (int t = 0; t < possibleStructures.size(); ++t) {
             Structure y = possibleStructures.get(t);
@@ -233,10 +236,41 @@ public class ILPSolver2 extends AbstractSolver {
           if (solution == null) {
             GPDLogger.info(this, "No feasible solution found.");
           } else {
-            GPDLogger.info(this, "Objective Value = " + solution.getObjectiveValue());
-            timeTaken = timeToSolve.elapsed(TimeUnit.SECONDS);
-            GPDLogger.info(this,
-                String.format("took %d seconds to solve the problem.", timeTaken));
+            try {
+              GPDLogger.info(this, "Objective Value = " + solution.getObjectiveValue());
+              timeTaken = timeToSolve.elapsed(TimeUnit.SECONDS);
+              GPDLogger.info(this,
+                  String.format("took %d seconds to solve the problem.", timeTaken));
+
+              Set<Structure> optimalStructures = new LinkedHashSet<>();
+              for (int t = 0; t < possibleStructures.size(); ++t) {
+                String varName = "y_" + t;
+                if (solution.getInteger(varName) == 1) {
+                  optimalStructures.add(possibleStructures.get(t));
+                }
+              }
+
+              System.out.println("Optimal structures with " + regressionStr
+                  + ", runTime = " + tca.getTimeTaken() + ", sizeLimit = " + sizeLimit + " :");
+              File resultDir = new File("./indexes/" + formattedDate);
+              resultDir.mkdirs();
+              BufferedWriter resultWriter =
+                  new BufferedWriter(
+                      new FileWriter(
+                          new File(
+                              String.format("./indexes/%s/%s_%s_%d_%d", formattedDate,
+                                  dbInfo.getTargetDBName(), regressionStr, tca.getTimeTaken(), sizeLimit))));
+              for (Structure s : optimalStructures) {
+                System.out.println("\t"+s.getQueryString());
+                resultWriter.write(s.getQueryString() + "\n");
+              }
+              resultWriter.close();
+            } catch (IOException ex) {
+              GPDLogger.error(this, "IOException");
+              ex.printStackTrace();
+            } catch (NullPointerException ex) {
+              GPDLogger.info(this, "No feasible solution found.");
+            }
           }
           //for (int i = 0; i < numQuery; ++i) {
           //for (int j = 0; j < numConfiguration; ++j) {
@@ -248,19 +282,6 @@ public class ILPSolver2 extends AbstractSolver {
           //String varName = "y_" + t;
           //System.out.println(varName + " = " + solution.getInteger(varName));
           //}
-          Set<Structure> optimalStructures = new LinkedHashSet<>();
-          for (int t = 0; t < possibleStructures.size(); ++t) {
-            String varName = "y_" + t;
-            if (solution.getInteger(varName) == 1) {
-              optimalStructures.add(possibleStructures.get(t));
-            }
-          }
-
-          System.out.println("Optimal structures with " + regressionStr
-              + ", runTime = " + tca.getTimeTaken() + ", sizeLimit = " + sizeLimit + " :");
-          for (Structure s : optimalStructures) {
-            System.out.println("\t"+s.getQueryString());
-          }
         }
       }
     }
@@ -365,6 +386,7 @@ public class ILPSolver2 extends AbstractSolver {
     Stopwatch runTime;
     List<Query> queries = workload.getQueries();
     long incrementalRunTime = GPDMain.userInput.getSetting().getIncrementalRunTime();
+    long nextRunTime = incrementalRunTime;
     boolean isIncrementalRun = GPDMain.userInput.getSetting().isIncrementalRun();
 
     extractor.initialize(sampleDBs, dbInfo.getTargetDBName(), schema,
@@ -446,7 +468,7 @@ public class ILPSolver2 extends AbstractSolver {
           }
           ++count;
           long elapsed = runTime.elapsed(TimeUnit.SECONDS);
-          if (isIncrementalRun && elapsed >= incrementalRunTime) {
+          if (isIncrementalRun && elapsed >= nextRunTime) {
             // create cost array for the time.
             GPDLogger.info(this, "Incrementally filling cost array for time = " + incrementalRunTime);
             if (fillCostArray()) {
@@ -461,7 +483,7 @@ public class ILPSolver2 extends AbstractSolver {
               return false;
             }
             GPDLogger.info(this, "Incrementally filled cost array for time = " + incrementalRunTime);
-            incrementalRunTime += incrementalRunTime;
+            nextRunTime += incrementalRunTime;
             // reset catalog.
             try {
               conn.setCatalog(dbName);
