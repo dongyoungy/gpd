@@ -419,9 +419,8 @@ public class ILPSolver2 extends AbstractSolver {
           for (Structure s : configuration.getStructures()) {
             s.create(conn);
             if (trainedSet.add(s)) {
-              for (int k = 0;k<2000;++k) {
-                extractor.addTrainingDataForSize(dbName, schema, s);
-              }
+              extractor.addTrainingDataForSize(dbName, schema, s);
+              GPDLogger.info(this, "TrainedSet Size = " + trainedSet.size());
             }
           }
 
