@@ -844,6 +844,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
     int idx = 0;
     for (Table t : s.getTables()) {
       newInstance.setValue(idx++, t.getRowCount(dbName));
+      GPDLogger.info(this, "Getting test data for table = " + t.getName());
     }
     newInstance.setValue(idx++, structure.getNonUniqueString());
     return newInstance;
