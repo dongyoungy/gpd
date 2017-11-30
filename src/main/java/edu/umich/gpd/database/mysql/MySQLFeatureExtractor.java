@@ -33,6 +33,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
     ArrayList<Attribute> attrList = new ArrayList<>();
     ArrayList<Attribute> attrListForSize = new ArrayList<>();
     try {
+      attrListForSize.add(new Attribute("numRow"));
       for (Table t : s.getTables()) {
         if (sampleDBs != null) {
           for (SampleInfo sample : sampleDBs) {
@@ -55,7 +56,6 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
           return false;
         }
         attrList.add(new Attribute("numRow_" + t.getName()));
-        attrListForSize.add(new Attribute("numRow_" + t.getName()));
 //
 //        String dbName = targetDBName;
 //        conn.setCatalog(dbName);
@@ -483,9 +483,12 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
     Instance newInstance = new DenseInstance(trainDataForSize.numAttributes());
     newInstance.setDataset(trainDataForSize);
     int idx = 0;
-    for (Table t : s.getTables()) {
-      newInstance.setValue(idx++, t.getRowCount(dbName));
-    }
+//    for (Table t : s.getTables()) {
+//      newInstance.setValue(idx++, t.getRowCount(dbName));
+//    }
+    newInstance.setValue(idx++, structure.getTable().getRowCount(dbName));
+    GPDLogger.debug(this, String.format("Adding row count = %d for table %s @ %s",
+        structure.getTable().getRowCount(dbName), structure.getTable().getName(), dbName));
     newInstance.setValue(idx++, structure.getNonUniqueString());
     newInstance.setValue(idx++, structure.getSize());
     trainDataForSize.add(newInstance);
@@ -840,9 +843,12 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
     Instance newInstance = new DenseInstance(trainDataForSize.numAttributes());
     newInstance.setDataset(trainDataForSize);
     int idx = 0;
-    for (Table t : s.getTables()) {
-      newInstance.setValue(idx++, t.getRowCount(dbName));
-    }
+//    for (Table t : s.getTables()) {
+//      newInstance.setValue(idx++, t.getRowCount(dbName));
+//    }
+    newInstance.setValue(idx++, structure.getTable().getRowCount(dbName));
+    GPDLogger.debug(this, String.format("Getting row count = %d for table %s @ %s",
+        structure.getTable().getRowCount(dbName), structure.getTable().getName(), dbName));
     newInstance.setValue(idx++, structure.getNonUniqueString());
     return newInstance;
   }
