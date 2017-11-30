@@ -258,7 +258,7 @@ public class ILPSolver2 extends AbstractSolver {
                   new BufferedWriter(
                       new FileWriter(
                           new File(
-                              String.format("./indexes/%s/%s_%s_%d_%d", formattedDate,
+                              String.format("./indexes/%s/%s_%s_%d_%d.index", formattedDate,
                                   dbInfo.getTargetDBName(), regressionStr, tca.getTimeTaken(), sizeLimit))));
               for (Structure s : optimalStructures) {
                 System.out.println("\t"+s.getQueryString());
