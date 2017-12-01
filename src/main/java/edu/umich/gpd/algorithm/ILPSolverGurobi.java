@@ -175,7 +175,8 @@ public class ILPSolverGurobi extends AbstractSolver {
                       GRBLinExpr cons = new GRBLinExpr();
                       String xVarName = "x_" + i + "_" + j;
                       GRBVar xVar = xVarMap.get(xVarName);
-                      GRBVar yVar = model.addVar(0.0, 1.0, 0.0, GRB.BINARY, yVarName);
+                      GRBVar yVar = yVarMap.containsKey(yVarName) ?
+                          yVarMap.get(yVarName) : model.addVar(0.0, 1.0, 0.0, GRB.BINARY, yVarName);
                       yVarMap.put(yVarName, yVar);
                       cons.addTerm(1.0, xVar);
                       cons.addTerm(-1.0, yVar);
