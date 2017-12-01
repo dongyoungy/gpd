@@ -1,15 +1,12 @@
 package edu.umich.gpd.main;
 
 import com.esotericsoftware.minlog.Log;
-import edu.umich.gpd.algorithm.GreedySolver;
-import edu.umich.gpd.algorithm.AbstractSolver;
-import edu.umich.gpd.algorithm.ILPSolver2;
+import edu.umich.gpd.algorithm.*;
 import edu.umich.gpd.database.common.*;
 import edu.umich.gpd.database.mysql.MySQLEnumerator;
 import edu.umich.gpd.database.mysql.MySQLFeatureExtractor;
 import edu.umich.gpd.database.mysql.MySQLJDBCConnection;
 import edu.umich.gpd.database.mysql.MySQLSampler;
-import edu.umich.gpd.algorithm.ILPSolver;
 import edu.umich.gpd.parser.InputDataParser;
 import edu.umich.gpd.parser.SchemaParser;
 import edu.umich.gpd.parser.WorkloadParser;
@@ -172,7 +169,12 @@ public class GPDMain {
 
       switch (algorithm) {
         case "ilp":
+        case "glpk":
           solver = new ILPSolver2(conn, workload, schema, configurations, samples, dbInfo,
+              extractor, useRegression);
+          break;
+        case "gurobi":
+          solver = new ILPSolverGurobi(conn, workload, schema, configurations, samples, dbInfo,
               extractor, useRegression);
           break;
         case "greedy":
