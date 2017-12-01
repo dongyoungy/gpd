@@ -232,7 +232,7 @@ public class ILPSolverGurobi extends AbstractSolver {
               model.addConstr(cons, GRB.LESS_EQUAL, sizeLimit, "c_size");
             }
 
-            model.write("./gurobi.debug");
+            model.write("./gurobi-model.lp");
 
             // now solve
             Stopwatch timeToSolve = Stopwatch.createStarted();
