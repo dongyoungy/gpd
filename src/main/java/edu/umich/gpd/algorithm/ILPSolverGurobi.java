@@ -232,6 +232,8 @@ public class ILPSolverGurobi extends AbstractSolver {
               model.addConstr(cons, GRB.LESS_EQUAL, sizeLimit, "c_size");
             }
 
+            model.write("./gurobi.debug");
+
             // now solve
             Stopwatch timeToSolve = Stopwatch.createStarted();
             model.optimize();
@@ -265,6 +267,9 @@ public class ILPSolverGurobi extends AbstractSolver {
               resultWriter.write(s.getQueryString() + "\n");
             }
             resultWriter.close();
+
+            model.dispose();
+            env.dispose();
 
           } catch (GRBException e) {
             GPDLogger.error(this, "Gurobi error.");
@@ -463,7 +468,7 @@ public class ILPSolverGurobi extends AbstractSolver {
           long elapsed = runTime.elapsed(TimeUnit.SECONDS);
           if (isIncrementalRun && elapsed >= nextRunTime) {
             // create cost array for the time.
-            GPDLogger.info(this, "Incrementally filling cost array for time = " + incrementalRunTime);
+            GPDLogger.info(this, "Incrementally filling cost array for time = " + elapsed);
             if (fillCostArray()) {
               double[] noRegression = Arrays.copyOf(costArrayNoRegression, costArrayNoRegression.length);
               double[] m5p = Arrays.copyOf(costArrayM5P, costArrayM5P.length);
@@ -475,7 +480,7 @@ public class ILPSolverGurobi extends AbstractSolver {
               GPDLogger.error(this, "Failed to fill cost array.");
               return false;
             }
-            GPDLogger.info(this, "Incrementally filled cost array for time = " + incrementalRunTime);
+            GPDLogger.info(this, "Incrementally filled cost array for time = " + elapsed);
             nextRunTime += incrementalRunTime;
             // reset catalog.
             try {
