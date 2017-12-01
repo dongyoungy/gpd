@@ -233,7 +233,9 @@ public class ILPSolverGurobi extends AbstractSolver {
               model.addConstr(cons, GRB.LESS_EQUAL, sizeLimit, "c_size");
             }
 
-            model.write(String.format("./%s-%s-%d-%d-gurobi-model.lp", dbInfo.getTargetDBName(), regressionStr, tca.getTimeTaken(), sizeLimit));
+            File modelDir = new File("./models/");
+            modelDir.mkdirs();
+            model.write(String.format("./models/%s-%s-%d-%d-gurobi-model.lp", dbInfo.getTargetDBName(), regressionStr, tca.getTimeTaken(), sizeLimit));
 
             // now solve
             Stopwatch timeToSolve = Stopwatch.createStarted();
