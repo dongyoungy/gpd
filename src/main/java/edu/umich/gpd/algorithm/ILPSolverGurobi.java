@@ -225,7 +225,7 @@ public class ILPSolverGurobi extends AbstractSolver {
                 }
                 GPDLogger.info(this, String.format("Estimated Structure Size = %f (%s)",
                     structureSize, s.getQueryString()));
-                GRBVar y = model.getVarByName(var);
+                GRBVar y = yVarMap.get(var);
                 cons.addTerm(structureSize, y);
               }
               model.addConstr(cons, GRB.LESS_EQUAL, sizeLimit, "c_size");
