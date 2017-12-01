@@ -232,11 +232,18 @@ public class ILPSolverGurobi extends AbstractSolver {
               model.addConstr(cons, GRB.LESS_EQUAL, sizeLimit, "c_size");
             }
 
-            model.write("./gurobi-model.lp");
+            model.write(String.format("./%s-%s-%d-%d-gurobi-model.lp", dbInfo.getTargetDBName(), regressionStr, tca.getTimeTaken(), sizeLimit));
 
             // now solve
             Stopwatch timeToSolve = Stopwatch.createStarted();
             model.optimize();
+            GRBVar[] vars = model.getVars();
+            double[] varValues = model.get(GRB.DoubleAttr.X, vars);
+            String[] varNames = model.get(GRB.StringAttr.VarName, vars);
+            for (int i = 0; i < vars.length; ++i) {
+              System.out.println(varNames[i] + " = " + varValues[i]);
+            }
+
 
             GPDLogger.info(this, "Objective Value = " + model.get(GRB.DoubleAttr.ObjVal));
             timeTaken = timeToSolve.elapsed(TimeUnit.SECONDS);
