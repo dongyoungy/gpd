@@ -128,6 +128,7 @@ public class ILPSolverGurobi extends AbstractSolver {
             GRBEnv env = new GRBEnv("gurobi.log");
             GRBModel model = new GRBModel(env);
             model.set(GRB.DoubleParam.TimeLimit, GPDMain.userInput.getSetting().getIlpTimeLimit());
+            model.set(GRB.IntParam.MIPFocus, 2);
 
             // Set objective
             GRBLinExpr obj = new GRBLinExpr();
@@ -242,7 +243,7 @@ public class ILPSolverGurobi extends AbstractSolver {
             double[] varValues = model.get(GRB.DoubleAttr.X, vars);
             String[] varNames = model.get(GRB.StringAttr.VarName, vars);
             for (int i = 0; i < vars.length; ++i) {
-              System.out.println(varNames[i] + " = " + varValues[i]);
+              GPDLogger.debug(this, varNames[i] + " = " + varValues[i]);
             }
 
 
