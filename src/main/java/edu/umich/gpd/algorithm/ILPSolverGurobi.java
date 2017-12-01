@@ -128,7 +128,6 @@ public class ILPSolverGurobi extends AbstractSolver {
             GRBEnv env = new GRBEnv("gurobi.log");
             GRBModel model = new GRBModel(env);
             model.set(GRB.DoubleParam.TimeLimit, GPDMain.userInput.getSetting().getIlpTimeLimit());
-            model.set(GRB.IntParam.MIPFocus, 2);
 
             // Set objective
             GRBLinExpr obj = new GRBLinExpr();
