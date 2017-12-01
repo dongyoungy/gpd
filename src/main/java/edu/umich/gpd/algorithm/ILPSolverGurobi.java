@@ -123,6 +123,8 @@ public class ILPSolverGurobi extends AbstractSolver {
 
           double[] costArray = tca.getArray();
           try {
+            Map<String, GRBVar> xVarMap = new HashMap<>();
+            Map<String, GRBVar> yVarMap = new HashMap<>();
             GRBEnv env = new GRBEnv("gurobi.log");
             GRBModel model = new GRBModel(env);
 
@@ -135,6 +137,7 @@ public class ILPSolverGurobi extends AbstractSolver {
               for (int j = 0; j < numConfig; ++j) {
                 String varName = "x_" + i + "_" + j;
                 GRBVar x = model.addVar(0.0, 1.0, 0.0, GRB.BINARY, varName);
+                xVarMap.put(varName, x);
                 obj.addTerm(costArray[count], x);
                 ++count;
               }
@@ -149,7 +152,7 @@ public class ILPSolverGurobi extends AbstractSolver {
               GRBLinExpr cons = new GRBLinExpr();
               for (int j = 0; j < numConfig; ++j) {
                 String varName = "x_" + i + "_" + j;
-                GRBVar x = model.getVarByName(varName);
+                GRBVar x = xVarMap.get(varName);
                 cons.addTerm(1.0, x);
               }
               model.addConstr(cons, GRB.EQUAL, 1.0, constName);
@@ -170,8 +173,9 @@ public class ILPSolverGurobi extends AbstractSolver {
                       String constName = "c_2_" + constraintCount;
                       GRBLinExpr cons = new GRBLinExpr();
                       String xVarName = "x_" + i + "_" + j;
-                      GRBVar xVar = model.getVarByName(xVarName);
+                      GRBVar xVar = xVarMap.get(xVarName);
                       GRBVar yVar = model.addVar(0.0, 1.0, 0.0, GRB.BINARY, yVarName);
+                      yVarMap.put(yVarName, yVar);
                       cons.addTerm(1.0, xVar);
                       cons.addTerm(-1.0, yVar);
                       model.addConstr(cons, GRB.LESS_EQUAL, 0.0, constName);
@@ -239,7 +243,7 @@ public class ILPSolverGurobi extends AbstractSolver {
             Set<Structure> optimalStructures = new LinkedHashSet<>();
             for (int t = 0; t < possibleStructures.size(); ++t) {
               String varName = "y_" + t;
-              GRBVar y = model.getVarByName(varName);
+              GRBVar y = yVarMap.get(varName);
               if (y.get(GRB.DoubleAttr.X) > 0) {
                 optimalStructures.add(possibleStructures.get(t));
               }
