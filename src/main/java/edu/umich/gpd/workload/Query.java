@@ -8,7 +8,7 @@ import java.util.*;
 /**
  * Created by Dong Young Yoon on 2/13/17.
  */
-public class Query {
+public class Query implements Comparable {
 
   private static int idCount = 1;
   int id;
@@ -48,6 +48,8 @@ public class Query {
     return result;
   }
 
+
+
   public String getContent() {
     return content;
   }
@@ -82,6 +84,14 @@ public class Query {
 
   public List<Configuration> getConfigurationList() {
     return new ArrayList<>(configurations);
+  }
+
+  @Override
+  public int compareTo(Object o) {
+    Query other = (Query) o;
+    if (id < other.id) return -1;
+    else if (id > other.id) return 1;
+    else return 0;
   }
 }
 

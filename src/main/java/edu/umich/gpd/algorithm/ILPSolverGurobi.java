@@ -52,7 +52,7 @@ public class ILPSolverGurobi extends AbstractSolver {
   private List<String> structureStrList;
   private static final String[] REGRESSION_STRINGS = {"NoRegression", "M5P"};
   private static final double MAX_QUERY_TIME = 1000000;
-  private Map<Configuration, Set<Query>> configToQueryMap;
+  private Map<Configuration, SortedSet<Query>> configToQueryMap;
 
   public ILPSolverGurobi(Connection conn, Workload workload, Schema schema,
                          Set<Configuration> configurations,
@@ -99,7 +99,7 @@ public class ILPSolverGurobi extends AbstractSolver {
     for (Query q : workload.getQueries()) {
       for (Configuration c : q.getConfigurations()) {
         if (!configToQueryMap.containsKey(c)) {
-          configToQueryMap.put(c, new HashSet<Query>());
+          configToQueryMap.put(c, new TreeSet<Query>());
         }
         configToQueryMap.get(c).add(q);
       }
@@ -144,7 +144,7 @@ public class ILPSolverGurobi extends AbstractSolver {
             // Set objective
             GRBLinExpr obj = new GRBLinExpr();
             count = 0;
-            for (Map.Entry<Configuration, Set<Query>> entry : configToQueryMap.entrySet()) {
+            for (Map.Entry<Configuration, SortedSet<Query>> entry : configToQueryMap.entrySet()) {
               Configuration c = entry.getKey();
               Set<Query> queries = entry.getValue();
               for (Query q :  queries) {
@@ -171,7 +171,7 @@ public class ILPSolverGurobi extends AbstractSolver {
 
             // Add constraints
             int constCount = 0;
-            for (Map.Entry<Configuration, Set<Query>> entry : configToQueryMap.entrySet()) {
+            for (Map.Entry<Configuration, SortedSet<Query>> entry : configToQueryMap.entrySet()) {
               Configuration c = entry.getKey();
               Set<Query> queries = entry.getValue();
               String constName = "c_1_" + constCount;
@@ -203,7 +203,7 @@ public class ILPSolverGurobi extends AbstractSolver {
             for (int t = 0; t < possibleStructures.size(); ++t) {
               Structure y = possibleStructures.get(t);
               String yVarName = "y_" + t;
-              for (Map.Entry<Configuration, Set<Query>> entry : configToQueryMap.entrySet()) {
+              for (Map.Entry<Configuration, SortedSet<Query>> entry : configToQueryMap.entrySet()) {
                 Configuration c = entry.getKey();
                 Set<Query> queries = entry.getValue();
                 String constName = "c_2_" + constraintCount;
@@ -480,7 +480,7 @@ public class ILPSolverGurobi extends AbstractSolver {
 
       int count = 0;
       Set<Structure> trainedSet = new HashSet<>();
-      for (Map.Entry<Configuration, Set<Query>> entry : configToQueryMap.entrySet()) {
+      for (Map.Entry<Configuration, SortedSet<Query>> entry : configToQueryMap.entrySet()) {
         Configuration configuration = entry.getKey();
         GPDLogger.info(this, String.format(
             "Building structures for configuration #%d out of %d. (sample DB #%d out of #%d)", count + 1,
