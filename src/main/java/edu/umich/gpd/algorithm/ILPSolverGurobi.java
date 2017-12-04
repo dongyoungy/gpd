@@ -171,19 +171,31 @@ public class ILPSolverGurobi extends AbstractSolver {
 
             // Add constraints
             int constCount = 0;
-            for (Map.Entry<Configuration, SortedSet<Query>> entry : configToQueryMap.entrySet()) {
-              Configuration c = entry.getKey();
-              Set<Query> queries = entry.getValue();
-              String constName = "c_1_" + constCount;
+            for (Query q : workload.getQueries()) {
               GRBLinExpr cons = new GRBLinExpr();
-              for (Query q :  queries) {
+              String constName = "c_1_" + constCount;
+              for (Configuration c : q.getConfigurations()) {
                 String varName = "x_" + q.getId() + "_" + c.getId();
                 GRBVar x = xVarMap.get(varName);
                 cons.addTerm(1.0, x);
-                ++constCount;
               }
               model.addConstr(cons, GRB.EQUAL, 1.0, constName);
+              ++constCount;
             }
+//            int constCount = 0;
+//            for (Map.Entry<Configuration, SortedSet<Query>> entry : configToQueryMap.entrySet()) {
+//              Configuration c = entry.getKey();
+//              Set<Query> queries = entry.getValue();
+//              String constName = "c_1_" + constCount;
+//              GRBLinExpr cons = new GRBLinExpr();
+//              for (Query q :  queries) {
+//                String varName = "x_" + q.getId() + "_" + c.getId();
+//                GRBVar x = xVarMap.get(varName);
+//                cons.addTerm(1.0, x);
+//                ++constCount;
+//              }
+//              model.addConstr(cons, GRB.EQUAL, 1.0, constName);
+//            }
 
 //            for (int i = 0; i < numQuery; ++i) {
 //              Query q = workload.getQueries().get(i);
