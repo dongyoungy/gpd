@@ -52,6 +52,7 @@ public class ILPSolverGurobi extends AbstractSolver {
   private List<String> structureStrList;
   private static final String[] REGRESSION_STRINGS = {"NoRegression", "M5P"};
   private static final double MAX_QUERY_TIME = 1000000;
+  private Map<Configuration, Set<Query>> configToQueryMap;
 
   public ILPSolverGurobi(Connection conn, Workload workload, Schema schema,
                          Set<Configuration> configurations,
@@ -69,6 +70,7 @@ public class ILPSolverGurobi extends AbstractSolver {
     this.costArrayM5P = new double[numCostVariables];
     this.numQuery = workload.getQueries().size();
     this.structureStrSet = new HashSet<>();
+    this.configToQueryMap = new HashMap<>();
   }
 
   public boolean solve() {
@@ -92,6 +94,16 @@ public class ILPSolverGurobi extends AbstractSolver {
     Date date = new Date();
     SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd-hhmmss");
     String formattedDate = sdf.format(date);
+
+    // Setup config to query map
+    for (Query q : workload.getQueries()) {
+      for (Configuration c : q.getConfigurations()) {
+        if (!configToQueryMap.containsKey(c)) {
+          configToQueryMap.put(c, new HashSet<Query>());
+        }
+        configToQueryMap.get(c).add(q);
+      }
+    }
 
     // fill the cost array first.
     Stopwatch timetoFillCostArray = Stopwatch.createStarted();
@@ -132,48 +144,74 @@ public class ILPSolverGurobi extends AbstractSolver {
             // Set objective
             GRBLinExpr obj = new GRBLinExpr();
             count = 0;
-            for (int i = 0; i < numQuery; ++i) {
-              Query q = workload.getQueries().get(i);
-              int numConfig = q.getConfigurations().size();
-              for (int j = 0; j < numConfig; ++j) {
-                String varName = "x_" + i + "_" + j;
+            for (Map.Entry<Configuration, Set<Query>> entry : configToQueryMap.entrySet()) {
+              Configuration c = entry.getKey();
+              Set<Query> queries = entry.getValue();
+              for (Query q :  queries) {
+                String varName = "x_" + q.getId() + "_" + c.getId();
                 GRBVar x = model.addVar(0.0, 1.0, 0.0, GRB.BINARY, varName);
                 xVarMap.put(varName, x);
                 obj.addTerm(costArray[count], x);
                 ++count;
               }
             }
+
+//            for (int i = 0; i < numQuery; ++i) {
+//              Query q = workload.getQueries().get(i);
+//              int numConfig = q.getConfigurations().size();
+//              for (int j = 0; j < numConfig; ++j) {
+//                String varName = "x_" + i + "_" + j;
+//                GRBVar x = model.addVar(0.0, 1.0, 0.0, GRB.BINARY, varName);
+//                xVarMap.put(varName, x);
+//                obj.addTerm(costArray[count], x);
+//                ++count;
+//              }
+//            }
             model.setObjective(obj, GRB.MINIMIZE);
 
             // Add constraints
-            for (int i = 0; i < numQuery; ++i) {
-              Query q = workload.getQueries().get(i);
-              int numConfig = q.getConfigurations().size();
-              String constName = "c_1_" + i;
+            int constCount = 0;
+            for (Map.Entry<Configuration, Set<Query>> entry : configToQueryMap.entrySet()) {
+              Configuration c = entry.getKey();
+              Set<Query> queries = entry.getValue();
+              String constName = "c_1_" + constCount;
               GRBLinExpr cons = new GRBLinExpr();
-              for (int j = 0; j < numConfig; ++j) {
-                String varName = "x_" + i + "_" + j;
+              for (Query q :  queries) {
+                String varName = "x_" + q.getId() + "_" + c.getId();
                 GRBVar x = xVarMap.get(varName);
                 cons.addTerm(1.0, x);
               }
               model.addConstr(cons, GRB.EQUAL, 1.0, constName);
+              ++constCount;
             }
+
+//            for (int i = 0; i < numQuery; ++i) {
+//              Query q = workload.getQueries().get(i);
+//              int numConfig = q.getConfigurations().size();
+//              String constName = "c_1_" + i;
+//              GRBLinExpr cons = new GRBLinExpr();
+//              for (int j = 0; j < numConfig; ++j) {
+//                String varName = "x_" + i + "_" + j;
+//                GRBVar x = xVarMap.get(varName);
+//                cons.addTerm(1.0, x);
+//              }
+//              model.addConstr(cons, GRB.EQUAL, 1.0, constName);
+//            }
 
             // Add constraints for x_ij <= y_t
             int constraintCount = 0;
             for (int t = 0; t < possibleStructures.size(); ++t) {
               Structure y = possibleStructures.get(t);
               String yVarName = "y_" + t;
-              for (int i = 0; i < numQuery; ++i) {
-                Query q = workload.getQueries().get(i);
-                int numConfig = q.getConfigurations().size();
-                for (int j = 0; j < numConfig; ++j) {
-                  Configuration config = q.getConfigurationList().get(j);
-                  for (Structure s : config.getStructures()) {
-                    if (s.getName().equals(y.getName())) {
-                      String constName = "c_2_" + constraintCount;
-                      GRBLinExpr cons = new GRBLinExpr();
-                      String xVarName = "x_" + i + "_" + j;
+              for (Map.Entry<Configuration, Set<Query>> entry : configToQueryMap.entrySet()) {
+                Configuration c = entry.getKey();
+                Set<Query> queries = entry.getValue();
+                String constName = "c_2_" + constraintCount;
+                GRBLinExpr cons = new GRBLinExpr();
+                for (Structure s : c.getStructures()) {
+                  if (s.getName().equals(y.getName())) {
+                    for (Query q : queries) {
+                      String xVarName = "x_" + q.getId() + "_" + c.getId();
                       GRBVar xVar = xVarMap.get(xVarName);
                       GRBVar yVar = yVarMap.containsKey(yVarName) ?
                           yVarMap.get(yVarName) : model.addVar(0.0, 1.0, 0.0, GRB.BINARY, yVarName);
@@ -187,6 +225,33 @@ public class ILPSolverGurobi extends AbstractSolver {
                 }
               }
             }
+
+//            for (int t = 0; t < possibleStructures.size(); ++t) {
+//              Structure y = possibleStructures.get(t);
+//              String yVarName = "y_" + t;
+//              for (int i = 0; i < numQuery; ++i) {
+//                Query q = workload.getQueries().get(i);
+//                int numConfig = q.getConfigurations().size();
+//                for (int j = 0; j < numConfig; ++j) {
+//                  Configuration config = q.getConfigurationList().get(j);
+//                  for (Structure s : config.getStructures()) {
+//                    if (s.getName().equals(y.getName())) {
+//                      String constName = "c_2_" + constraintCount;
+//                      GRBLinExpr cons = new GRBLinExpr();
+//                      String xVarName = "x_" + i + "_" + j;
+//                      GRBVar xVar = xVarMap.get(xVarName);
+//                      GRBVar yVar = yVarMap.containsKey(yVarName) ?
+//                          yVarMap.get(yVarName) : model.addVar(0.0, 1.0, 0.0, GRB.BINARY, yVarName);
+//                      yVarMap.put(yVarName, yVar);
+//                      cons.addTerm(1.0, xVar);
+//                      cons.addTerm(-1.0, yVar);
+//                      model.addConstr(cons, GRB.LESS_EQUAL, 0.0, constName);
+//                      ++constraintCount;
+//                    }
+//                  }
+//                }
+//              }
+//            }
 
             // TODO: add constraints for compatibility matrix
 
@@ -415,34 +480,32 @@ public class ILPSolverGurobi extends AbstractSolver {
 
       int count = 0;
       Set<Structure> trainedSet = new HashSet<>();
-      for (int i = 0; i < queries.size(); ++i) {
-        Query q = queries.get(i);
-        for (Configuration configuration : q.getConfigurations()) {
-          // build structures
-          GPDLogger.info(this, String.format(
-              "Building structures for configuration #%d out of %d. (sample DB #%d out of #%d)", configuration.getId() + 1,
-              numCostVariables, d+1, numSampleDBs));
-          for (Structure s : configuration.getStructures()) {
-            s.create(conn);
-            if (trainedSet.add(s)) {
-              extractor.addTrainingDataForSize(dbName, schema, s);
-              GPDLogger.debug(this,
-                  String.format("Added training data for size: %s = %d @ %s", s.getQueryString(), s.getSize(), dbName));
-            }
+      for (Map.Entry<Configuration, Set<Query>> entry : configToQueryMap.entrySet()) {
+        Configuration configuration = entry.getKey();
+        GPDLogger.info(this, String.format(
+            "Building structures for configuration #%d out of %d. (sample DB #%d out of #%d)", count + 1,
+            numCostVariables, d + 1, numSampleDBs));
+        for (Structure s : configuration.getStructures()) {
+          s.create(conn);
+          if (trainedSet.add(s)) {
+            extractor.addTrainingDataForSize(dbName, schema, s);
+            GPDLogger.debug(this,
+                String.format("Added training data for size: %s = %d @ %s", s.getQueryString(), s.getSize(), dbName));
           }
-
-          GPDLogger.info(this, String.format(
-              "Running queries for configuration #%d out of %d. (sample DB #%d out of #%d)", configuration.getId() + 1,
-              numCostVariables, d+1, numSampleDBs));
+        }
+        Set<Query> qs = entry.getValue();
+        GPDLogger.info(this, String.format(
+            "Running queries for configuration #%d out of %d. (sample DB #%d out of #%d)", count + 1,
+            numCostVariables, d + 1, numSampleDBs));
+        for (Query q : qs) {
           stopwatch = Stopwatch.createStarted();
-
           boolean isTimedOut = false;
           try {
             stmt.setQueryTimeout(GPDMain.userInput.getSetting().getQueryTimeout());
             stmt.execute(q.getContent());
           } catch (SQLException e) {
             GPDLogger.info(this, String.format("Query #%d has been timed out. Assigning " +
-                "maximum cost.", i));
+                "maximum cost.", q.getId()));
             isTimedOut = true;
           }
           double queryTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
@@ -466,43 +529,131 @@ public class ILPSolverGurobi extends AbstractSolver {
                 configId,
                 queryTime);
           }
-
-          // remove structures
-          GPDLogger.info(this, String.format(
-              "Removing structures for configuration #%d out of %d. (sample DB #%d out of #%d)", configuration.getId()+1,
-              numCostVariables, d+1, numSampleDBs));
-          for (Structure s : configuration.getStructures()) {
-            s.drop(conn);
+        }
+        // remove structures
+        GPDLogger.info(this, String.format(
+            "Removing structures for configuration #%d out of %d. (sample DB #%d out of #%d)", count + 1,
+            numCostVariables, d + 1, numSampleDBs));
+        for (Structure s : configuration.getStructures()) {
+          s.drop(conn);
+        }
+        ++count;
+        long elapsed = runTime.elapsed(TimeUnit.SECONDS);
+        if (isIncrementalRun && elapsed >= nextRunTime) {
+          // create cost array for the time.
+          GPDLogger.info(this, "Incrementally filling cost array for time = " + elapsed);
+          if (fillCostArray()) {
+            double[] noRegression = Arrays.copyOf(costArrayNoRegression, costArrayNoRegression.length);
+            double[] m5p = Arrays.copyOf(costArrayM5P, costArrayM5P.length);
+            TemporalCostArray noRegressionArray = new TemporalCostArray(noRegression, elapsed, "NoRegression");
+            TemporalCostArray m5pArray = new TemporalCostArray(m5p, elapsed, "M5P");
+            costArrays.add(noRegressionArray);
+            costArrays.add(m5pArray);
           }
-          ++count;
-          long elapsed = runTime.elapsed(TimeUnit.SECONDS);
-          if (isIncrementalRun && elapsed >= nextRunTime) {
-            // create cost array for the time.
-            GPDLogger.info(this, "Incrementally filling cost array for time = " + elapsed);
-            if (fillCostArray()) {
-              double[] noRegression = Arrays.copyOf(costArrayNoRegression, costArrayNoRegression.length);
-              double[] m5p = Arrays.copyOf(costArrayM5P, costArrayM5P.length);
-              TemporalCostArray noRegressionArray = new TemporalCostArray(noRegression, elapsed, "NoRegression");
-              TemporalCostArray m5pArray = new TemporalCostArray(m5p, elapsed, "M5P");
-              costArrays.add(noRegressionArray);
-              costArrays.add(m5pArray);
-            } else {
-              GPDLogger.error(this, "Failed to fill cost array.");
-              return false;
-            }
-            GPDLogger.info(this, "Incrementally filled cost array for time = " + elapsed);
-            nextRunTime += incrementalRunTime;
-            // reset catalog.
-            try {
-              conn.setCatalog(dbName);
-            } catch (Exception e) {
-              e.printStackTrace();
-            }
+          else {
+            GPDLogger.error(this, "Failed to fill cost array.");
+            return false;
+          }
+          GPDLogger.info(this, "Incrementally filled cost array for time = " + elapsed);
+          nextRunTime += incrementalRunTime;
+          // reset catalog.
+          try {
+            conn.setCatalog(dbName);
+          } catch (Exception e) {
+            e.printStackTrace();
           }
         }
       }
-    }
 
+      // old impl.
+//      for (int i = 0; i < queries.size(); ++i) {
+//        Query q = queries.get(i);
+//        for (Configuration configuration : q.getConfigurations()) {
+//          // build structures
+//          GPDLogger.info(this, String.format(
+//              "Building structures for configuration #%d out of %d. (sample DB #%d out of #%d)", configuration.getId() + 1,
+//              numCostVariables, d+1, numSampleDBs));
+//          for (Structure s : configuration.getStructures()) {
+//            s.create(conn);
+//            if (trainedSet.add(s)) {
+//              extractor.addTrainingDataForSize(dbName, schema, s);
+//              GPDLogger.debug(this,
+//                  String.format("Added training data for size: %s = %d @ %s", s.getQueryString(), s.getSize(), dbName));
+//            }
+//          }
+//
+//          GPDLogger.info(this, String.format(
+//              "Running queries for configuration #%d out of %d. (sample DB #%d out of #%d)", configuration.getId() + 1,
+//              numCostVariables, d+1, numSampleDBs));
+//          stopwatch = Stopwatch.createStarted();
+//
+//          boolean isTimedOut = false;
+//          try {
+//            stmt.setQueryTimeout(GPDMain.userInput.getSetting().getQueryTimeout());
+//            stmt.execute(q.getContent());
+//          } catch (SQLException e) {
+//            GPDLogger.info(this, String.format("Query #%d has been timed out. Assigning " +
+//                "maximum cost.", i));
+//            isTimedOut = true;
+//          }
+//          double queryTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+//          // when query times out, we assign 'MAX_QUERY_TIME' seconds to its cost.
+//          if (isTimedOut) {
+//            rawCostArray[d][count] = (long) MAX_QUERY_TIME;
+//          }
+//          else {
+//            rawCostArray[d][count] = (long) queryTime;
+//          }
+//          if (useRegression) {
+//            int configId = 0;
+//            int structureCount = 0;
+//            int structureSize = structureStrList.size();
+//            for (Structure s : configuration.getStructures()) {
+//              configId += Math.pow(structureSize, structureCount) *
+//                  structureStrList.indexOf(s.getNonUniqueString());
+//              ++structureCount;
+//            }
+//            extractor.addTrainingData(dbName, schema, q,
+//                configId,
+//                queryTime);
+//          }
+//
+//          // remove structures
+//          GPDLogger.info(this, String.format(
+//              "Removing structures for configuration #%d out of %d. (sample DB #%d out of #%d)", configuration.getId()+1,
+//              numCostVariables, d+1, numSampleDBs));
+//          for (Structure s : configuration.getStructures()) {
+//            s.drop(conn);
+//          }
+//          ++count;
+//          long elapsed = runTime.elapsed(TimeUnit.SECONDS);
+//          if (isIncrementalRun && elapsed >= nextRunTime) {
+//            // create cost array for the time.
+//            GPDLogger.info(this, "Incrementally filling cost array for time = " + elapsed);
+//            if (fillCostArray()) {
+//              double[] noRegression = Arrays.copyOf(costArrayNoRegression, costArrayNoRegression.length);
+//              double[] m5p = Arrays.copyOf(costArrayM5P, costArrayM5P.length);
+//              TemporalCostArray noRegressionArray = new TemporalCostArray(noRegression, elapsed, "NoRegression");
+//              TemporalCostArray m5pArray = new TemporalCostArray(m5p, elapsed, "M5P");
+//              costArrays.add(noRegressionArray);
+//              costArrays.add(m5pArray);
+//            } else {
+//              GPDLogger.error(this, "Failed to fill cost array.");
+//              return false;
+//            }
+//            GPDLogger.info(this, "Incrementally filled cost array for time = " + elapsed);
+//            nextRunTime += incrementalRunTime;
+//            // reset catalog.
+//            try {
+//              conn.setCatalog(dbName);
+//            } catch (Exception e) {
+//              e.printStackTrace();
+//            }
+//          }
+//        }
+//      }
+//    }
+    }
     long elapsed = runTime.elapsed(TimeUnit.SECONDS);
     if (fillCostArray()) {
       double[] noRegression = Arrays.copyOf(costArrayNoRegression, costArrayNoRegression.length);

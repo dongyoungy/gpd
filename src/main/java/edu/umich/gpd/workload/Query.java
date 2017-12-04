@@ -30,6 +30,24 @@ public class Query {
     this.configurations = new LinkedHashSet<>();
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    Query query = (Query) o;
+
+    if (id != query.id) return false;
+    return content != null ? content.equals(query.content) : query.content == null;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = id;
+    result = 31 * result + (content != null ? content.hashCode() : 0);
+    return result;
+  }
+
   public String getContent() {
     return content;
   }

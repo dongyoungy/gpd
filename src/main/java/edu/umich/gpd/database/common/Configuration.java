@@ -1,5 +1,7 @@
 package edu.umich.gpd.database.common;
 
+import edu.umich.gpd.workload.Query;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,15 +13,18 @@ public class Configuration {
   private static int idCount = 0;
   private int id;
   private List<Structure> structures;
+  private List<Query> queries;
 
   public Configuration() {
     id = idCount++;
     structures = new ArrayList<>();
+    queries = new ArrayList<>();
   }
 
   public Configuration(List<Structure> structures) {
     id = idCount++;
     this.structures = structures;
+    queries = new ArrayList<>();
   }
 
   @Override
@@ -54,5 +59,13 @@ public class Configuration {
       str += s.getNonUniqueString() + "\n";
     }
     return str;
+  }
+
+  public void addQuery(Query q) {
+    queries.add(q);
+  }
+
+  public List<Query> getQueries() {
+    return queries;
   }
 }

@@ -57,7 +57,7 @@ public class MySQLEnumerator extends StructureEnumerator {
       Set<String> interestingTableSet = q.getTables();
       Set<String> interestingColumnList = q.getColumns();
       Set<Structure> interestingStructures = new LinkedHashSet<>();
-      List<Set<Structure>> structuresForQuery = new ArrayList<>();
+      List<Set<Set<Structure>>> structuresForQuery = new ArrayList<>();
 
       for (String tableName : interestingTableSet) {
         Set<Structure> structuresForTable = new HashSet<>();
@@ -122,18 +122,41 @@ public class MySQLEnumerator extends StructureEnumerator {
             interestingStructures.add(structure);
             structuresForTable.add(structure);
           }
+
         }
+        if (structuresForTable.size() > 4 || interestingTableSet.size() > 4) {
+          Set<Structure> newStructuresForTable = new HashSet<>();
+          for (Structure s1 : structuresForTable) {
+            if (s1.getColumns().size() == 1) {
+              newStructuresForTable.add(s1);
+            }
+          }
+          structuresForTable = newStructuresForTable;
+        }
+        Set<Set<Structure>> structurePowerSet = Sets.powerSet(structuresForTable);
 //      }
-      structuresForQuery.add(structuresForTable);
+//        structuresForQuery.add(structuresForTable);
+        structuresForQuery.add(structurePowerSet);
       }
 
-      Set<List<Structure>> cartesianSets = Sets.cartesianProduct(structuresForQuery);
+      Set<List<Set<Structure>>> cartesianSets = Sets.cartesianProduct(structuresForQuery);
 
       // cartesian implementation
-      for (List<Structure> config : cartesianSets) {
-        Configuration newConfig = new Configuration(new ArrayList(config));
+      for (List<Set<Structure>> config : cartesianSets) {
+        List<Structure> structureList = new ArrayList<>();
+        for (Set<Structure> structureSet : config) {
+          for (Structure s1 : structureSet) {
+            structureList.add(s1);
+          }
+        }
+        Configuration newConfig = new Configuration(structureList);
         configurations.add(newConfig);
         q.addConfiguration(newConfig);
+
+        // ole implementation
+//        Configuration newConfig = new Configuration(new ArrayList(config));
+//        configurations.add(newConfig);
+//        q.addConfiguration(newConfig);
       }
 
       Configuration emptyConfig = new Configuration(new ArrayList<Structure>());
