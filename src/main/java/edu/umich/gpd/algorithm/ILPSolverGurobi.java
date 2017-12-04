@@ -491,12 +491,14 @@ public class ILPSolverGurobi extends AbstractSolver {
       }
 
       int count = 0;
+      int configCount = 0;
+      int configSize = configToQueryMap.entrySet().size();
       Set<Structure> trainedSet = new HashSet<>();
       for (Map.Entry<Configuration, SortedSet<Query>> entry : configToQueryMap.entrySet()) {
         Configuration configuration = entry.getKey();
         GPDLogger.info(this, String.format(
-            "Building structures for configuration #%d out of %d. (sample DB #%d out of #%d)", count + 1,
-            numCostVariables, d + 1, numSampleDBs));
+            "Building structures for configuration #%d out of %d. (sample DB #%d out of #%d)", configCount + 1,
+            configSize, d + 1, numSampleDBs));
         for (Structure s : configuration.getStructures()) {
           s.create(conn);
           if (trainedSet.add(s)) {
@@ -507,8 +509,8 @@ public class ILPSolverGurobi extends AbstractSolver {
         }
         Set<Query> qs = entry.getValue();
         GPDLogger.info(this, String.format(
-            "Running queries for configuration #%d out of %d. (sample DB #%d out of #%d)", count + 1,
-            numCostVariables, d + 1, numSampleDBs));
+            "Running queries for configuration #%d out of %d. (sample DB #%d out of #%d)", configCount + 1,
+            configSize, d + 1, numSampleDBs));
         for (Query q : qs) {
           stopwatch = Stopwatch.createStarted();
           boolean isTimedOut = false;
@@ -541,15 +543,16 @@ public class ILPSolverGurobi extends AbstractSolver {
                 configId,
                 queryTime);
           }
+          ++count;
         }
         // remove structures
         GPDLogger.info(this, String.format(
-            "Removing structures for configuration #%d out of %d. (sample DB #%d out of #%d)", count + 1,
-            numCostVariables, d + 1, numSampleDBs));
+            "Removing structures for configuration #%d out of %d. (sample DB #%d out of #%d)", configCount + 1,
+            configSize, d + 1, numSampleDBs));
         for (Structure s : configuration.getStructures()) {
           s.drop(conn);
         }
-        ++count;
+        ++configCount;
         long elapsed = runTime.elapsed(TimeUnit.SECONDS);
         if (isIncrementalRun && elapsed >= nextRunTime) {
           // create cost array for the time.
