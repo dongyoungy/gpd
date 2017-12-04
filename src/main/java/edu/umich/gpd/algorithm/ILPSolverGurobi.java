@@ -175,12 +175,22 @@ public class ILPSolverGurobi extends AbstractSolver {
             for (Query q : workload.getQueries()) {
               GRBLinExpr cons = new GRBLinExpr();
               String constName = "c_1_" + constCount;
-              for (Configuration c : q.getConfigurations()) {
-                String varName = "x_" + q.getId() + "_" + c.getId();
-                GPDLogger.debug(this, "Varname for const1 = " + varName);
-                GRBVar x = xVarMap.get(varName);
-                cons.addTerm(1.0, x);
+              for (Map.Entry<Configuration, SortedSet<Query>> entry : configToQueryMap.entrySet()) {
+                Configuration c = entry.getKey();
+                Set<Query> queries = entry.getValue();
+                if (queries.contains(q)) {
+                  String varName = "x_" + q.getId() + "_" + c.getId();
+                  GPDLogger.debug(this, "Varname for const1 = " + varName);
+                  GRBVar x = xVarMap.get(varName);
+                  cons.addTerm(1.0, x);
+                }
               }
+//              for (Configuration c : q.getConfigurations()) {
+//                String varName = "x_" + q.getId() + "_" + c.getId();
+//                GPDLogger.debug(this, "Varname for const1 = " + varName);
+//                GRBVar x = xVarMap.get(varName);
+//                cons.addTerm(1.0, x);
+//              }
               model.addConstr(cons, GRB.EQUAL, 1.0, constName);
               ++constCount;
             }
