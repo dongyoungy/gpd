@@ -149,6 +149,7 @@ public class ILPSolverGurobi extends AbstractSolver {
               Set<Query> queries = entry.getValue();
               for (Query q :  queries) {
                 String varName = "x_" + q.getId() + "_" + c.getId();
+                GPDLogger.debug(this, "Varname for objective = " + varName);
                 GRBVar x = model.addVar(0.0, 1.0, 0.0, GRB.BINARY, varName);
                 xVarMap.put(varName, x);
                 obj.addTerm(costArray[count], x);
@@ -176,6 +177,7 @@ public class ILPSolverGurobi extends AbstractSolver {
               String constName = "c_1_" + constCount;
               for (Configuration c : q.getConfigurations()) {
                 String varName = "x_" + q.getId() + "_" + c.getId();
+                GPDLogger.debug(this, "Varname for const1 = " + varName);
                 GRBVar x = xVarMap.get(varName);
                 cons.addTerm(1.0, x);
               }
