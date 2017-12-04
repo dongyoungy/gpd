@@ -206,10 +206,10 @@ public class ILPSolverGurobi extends AbstractSolver {
               for (Map.Entry<Configuration, SortedSet<Query>> entry : configToQueryMap.entrySet()) {
                 Configuration c = entry.getKey();
                 Set<Query> queries = entry.getValue();
-                GRBLinExpr cons = new GRBLinExpr();
                 for (Structure s : c.getStructures()) {
                   if (s.getName().equals(y.getName())) {
                     for (Query q : queries) {
+                      GRBLinExpr cons = new GRBLinExpr();
                       String xVarName = "x_" + q.getId() + "_" + c.getId();
                       GRBVar xVar = xVarMap.get(xVarName);
                       GRBVar yVar = yVarMap.containsKey(yVarName) ?
