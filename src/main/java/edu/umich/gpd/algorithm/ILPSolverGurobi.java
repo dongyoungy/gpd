@@ -180,9 +180,9 @@ public class ILPSolverGurobi extends AbstractSolver {
                 String varName = "x_" + q.getId() + "_" + c.getId();
                 GRBVar x = xVarMap.get(varName);
                 cons.addTerm(1.0, x);
+                ++constCount;
               }
               model.addConstr(cons, GRB.EQUAL, 1.0, constName);
-              ++constCount;
             }
 
 //            for (int i = 0; i < numQuery; ++i) {
@@ -206,7 +206,6 @@ public class ILPSolverGurobi extends AbstractSolver {
               for (Map.Entry<Configuration, SortedSet<Query>> entry : configToQueryMap.entrySet()) {
                 Configuration c = entry.getKey();
                 Set<Query> queries = entry.getValue();
-                String constName = "c_2_" + constraintCount;
                 GRBLinExpr cons = new GRBLinExpr();
                 for (Structure s : c.getStructures()) {
                   if (s.getName().equals(y.getName())) {
@@ -218,6 +217,7 @@ public class ILPSolverGurobi extends AbstractSolver {
                       yVarMap.put(yVarName, yVar);
                       cons.addTerm(1.0, xVar);
                       cons.addTerm(-1.0, yVar);
+                      String constName = "c_2_" + constraintCount;
                       model.addConstr(cons, GRB.LESS_EQUAL, 0.0, constName);
                       ++constraintCount;
                     }
