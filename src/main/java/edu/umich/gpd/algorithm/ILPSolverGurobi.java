@@ -537,13 +537,15 @@ public class ILPSolverGurobi extends AbstractSolver {
                     configCount + 1, q.getId()));
           }
 
-          try {
-            stmt.setQueryTimeout(GPDMain.userInput.getSetting().getQueryTimeout());
-            stmt.execute(q.getContent());
-          } catch (SQLException e) {
-            GPDLogger.info(this, String.format("Query #%d has been timed out. Assigning " +
-                "maximum cost.", q.getId()));
-            isTimedOut = true;
+          if (!isTimedOut) {
+            try {
+              stmt.setQueryTimeout(GPDMain.userInput.getSetting().getQueryTimeout());
+              stmt.execute(q.getContent());
+            } catch (SQLException e) {
+              GPDLogger.info(this, String.format("Query #%d has been timed out. Assigning " +
+                  "maximum cost.", q.getId()));
+              isTimedOut = true;
+            }
           }
           double queryTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
           // when query times out, we assign 'MAX_QUERY_TIME' seconds to its cost.
