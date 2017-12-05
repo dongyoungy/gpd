@@ -503,6 +503,8 @@ public class ILPSolverGurobi extends AbstractSolver {
         e.printStackTrace();
         return false;
       }
+      Map<Query, Long> queryBestLatencyMap = new HashMap<>();
+      double tolerableLatencyMultiplier = 5.0;
 
       int count = 0;
       int configCount = 0;
@@ -511,7 +513,7 @@ public class ILPSolverGurobi extends AbstractSolver {
       for (Map.Entry<Configuration, SortedSet<Query>> entry : configToQueryMap.entrySet()) {
         Configuration configuration = entry.getKey();
         GPDLogger.info(this, String.format(
-            "Getting query costs using structures of configuration #%d out of %d. (sample DB #%d out of #%d)", configCount + 1,
+            "Getting query costs using structures of configuration #%d out of %d. (sample DB #%d out of %d)", configCount + 1,
             configSize, d + 1, numSampleDBs));
         for (Structure s : configuration.getStructures()) {
           s.create(conn);
@@ -547,7 +549,7 @@ public class ILPSolverGurobi extends AbstractSolver {
               isTimedOut = true;
             }
           }
-          double queryTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+          long queryTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
           // when query times out, we assign 'MAX_QUERY_TIME' seconds to its cost.
           if (isTimedOut) {
             rawCostArray[d][count] = (long) MAX_QUERY_TIME;
@@ -557,7 +559,18 @@ public class ILPSolverGurobi extends AbstractSolver {
             queryToTimedOutStructureMap.get(q).addAll(configuration.getStructures());
           }
           else {
-            rawCostArray[d][count] = (long) queryTime;
+            if (!queryBestLatencyMap.containsKey(q)) {
+              queryBestLatencyMap.put(q, queryTime);
+            }
+            rawCostArray[d][count] = queryTime;
+            if (queryTime < queryBestLatencyMap.get(q)) {
+              queryBestLatencyMap.put(q, queryTime);
+            } else if (queryTime >= queryBestLatencyMap.get(q).longValue() * tolerableLatencyMultiplier) {
+              if (!queryToTimedOutStructureMap.containsKey(q)) {
+                queryToTimedOutStructureMap.put(q, new HashSet<Structure>());
+              }
+              queryToTimedOutStructureMap.get(q).addAll(configuration.getStructures());
+            }
           }
           if (useRegression) {
             int configId = 0;
