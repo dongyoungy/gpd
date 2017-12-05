@@ -511,7 +511,7 @@ public class ILPSolverGurobi extends AbstractSolver {
       for (Map.Entry<Configuration, SortedSet<Query>> entry : configToQueryMap.entrySet()) {
         Configuration configuration = entry.getKey();
         GPDLogger.info(this, String.format(
-            "Building structures for configuration #%d out of %d. (sample DB #%d out of #%d)", configCount + 1,
+            "Getting query costs using structures of configuration #%d out of %d. (sample DB #%d out of #%d)", configCount + 1,
             configSize, d + 1, numSampleDBs));
         for (Structure s : configuration.getStructures()) {
           s.create(conn);
@@ -522,9 +522,9 @@ public class ILPSolverGurobi extends AbstractSolver {
           }
         }
         Set<Query> qs = entry.getValue();
-        GPDLogger.info(this, String.format(
-            "Running queries for configuration #%d out of %d. (sample DB #%d out of #%d)", configCount + 1,
-            configSize, d + 1, numSampleDBs));
+//        GPDLogger.info(this, String.format(
+//            "Running queries for configuration #%d out of %d. (sample DB #%d out of #%d)", configCount + 1,
+//            configSize, d + 1, numSampleDBs));
         for (Query q : qs) {
           stopwatch = Stopwatch.createStarted();
           boolean isTimedOut = false;
@@ -575,9 +575,9 @@ public class ILPSolverGurobi extends AbstractSolver {
           ++count;
         }
         // remove structures
-        GPDLogger.info(this, String.format(
-            "Removing structures for configuration #%d out of %d. (sample DB #%d out of #%d)", configCount + 1,
-            configSize, d + 1, numSampleDBs));
+//        GPDLogger.info(this, String.format(
+//            "Removing structures for configuration #%d out of %d. (sample DB #%d out of #%d)", configCount + 1,
+//            configSize, d + 1, numSampleDBs));
         for (Structure s : configuration.getStructures()) {
           s.drop(conn);
         }
