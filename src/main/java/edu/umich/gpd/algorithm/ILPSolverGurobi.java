@@ -487,6 +487,8 @@ public class ILPSolverGurobi extends AbstractSolver {
     extractor.initialize(sampleDBs, dbInfo.getTargetDBName(), schema,
         new ArrayList<>(structureStrSet));
 
+    Map<Query, Set<Structure>> queryToTimedOutStructureMap = new HashMap<>();
+
     runTime = Stopwatch.createStarted();
 
     // fill cost array from each sample database.
@@ -526,6 +528,15 @@ public class ILPSolverGurobi extends AbstractSolver {
         for (Query q : qs) {
           stopwatch = Stopwatch.createStarted();
           boolean isTimedOut = false;
+          // predetermine timeout
+          if (queryToTimedOutStructureMap.containsKey(q) &&
+              queryToTimedOutStructureMap.get(q).containsAll(configuration.getStructures())) {
+            isTimedOut = true;
+            GPDLogger.debug(this,
+                String.format("Configuration #%d is predetermined to time out query #%d.",
+                    configCount + 1, q.getId()));
+          }
+
           try {
             stmt.setQueryTimeout(GPDMain.userInput.getSetting().getQueryTimeout());
             stmt.execute(q.getContent());
@@ -538,6 +549,10 @@ public class ILPSolverGurobi extends AbstractSolver {
           // when query times out, we assign 'MAX_QUERY_TIME' seconds to its cost.
           if (isTimedOut) {
             rawCostArray[d][count] = (long) MAX_QUERY_TIME;
+            if (!queryToTimedOutStructureMap.containsKey(q)) {
+              queryToTimedOutStructureMap.put(q, new HashSet<Structure>());
+            }
+            queryToTimedOutStructureMap.get(q).addAll(configuration.getStructures());
           }
           else {
             rawCostArray[d][count] = (long) queryTime;
