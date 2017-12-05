@@ -20,6 +20,7 @@ public class Setting {
   private int ilpTimeLimit;
   private List<SampleInfo> samples;
   private String algorithm;
+  private double tolerableLatencyMultiplier;
 
   public Setting() {
     this.maxNumColumn = 30;
@@ -35,6 +36,7 @@ public class Setting {
     this.debug = false;
     this.algorithm = "ilp";
     this.samples = new ArrayList<>();
+    this.tolerableLatencyMultiplier = 10.0;
   }
 
   @Override
@@ -145,5 +147,9 @@ public class Setting {
 
   public void setIncrementalRun(boolean incrementalRun) {
     this.incrementalRun = incrementalRun;
+  }
+
+  public double getTolerableLatencyMultiplier() {
+    return tolerableLatencyMultiplier;
   }
 }

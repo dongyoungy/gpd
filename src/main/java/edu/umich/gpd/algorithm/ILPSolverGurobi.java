@@ -504,7 +504,7 @@ public class ILPSolverGurobi extends AbstractSolver {
         return false;
       }
       Map<Query, Long> queryBestLatencyMap = new HashMap<>();
-      double tolerableLatencyMultiplier = 5.0;
+      double tolerableLatencyMultiplier = GPDMain.userInput.getSetting().getTolerableLatencyMultiplier();
 
       int count = 0;
       int configCount = 0;
