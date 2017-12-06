@@ -71,7 +71,7 @@ public class SASolver extends AbstractSolver {
     return sizeEstimates;
   }
 
-  private long getTotalQueryTime(Structure[] structures, boolean[] isBuilt) {
+  private long getTotalQueryTime(boolean[] isBuilt) {
 
     long cachedQueryTime = getStructureQueryTime(isBuilt);
     if (cachedQueryTime != -1) {
@@ -86,14 +86,6 @@ public class SASolver extends AbstractSolver {
       try {
         conn.setCatalog(dbName);
         stmt = conn.createStatement();
-
-        for (int i = 0; i < structures.length; ++i) {
-          if (isBuilt[i]) {
-            structures[i].create(conn);
-          } else {
-            structures[i].drop(conn);
-          }
-        }
 
         for (Query q : queries) {
           Stopwatch stopwatch = Stopwatch.createStarted();
@@ -144,6 +136,21 @@ public class SASolver extends AbstractSolver {
       }
     } else {
       return Math.exp( (-10 * (timeDiff + sizeDiff))) / ((currentTemp / (10 *targetTemp)) );
+    }
+  }
+
+  private void buildOrDropStructure(Structure st, boolean build) {
+    for (SampleInfo s : sampleDBs) {
+      String dbName = s.getDbName();
+      Statement stmt;
+      try {
+        conn.setCatalog(dbName);
+        stmt = conn.createStatement();
+        if (build) st.create(conn);
+        else st.drop(conn);
+      } catch (SQLException e) {
+        e.printStackTrace();
+      }
     }
   }
 
@@ -205,8 +212,9 @@ public class SASolver extends AbstractSolver {
       int indexOfStructureToAlter = rng.nextInt(structureSize);
       newSolution[indexOfStructureToAlter] = currentSolution[indexOfStructureToAlter] ? false : true;
 
-      long currentTime = getTotalQueryTime(structureArray, currentSolution);
-      long newTime = getTotalQueryTime(structureArray, newSolution);
+      long currentTime = getTotalQueryTime(currentSolution);
+      buildOrDropStructure(structureArray[indexOfStructureToAlter], newSolution[indexOfStructureToAlter]);
+      long newTime = getTotalQueryTime(newSolution);
 
       double normalizedTimeDiff = (double) (currentTime - newTime) / (double) currentTime;
       long sizeDiff = estimatedStructureSizes[indexOfStructureToAlter];
@@ -223,9 +231,12 @@ public class SASolver extends AbstractSolver {
       if (acceptanceProb > prob) {
         GPDLogger.debug(this, String.format("(Iter #%d) Solution accepted.", numIteration));
         currentSolution = Arrays.copyOf(newSolution, structureSize);
-        newSolution = Arrays.copyOf(currentSolution, structureSize);
         temperature += sizeDiff;
+      } else {
+        // Revert structure if new solution is not accepted.
+        buildOrDropStructure(structureArray[indexOfStructureToAlter], currentSolution[indexOfStructureToAlter]);
       }
+      newSolution = Arrays.copyOf(currentSolution, structureSize);
       GPDLogger.debug(this, String.format("(Iter #%d) New solution = %s", numIteration, getStructureCode(currentSolution)));
       GPDLogger.debug(this, String.format("(Iter #%d) Current temp = %d, target temp = %d", numIteration, temperature, targetTemperature));
       ++numIteration;
