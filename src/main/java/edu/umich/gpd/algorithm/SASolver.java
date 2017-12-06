@@ -151,6 +151,7 @@ public class SASolver extends AbstractSolver {
   public boolean solve() {
     List<Structure> allStructures = getAllStructures(configurations);
     Set<Structure> possibleStructures = new HashSet<>();
+    Set<String> structureStrSet = new HashSet<>();
     sizeEstimator = new GPDClassifier(new SMOreg());
     sizeLimits = GPDMain.userInput.getSetting().getSizeLimits();
 
@@ -158,8 +159,13 @@ public class SASolver extends AbstractSolver {
     long sizeLimit = sizeLimits[0];
 
     for (Structure s : allStructures) {
-      possibleStructures.add(s);
+      if (possibleStructures.add(s)) {
+        structureStrSet.add(s.getNonUniqueString());
+      }
     }
+    extractor.initialize(sampleDBs, dbInfo.getTargetDBName(), schema,
+        new ArrayList<>(structureStrSet));
+
     Structure[] structureArray = possibleStructures.toArray(new Structure[0]);
     int structureSize = structureArray.length;
     boolean[] isStructureBuilt = new boolean[structureSize];
