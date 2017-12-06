@@ -138,12 +138,12 @@ public class SASolver extends AbstractSolver {
     if (sizeDiff < 0 && timeDiff < 0) return 1.0;
     else if (sizeDiff * timeDiff < 0) {
       if (sizeDiff < 0) {
-        return Math.exp((sizeDiff - (5 * timeDiff)) / (currentTemp / (10 * targetTemp)));
+        return Math.exp((sizeDiff - (2 * timeDiff)) / (currentTemp / (10 * targetTemp)));
       } else {
-        return Math.exp((timeDiff - (5 * sizeDiff)) / (currentTemp / (10 * targetTemp)));
+        return Math.exp((timeDiff - (2 * sizeDiff)) / (currentTemp / (10 * targetTemp)));
       }
     } else {
-      return Math.exp((-10 * (timeDiff + sizeDiff))) / ((currentTemp / (10 * targetTemp)));
+      return Math.exp((-5 * (timeDiff + sizeDiff))) / ((currentTemp / (10 * targetTemp)));
     }
   }
 
