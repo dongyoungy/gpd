@@ -182,7 +182,7 @@ public class SASolver extends AbstractSolver {
     GPDLogger.info(this, "Getting estimated structure sizes.");
     long[] estimatedStructureSizes = getSizeEstimates(structureArray);
     for (int i = 0; i < structureArray.length; ++i) {
-      GPDLogger.debug(this, String.format("Estimated Structure Size = %f (%s)",
+      GPDLogger.debug(this, String.format("Estimated Structure Size = %d (%s)",
           estimatedStructureSizes[i], structureArray[i].getQueryString()));
     }
 
