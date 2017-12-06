@@ -88,13 +88,21 @@ public class SASolver extends AbstractSolver {
         stmt = conn.createStatement();
 
         for (Query q : queries) {
+          boolean timeout = false;
           Stopwatch stopwatch = Stopwatch.createStarted();
           try {
+            stmt.setQueryTimeout(GPDMain.userInput.getSetting().getQueryTimeout());
             stmt.execute(q.getContent());
           } catch (SQLException e) {
-            e.printStackTrace();
+            GPDLogger.debug(this, String.format("Query #%d has been timed out.",
+                q.getId()));
+            timeout = true;
           }
-          totalQueryTime += stopwatch.elapsed(TimeUnit.MILLISECONDS);
+          if (timeout) {
+            totalQueryTime += GPDMain.userInput.getSetting().getQueryTimeout() * 1000;
+          } else {
+            totalQueryTime += stopwatch.elapsed(TimeUnit.MILLISECONDS);
+          }
         }
 
       } catch (SQLException e) {
@@ -212,8 +220,14 @@ public class SASolver extends AbstractSolver {
       int indexOfStructureToAlter = rng.nextInt(structureSize);
       newSolution[indexOfStructureToAlter] = currentSolution[indexOfStructureToAlter] ? false : true;
 
+      GPDLogger.debug(this,
+          String.format("(Iter #%d) Getting total query time for current solution.",
+              numIteration));
       long currentTime = getTotalQueryTime(currentSolution);
       buildOrDropStructure(structureArray[indexOfStructureToAlter], newSolution[indexOfStructureToAlter]);
+      GPDLogger.debug(this,
+          String.format("(Iter #%d) Getting total query time for neighbor solution.",
+              numIteration));
       long newTime = getTotalQueryTime(newSolution);
 
       double normalizedTimeDiff = (double) (currentTime - newTime) / (double) currentTime;
