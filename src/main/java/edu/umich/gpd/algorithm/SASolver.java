@@ -215,8 +215,8 @@ public class SASolver extends AbstractSolver {
 
       double acceptanceProb = getAcceptanceProbability(normalizedSizeDiff, normalizedTimeDiff, temperature, targetTemperature);
       double prob = rng.nextDouble();
-      GPDLogger.debug(this, String.format("(Iter #%d) Acceptance probability = %d", numIteration, acceptanceProb));
-      GPDLogger.debug(this, String.format("(Iter #%d) Random value = %d", numIteration, prob));
+      GPDLogger.debug(this, String.format("(Iter #%d) Acceptance probability = %f", numIteration, acceptanceProb));
+      GPDLogger.debug(this, String.format("(Iter #%d) Random value = %f", numIteration, prob));
       if (acceptanceProb > prob) {
         GPDLogger.debug(this, String.format("(Iter #%d) Solution accepted.", numIteration));
         currentSolution = Arrays.copyOf(newSolution, structureSize);
