@@ -57,6 +57,7 @@ public class Setting {
         ", useRegression=" + useRegression +
         ", incrementalRun=" + incrementalRun +
         ", incrementalRunTime=" + incrementalRunTime +
+        ", tolerableLatencyMultipler=" + tolerableLatencyMultiplier +
         ", ilpTimeLimit=" + ilpTimeLimit +
         ", debug=" + debug +
         ", samples=" + samples +

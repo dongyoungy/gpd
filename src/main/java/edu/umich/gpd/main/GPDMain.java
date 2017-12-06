@@ -181,6 +181,10 @@ public class GPDMain {
           solver = new GreedySolver(conn, workload, schema, configurations, samples, dbInfo,
               extractor, useRegression);
           break;
+        case "sa":
+          solver = new SASolver(conn, workload, schema, configurations, samples, dbInfo,
+              extractor, useRegression);
+          break;
         default:
           Log.error("GPDMain", "Unsupported algorithm: " +
               setting.getAlgorithm());
