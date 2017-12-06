@@ -160,7 +160,7 @@ public class SASolver extends AbstractSolver {
     for (Structure s : allStructures) {
       possibleStructures.add(s);
     }
-    Structure[] structureArray = (Structure[]) possibleStructures.toArray();
+    Structure[] structureArray = possibleStructures.toArray(new Structure[0]);
     int structureSize = structureArray.length;
     boolean[] isStructureBuilt = new boolean[structureSize];
     Arrays.fill(isStructureBuilt, Boolean.TRUE);
