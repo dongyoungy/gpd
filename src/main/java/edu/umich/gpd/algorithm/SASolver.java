@@ -64,8 +64,8 @@ public class SASolver extends AbstractSolver {
   private long[] getSizeEstimates(Structure[] structures) {
     long[] sizeEstimates = new long[structures.length];
     for (int i = 0; i < structures.length; ++i) {
-      Instance testInstance = extractor.getTestInstanceForSize(
-          dbInfo.getTargetDBName(), schema, structures[i]);
+      Instance testInstance =
+          extractor.getTestInstanceForSize(dbInfo.getTargetDBName(), schema, structures[i]);
       sizeEstimates[i] = (long) sizeEstimator.regress(testInstance);
     }
     return sizeEstimates;
@@ -94,8 +94,7 @@ public class SASolver extends AbstractSolver {
             stmt.setQueryTimeout(GPDMain.userInput.getSetting().getQueryTimeout());
             stmt.execute(q.getContent());
           } catch (SQLException e) {
-            GPDLogger.debug(this, String.format("Query #%d has been timed out.",
-                q.getId()));
+            GPDLogger.debug(this, String.format("Query #%d has been timed out.", q.getId()));
             timeout = true;
           }
           if (timeout) {
@@ -134,16 +133,17 @@ public class SASolver extends AbstractSolver {
     return -1;
   }
 
-  private double getAcceptanceProbability(double sizeDiff, double timeDiff, double currentTemp, double targetTemp) {
+  private double getAcceptanceProbability(
+      double sizeDiff, double timeDiff, double currentTemp, double targetTemp) {
     if (sizeDiff < 0 && timeDiff < 0) return 1.0;
     else if (sizeDiff * timeDiff < 0) {
       if (sizeDiff < 0) {
-        return Math.exp( (sizeDiff - (1/4 * timeDiff)) / (currentTemp / (10 *targetTemp) ) );
+        return Math.exp((sizeDiff - (5 * timeDiff)) / (currentTemp / (10 * targetTemp)));
       } else {
-        return Math.exp( (timeDiff - (1/4 * sizeDiff)) / (currentTemp / (10 *targetTemp) ) );
+        return Math.exp((timeDiff - (5 * sizeDiff)) / (currentTemp / (10 * targetTemp)));
       }
     } else {
-      return Math.exp( (-10 * (timeDiff + sizeDiff))) / ((currentTemp / (10 *targetTemp)) );
+      return Math.exp((-10 * (timeDiff + sizeDiff))) / ((currentTemp / (10 * targetTemp)));
     }
   }
 
@@ -178,8 +178,8 @@ public class SASolver extends AbstractSolver {
         structureStrSet.add(s.getNonUniqueString());
       }
     }
-    extractor.initialize(sampleDBs, dbInfo.getTargetDBName(), schema,
-        new ArrayList<>(structureStrSet));
+    extractor.initialize(
+        sampleDBs, dbInfo.getTargetDBName(), schema, new ArrayList<>(structureStrSet));
 
     Structure[] structureArray = possibleStructures.toArray(new Structure[0]);
     int structureSize = structureArray.length;
@@ -197,8 +197,11 @@ public class SASolver extends AbstractSolver {
     GPDLogger.info(this, "Getting estimated structure sizes.");
     long[] estimatedStructureSizes = getSizeEstimates(structureArray);
     for (int i = 0; i < structureArray.length; ++i) {
-      GPDLogger.debug(this, String.format("Estimated Structure Size = %d (%s)",
-          estimatedStructureSizes[i], structureArray[i].getQueryString()));
+      GPDLogger.debug(
+          this,
+          String.format(
+              "Estimated Structure Size = %d (%s)",
+              estimatedStructureSizes[i], structureArray[i].getQueryString()));
     }
 
     // Calculate initial temperature (i.e., total estimated size)
@@ -218,16 +221,19 @@ public class SASolver extends AbstractSolver {
     int numIteration = 1;
     while (temperature > targetTemperature) {
       int indexOfStructureToAlter = rng.nextInt(structureSize);
-      newSolution[indexOfStructureToAlter] = currentSolution[indexOfStructureToAlter] ? false : true;
+      newSolution[indexOfStructureToAlter] =
+          currentSolution[indexOfStructureToAlter] ? false : true;
 
-      GPDLogger.debug(this,
-          String.format("(Iter #%d) Getting total query time for current solution.",
-              numIteration));
+      GPDLogger.debug(
+          this,
+          String.format("(Iter #%d) Getting total query time for current solution.", numIteration));
       long currentTime = getTotalQueryTime(currentSolution);
-      buildOrDropStructure(structureArray[indexOfStructureToAlter], newSolution[indexOfStructureToAlter]);
-      GPDLogger.debug(this,
-          String.format("(Iter #%d) Getting total query time for neighbor solution.",
-              numIteration));
+      buildOrDropStructure(
+          structureArray[indexOfStructureToAlter], newSolution[indexOfStructureToAlter]);
+      GPDLogger.debug(
+          this,
+          String.format(
+              "(Iter #%d) Getting total query time for neighbor solution.", numIteration));
       long newTime = getTotalQueryTime(newSolution);
 
       double normalizedTimeDiff = (double) (newTime - currentTime) / (double) currentTime;
@@ -235,12 +241,18 @@ public class SASolver extends AbstractSolver {
       if (!newSolution[indexOfStructureToAlter]) sizeDiff = sizeDiff * -1;
       double normalizedSizeDiff = (double) (sizeDiff) / (double) temperature;
 
-      double acceptanceProb = getAcceptanceProbability(normalizedSizeDiff, normalizedTimeDiff, temperature, targetTemperature);
+      double acceptanceProb =
+          getAcceptanceProbability(
+              normalizedSizeDiff, normalizedTimeDiff, temperature, targetTemperature);
       double prob = rng.nextDouble();
-      GPDLogger.debug(this,
-          String.format("(Iter #%d) (Normalized) Time diff. = %f, Size diff. = %f",
+      GPDLogger.debug(
+          this,
+          String.format(
+              "(Iter #%d) (Normalized) Time diff. = %f, Size diff. = %f",
               numIteration, normalizedTimeDiff, normalizedSizeDiff));
-      GPDLogger.debug(this, String.format("(Iter #%d) Acceptance probability = %f", numIteration, acceptanceProb));
+      GPDLogger.debug(
+          this,
+          String.format("(Iter #%d) Acceptance probability = %f", numIteration, acceptanceProb));
       GPDLogger.debug(this, String.format("(Iter #%d) Random value = %f", numIteration, prob));
       if (acceptanceProb > prob) {
         GPDLogger.debug(this, String.format("(Iter #%d) New solution accepted.", numIteration));
@@ -248,11 +260,19 @@ public class SASolver extends AbstractSolver {
         temperature += sizeDiff;
       } else {
         // Revert structure if new solution is not accepted.
-        buildOrDropStructure(structureArray[indexOfStructureToAlter], currentSolution[indexOfStructureToAlter]);
+        buildOrDropStructure(
+            structureArray[indexOfStructureToAlter], currentSolution[indexOfStructureToAlter]);
       }
       newSolution = Arrays.copyOf(currentSolution, structureSize);
-      GPDLogger.debug(this, String.format("(Iter #%d) Current solution = %s", numIteration, getStructureCode(currentSolution)));
-      GPDLogger.debug(this, String.format("(Iter #%d) Current temp = %d, target temp = %d", numIteration, temperature, targetTemperature));
+      GPDLogger.debug(
+          this,
+          String.format(
+              "(Iter #%d) Current solution = %s", numIteration, getStructureCode(currentSolution)));
+      GPDLogger.debug(
+          this,
+          String.format(
+              "(Iter #%d) Current temp = %d, target temp = %d",
+              numIteration, temperature, targetTemperature));
       ++numIteration;
     }
 
@@ -260,7 +280,7 @@ public class SASolver extends AbstractSolver {
     for (int i = 0; i < structureArray.length; ++i) {
       if (currentSolution[i]) {
         Structure s = structureArray[i];
-        System.out.println("\t"+s.getQueryString());
+        System.out.println("\t" + s.getQueryString());
       }
     }
 
