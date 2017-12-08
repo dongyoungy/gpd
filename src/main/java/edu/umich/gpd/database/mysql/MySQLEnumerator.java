@@ -124,15 +124,15 @@ public class MySQLEnumerator extends StructureEnumerator {
           }
 
         }
-        if (structuresForTable.size() > 4 || interestingTableSet.size() > 4) {
-          Set<Structure> newStructuresForTable = new HashSet<>();
-          for (Structure s1 : structuresForTable) {
-            if (s1.getColumns().size() == 1) {
-              newStructuresForTable.add(s1);
-            }
-          }
-          structuresForTable = newStructuresForTable;
-        }
+//        if (structuresForTable.size() > 4 || interestingTableSet.size() > 4) {
+//          Set<Structure> newStructuresForTable = new HashSet<>();
+//          for (Structure s1 : structuresForTable) {
+//            if (s1.getColumns().size() == 1) {
+//              newStructuresForTable.add(s1);
+//            }
+//          }
+//          structuresForTable = newStructuresForTable;
+//        }
         Set<Set<Structure>> structurePowerSet = Sets.powerSet(structuresForTable);
 //      }
 //        structuresForQuery.add(structuresForTable);
