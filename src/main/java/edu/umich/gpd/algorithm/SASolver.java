@@ -135,11 +135,15 @@ public class SASolver extends AbstractSolver {
 
   private double getAcceptanceProbability(
       double sizeDiff, double timeDiff, double currentTemp, double targetTemp) {
+    double tempRatio = currentTemp / targetTemp;
+    GPDLogger.debug(
+        this,
+        String.format("(Iter #%d) Temp Ratio = %f (%f, %f)", tempRatio, currentTemp, targetTemp));
     if (sizeDiff < 0 && timeDiff < 0) return 1.0;
     else if (sizeDiff < 0 && timeDiff > 0) {
-      return (Math.exp(Math.abs(timeDiff / sizeDiff) * -1));
+      return (Math.exp(Math.abs(timeDiff / sizeDiff) * -1)) * tempRatio;
     } else if (timeDiff < 0 && sizeDiff > 0) {
-        return (Math.exp(Math.abs(sizeDiff/timeDiff) * -1));
+        return (Math.exp(Math.abs(sizeDiff/timeDiff) * -1)) * tempRatio;
 //      return Math.exp((sizeDiff * timeDiff)) / (currentTemp / (10 * targetTemp));
 //      if (sizeDiff < 0) {
 //        return Math.exp((sizeDiff - (2 * timeDiff)) / (currentTemp / (10 * targetTemp)));
@@ -147,7 +151,7 @@ public class SASolver extends AbstractSolver {
 //        return Math.exp((timeDiff - (2 * sizeDiff)) / (currentTemp / (10 * targetTemp)));
 //      }
     } else {
-      return Math.exp((-1 * (timeDiff + sizeDiff)));
+      return Math.exp((-1 * (timeDiff + sizeDiff))) * tempRatio;
 //      return Math.exp((-5 * (timeDiff + sizeDiff))) / ((currentTemp / (10 * targetTemp)));
     }
   }
