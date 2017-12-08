@@ -141,9 +141,9 @@ public class SASolver extends AbstractSolver {
         String.format("Temp. Ratio = %f (%f, %f)", tempRatio, currentTemp, targetTemp));
     if (sizeDiff < 0 && timeDiff < 0) return 1.0;
     else if (sizeDiff < 0 && timeDiff > 0) {
-      return (Math.exp(Math.abs(timeDiff / sizeDiff) * -1)) * tempRatio;
+      return Math.exp(Math.abs(timeDiff / sizeDiff) * -1 / (2 * tempRatio));
     } else if (timeDiff < 0 && sizeDiff > 0) {
-        return (Math.exp(Math.abs(sizeDiff/timeDiff) * -1)) * tempRatio;
+        return Math.exp(Math.abs(sizeDiff/timeDiff) * -1 / (2 * tempRatio));
 //      return Math.exp((sizeDiff * timeDiff)) / (currentTemp / (10 * targetTemp));
 //      if (sizeDiff < 0) {
 //        return Math.exp((sizeDiff - (2 * timeDiff)) / (currentTemp / (10 * targetTemp)));
