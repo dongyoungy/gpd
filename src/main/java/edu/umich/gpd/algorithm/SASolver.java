@@ -228,6 +228,8 @@ public class SASolver extends AbstractSolver {
     boolean[] newSolution = Arrays.copyOf(isStructureBuilt, structureSize);
     GPDLogger.debug(this, "Initial solution = " + getStructureCode(currentSolution));
     int numIteration = 1;
+    long currentTime = 0;
+    long bestTime = Long.MAX_VALUE;
     while (temperature > targetTemperature) {
       int indexOfStructureToAlter = rng.nextInt(structureSize);
       newSolution[indexOfStructureToAlter] =
@@ -236,7 +238,7 @@ public class SASolver extends AbstractSolver {
       GPDLogger.debug(
           this,
           String.format("(Iter #%d) Getting total query time for current solution.", numIteration));
-      long currentTime = getTotalQueryTime(currentSolution);
+      currentTime = getTotalQueryTime(currentSolution);
       buildOrDropStructure(
           structureArray[indexOfStructureToAlter], newSolution[indexOfStructureToAlter]);
       GPDLogger.debug(
@@ -267,11 +269,13 @@ public class SASolver extends AbstractSolver {
         GPDLogger.debug(this, String.format("(Iter #%d) New solution accepted.", numIteration));
         currentSolution = Arrays.copyOf(newSolution, structureSize);
         temperature += sizeDiff;
+        currentTime = newTime;
       } else {
         // Revert structure if new solution is not accepted.
         buildOrDropStructure(
             structureArray[indexOfStructureToAlter], currentSolution[indexOfStructureToAlter]);
       }
+      if (currentTime < bestTime) bestTime = currentTime;
       newSolution = Arrays.copyOf(currentSolution, structureSize);
       GPDLogger.debug(
           this,
@@ -285,7 +289,8 @@ public class SASolver extends AbstractSolver {
       ++numIteration;
     }
 
-    GPDLogger.info(this, "Optimal structures: ");
+    GPDLogger.info(this, "Best time = " + bestTime);
+    GPDLogger.info(this, "Optimal structures with execution time = " + currentTime + ":");
     for (int i = 0; i < structureArray.length; ++i) {
       if (currentSolution[i]) {
         Structure s = structureArray[i];
