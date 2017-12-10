@@ -78,30 +78,42 @@ public class SASolver extends AbstractSolver {
 
   private long getTotalQueryTime(Structure[] structureArray, boolean[] isBuilt) {
 
-    if (!useRegression) {
+    //    if (!useRegression) {
+    //      long cachedQueryTime = getStructureQueryTime(isBuilt);
+    //      if (cachedQueryTime != -1) {
+    //        GPDLogger.debug(
+    //            this,
+    //            String.format(
+    //                "Estimated query time (from cache) = %d (%s)",
+    //                cachedQueryTime, getStructureCode(isBuilt)));
+    //        return cachedQueryTime;
+    //      }
+    //    } else {
+    //      String code = getStructureCode(isBuilt);
+    //      if (structureToUseCacheMap.containsKey(code) && structureToUseCacheMap.get(code)) {
+    //        long cachedQueryTime = getStructureQueryTime(isBuilt);
+    //        if (cachedQueryTime != -1) {
+    //          GPDLogger.debug(
+    //              this,
+    //              String.format(
+    //                  "Estimated query time = %d (%s)", cachedQueryTime,
+    // getStructureCode(isBuilt)));
+    //          return cachedQueryTime;
+    //        }
+    //      }
+    //    }
+
+    String code = getStructureCode(isBuilt);
+    if (structureToUseCacheMap.containsKey(code) && structureToUseCacheMap.get(code)) {
       long cachedQueryTime = getStructureQueryTime(isBuilt);
       if (cachedQueryTime != -1) {
         GPDLogger.debug(
             this,
             String.format(
-                "Estimated query time (from cache) = %d (%s)",
-                cachedQueryTime, getStructureCode(isBuilt)));
+                "Estimated query time (from cache) = %d (%s)", cachedQueryTime, getStructureCode(isBuilt)));
         return cachedQueryTime;
       }
-    } else {
-      String code = getStructureCode(isBuilt);
-      if (structureToUseCacheMap.containsKey(code) && structureToUseCacheMap.get(code)) {
-        long cachedQueryTime = getStructureQueryTime(isBuilt);
-        if (cachedQueryTime != -1) {
-          GPDLogger.debug(
-              this,
-              String.format(
-                  "Estimated query time = %d (%s)", cachedQueryTime, getStructureCode(isBuilt)));
-          return cachedQueryTime;
-        }
-      }
     }
-
     List<String> builtStructures = new ArrayList<>();
     if (useRegression) {
       for (int i = 0; i < isBuilt.length; ++i) {
