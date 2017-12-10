@@ -28,6 +28,7 @@ public class SASolver extends AbstractSolver {
   private GPDClassifier sizeEstimator;
   private GPDClassifier costEstimator;
   Map<String, Long> structureToQueryTimeMap;
+  Map<String, Boolean> structureToUseCacheMap;
 
   public SASolver(
       Connection conn,
@@ -40,6 +41,7 @@ public class SASolver extends AbstractSolver {
       boolean useRegression) {
     super(conn, workload, schema, configurations, sampleDBs, dbInfo, extractor, useRegression);
     structureToQueryTimeMap = new HashMap<>();
+    structureToUseCacheMap = new HashMap<>();
   }
 
   private boolean buildInitialFullStructure(Set<Structure> structureSet) {
@@ -79,7 +81,23 @@ public class SASolver extends AbstractSolver {
     if (!useRegression) {
       long cachedQueryTime = getStructureQueryTime(isBuilt);
       if (cachedQueryTime != -1) {
+        GPDLogger.debug(
+            this,
+            String.format(
+                "Estimated query time (from cache) = %d (%s)",
+                cachedQueryTime, getStructureCode(isBuilt)));
         return cachedQueryTime;
+      }
+    } else {
+      if (structureToUseCacheMap.get(getStructureCode(isBuilt))) {
+        long cachedQueryTime = getStructureQueryTime(isBuilt);
+        if (cachedQueryTime != -1) {
+          GPDLogger.debug(
+              this,
+              String.format(
+                  "Estimated query time = %d (%s)", cachedQueryTime, getStructureCode(isBuilt)));
+          return cachedQueryTime;
+        }
       }
     }
 
@@ -131,15 +149,17 @@ public class SASolver extends AbstractSolver {
     if (useRegression) {
       costEstimator.build(extractor.getTrainData());
       for (Query q : queries) {
-        Instance testInstance = extractor.getTestInstance(dbInfo.getTargetDBName(),
-            schema, q, builtStructures);
+        Instance testInstance =
+            extractor.getTestInstance(dbInfo.getTargetDBName(), schema, q, builtStructures);
         if (testInstance == null) {
           GPDLogger.error(this, "test instance null.");
         }
         totalQueryTime += (long) costEstimator.regress(testInstance);
       }
     }
-    GPDLogger.debug(this, String.format("Estimated query time = %d (%s)", totalQueryTime, getStructureCode(isBuilt)));
+    GPDLogger.debug(
+        this,
+        String.format("Estimated query time = %d (%s)", totalQueryTime, getStructureCode(isBuilt)));
     AddStructureQueryTime(isBuilt, totalQueryTime);
     return totalQueryTime;
   }
@@ -154,7 +174,20 @@ public class SASolver extends AbstractSolver {
 
   private void AddStructureQueryTime(boolean[] isBuilt, long time) {
     String code = getStructureCode(isBuilt);
-    structureToQueryTimeMap.put(code, time);
+    Long previousTime = structureToQueryTimeMap.put(code, time);
+    if (previousTime == null) {
+      structureToUseCacheMap.put(code, false);
+    } else {
+      GPDLogger.debug(
+          this,
+          String.format(
+              "Previous time = %d, current time = %d (%s)", previousTime.longValue(), time, code));
+      if (Math.abs((double) (previousTime.longValue() - time) / (double) previousTime.longValue())
+          < 0.05) {
+        GPDLogger.debug(this, String.format("Using cache for %s", code));
+        structureToUseCacheMap.put(code, true);
+      }
+    }
   }
 
   private long getStructureQueryTime(boolean[] isBuilt) {
@@ -169,22 +202,21 @@ public class SASolver extends AbstractSolver {
       double sizeDiff, double timeDiff, double currentTemp, double targetTemp) {
     double tempRatio = currentTemp / targetTemp;
     GPDLogger.debug(
-        this,
-        String.format("Temp. Ratio = %f (%f, %f)", tempRatio, currentTemp, targetTemp));
+        this, String.format("Temp. Ratio = %f (%f, %f)", tempRatio, currentTemp, targetTemp));
     if (sizeDiff <= 0 && timeDiff <= 0) return 1.0;
     else if (sizeDiff < 0 && timeDiff > 0) {
       return Math.exp(Math.abs(timeDiff / sizeDiff) * -1 / (2 * tempRatio));
     } else if (timeDiff < 0 && sizeDiff > 0) {
-        return Math.exp(Math.abs(sizeDiff/timeDiff) * -1 / (2 * tempRatio));
-//      return Math.exp((sizeDiff * timeDiff)) / (currentTemp / (10 * targetTemp));
-//      if (sizeDiff < 0) {
-//        return Math.exp((sizeDiff - (2 * timeDiff)) / (currentTemp / (10 * targetTemp)));
-//      } else {
-//        return Math.exp((timeDiff - (2 * sizeDiff)) / (currentTemp / (10 * targetTemp)));
-//      }
+      return Math.exp(Math.abs(sizeDiff / timeDiff) * -1 / (2 * tempRatio));
+      //      return Math.exp((sizeDiff * timeDiff)) / (currentTemp / (10 * targetTemp));
+      //      if (sizeDiff < 0) {
+      //        return Math.exp((sizeDiff - (2 * timeDiff)) / (currentTemp / (10 * targetTemp)));
+      //      } else {
+      //        return Math.exp((timeDiff - (2 * sizeDiff)) / (currentTemp / (10 * targetTemp)));
+      //      }
     } else {
       return Math.exp((-10 * (timeDiff / sizeDiff))) / tempRatio;
-//      return Math.exp((-5 * (timeDiff + sizeDiff))) / ((currentTemp / (10 * targetTemp)));
+      //      return Math.exp((-5 * (timeDiff + sizeDiff))) / ((currentTemp / (10 * targetTemp)));
     }
   }
 
@@ -213,10 +245,12 @@ public class SASolver extends AbstractSolver {
 
     SMOreg smo = new SMOreg();
     try {
-      smo.setOptions(Utils.splitOptions("-C 1.0 -N 0 " +
-          "-I \"weka.classifiers.functions.supportVector.RegSMOImproved " +
-          "-T 0.001 -V -P 1.0E-12 -L 0.001 -W 1\" " +
-          "-K \"weka.classifiers.functions.supportVector.RBFKernel -G 0.01 -C 0\""));
+      smo.setOptions(
+          Utils.splitOptions(
+              "-C 1.0 -N 0 "
+                  + "-I \"weka.classifiers.functions.supportVector.RegSMOImproved "
+                  + "-T 0.001 -V -P 1.0E-12 -L 0.001 -W 1\" "
+                  + "-K \"weka.classifiers.functions.supportVector.RBFKernel -G 0.01 -C 0\""));
     } catch (Exception e) {
       GPDLogger.error(this, "Failed to set options for the classifier.");
       e.printStackTrace();
@@ -231,8 +265,7 @@ public class SASolver extends AbstractSolver {
         structureStrList.add(s.getNonUniqueString());
       }
     }
-    extractor.initialize(
-        sampleDBs, dbInfo.getTargetDBName(), schema, structureStrList);
+    extractor.initialize(sampleDBs, dbInfo.getTargetDBName(), schema, structureStrList);
 
     Structure[] structureArray = possibleStructures.toArray(new Structure[0]);
     int structureSize = structureArray.length;
