@@ -76,9 +76,11 @@ public class SASolver extends AbstractSolver {
 
   private long getTotalQueryTime(Structure[] structureArray, boolean[] isBuilt) {
 
-    long cachedQueryTime = getStructureQueryTime(isBuilt);
-    if (cachedQueryTime != -1) {
-      return cachedQueryTime;
+    if (!useRegression) {
+      long cachedQueryTime = getStructureQueryTime(isBuilt);
+      if (cachedQueryTime != -1) {
+        return cachedQueryTime;
+      }
     }
 
     List<String> builtStructures = new ArrayList<>();

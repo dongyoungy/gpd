@@ -1,6 +1,7 @@
 package edu.umich.gpd.classifier;
 
 import com.esotericsoftware.minlog.Log;
+import edu.umich.gpd.util.GPDLogger;
 import weka.classifiers.Classifier;
 import weka.classifiers.functions.SMOreg;
 import weka.core.Instance;
@@ -12,9 +13,11 @@ import weka.core.Instances;
 public class GPDClassifier {
 
   private Classifier classifier;
+  private boolean hasBuilt;
 
   public GPDClassifier(Classifier classifier) {
     this.classifier = classifier;
+    this.hasBuilt = false;
   }
 
   public boolean build(Instances trainData) {
@@ -22,6 +25,7 @@ public class GPDClassifier {
       // assuming the last attribute is the class attribute
       trainData.setClassIndex(trainData.numAttributes() - 1);
       classifier.buildClassifier(trainData);
+      hasBuilt = true;
     } catch (Exception e) {
       Log.error("GPDRegression", "Error while building classifier.");
       e.printStackTrace();
@@ -31,6 +35,10 @@ public class GPDClassifier {
   }
 
   public double regress(Instance testInstance) {
+    if (!hasBuilt) {
+      GPDLogger.error(this, "Need to build the classifier first.");
+      return 0;
+    }
     try {
       return classifier.classifyInstance(testInstance);
     } catch (Exception e) {
