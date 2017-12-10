@@ -151,7 +151,7 @@ public class SASolver extends AbstractSolver {
 //        return Math.exp((timeDiff - (2 * sizeDiff)) / (currentTemp / (10 * targetTemp)));
 //      }
     } else {
-      return Math.exp((-5 * (timeDiff / sizeDiff))) / tempRatio;
+      return Math.exp((-10 * (timeDiff / sizeDiff))) / tempRatio;
 //      return Math.exp((-5 * (timeDiff + sizeDiff))) / ((currentTemp / (10 * targetTemp)));
     }
   }
