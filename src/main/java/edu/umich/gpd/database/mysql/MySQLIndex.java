@@ -103,7 +103,7 @@ public class MySQLIndex extends Structure {
     return String.format("CREATE INDEX ON %s (%s);", table.getName(), columnStr);
   }
 
-  public boolean create(Connection conn) {
+  public boolean create(Connection conn, String dbName) {
     String columnStr = "";
     //ColumnDefinition[] cols = (ColumnDefinition[])columns.toArray();
     List<ColumnDefinition> columnList = new ArrayList<>(columns);
@@ -114,10 +114,11 @@ public class MySQLIndex extends Structure {
       }
     }
     try {
+      conn.setCatalog(dbName);
       Statement stmt = conn.createStatement();
-      String dbName = conn.getCatalog();
+      String targetDBName = conn.getCatalog();
       stmt.execute(String.format("CREATE INDEX %s ON %s (%s)", this.name, table.getName(), columnStr));
-      GPDLogger.debug(this, "Executed: " + String.format("CREATE INDEX %s ON %s (%s) @ %s", this.name, table.getName(), columnStr, dbName));
+      GPDLogger.debug(this, "Executed: " + String.format("CREATE INDEX %s ON %s (%s) @ %s", this.name, table.getName(), columnStr, targetDBName));
 
       ResultSet res = stmt.executeQuery(String.format("SELECT stat_value*@@innodb_page_size FROM " +
           "mysql.innodb_index_stats WHERE stat_name = 'size' and database_name = '%s' and " +
@@ -136,12 +137,13 @@ public class MySQLIndex extends Structure {
     return true;
   }
 
-  public boolean drop(Connection conn) {
+  public boolean drop(Connection conn, String dbName) {
     try {
+      conn.setCatalog(dbName);
       Statement stmt = conn.createStatement();
-      String dbName = conn.getCatalog();
+      String targetDBName = conn.getCatalog();
       stmt.execute(String.format("DROP INDEX %s ON %s", this.name, table.getName()));
-      GPDLogger.debug(this, "Executed: " + String.format("DROP INDEX %s ON %s @ %s", this.name, table.getName(), dbName));
+      GPDLogger.debug(this, "Executed: " + String.format("DROP INDEX %s ON %s @ %s", this.name, table.getName(), targetDBName));
     } catch (Exception e) {
       e.printStackTrace();
       return false;
