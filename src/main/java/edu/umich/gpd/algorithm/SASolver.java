@@ -130,6 +130,9 @@ public class SASolver extends AbstractSolver {
       for (Query q : queries) {
         Instance testInstance = extractor.getTestInstance(dbInfo.getTargetDBName(),
             schema, q, builtStructures);
+        if (testInstance == null) {
+          GPDLogger.error(this, "test instance null.");
+        }
         totalQueryTime += (long) costEstimator.regress(testInstance);
       }
     }

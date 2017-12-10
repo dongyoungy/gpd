@@ -1529,7 +1529,6 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
             newInstance.setValue(idx++, 0);
           }
         }
-
         return newInstance;
       }
     } catch (SQLException e) {
