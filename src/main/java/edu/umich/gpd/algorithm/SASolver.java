@@ -184,7 +184,7 @@ public class SASolver extends AbstractSolver {
           String.format(
               "Previous time = %d, current time = %d (%s)", previousTime.longValue(), time, code));
       if (Math.abs((double) (previousTime.longValue() - time) / (double) previousTime.longValue())
-          < 0.05) {
+          < 0.01) {
         GPDLogger.debug(this, String.format("Using cache for %s", code));
         structureToUseCacheMap.put(code, true);
       }
@@ -251,12 +251,14 @@ public class SASolver extends AbstractSolver {
               "-C 1.0 -N 0 "
                   + "-I \"weka.classifiers.functions.supportVector.RegSMOImproved "
                   + "-T 0.001 -V -P 1.0E-12 -L 0.001 -W 1\" "
-                  + "-K \"weka.classifiers.functions.supportVector.RBFKernel -G 0.01 -C 0\""));
+                  + "-K \"weka.classifiers.functions.supportVector.PolyKernel -E 1.0 -C 0\""));
+      //                  + "-K \"weka.classifiers.functions.supportVector.RBFKernel -G 0.01 -C
+      // 0\""));
     } catch (Exception e) {
       GPDLogger.error(this, "Failed to set options for the classifier.");
       e.printStackTrace();
     }
-    costEstimator = new GPDClassifier(new M5P());
+    costEstimator = new GPDClassifier(smo);
 
     // For now, only consider a single size limit.
     long sizeLimit = sizeLimits[0];
