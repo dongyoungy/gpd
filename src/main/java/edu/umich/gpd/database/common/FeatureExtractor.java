@@ -31,9 +31,14 @@ public abstract class FeatureExtractor {
   public abstract boolean addTrainingData(String dbName, Schema s, Query q, int configId,
                                           double queryTime);
 
+  public abstract boolean addTrainingData(String dbName, Schema s, Query q, List<String> structures,
+                                          double queryTime);
+
   public abstract boolean addTrainingDataForSize(String dbName, Schema s, Structure structure);
 
   public abstract Instance getTestInstance(String dbName, Schema s, Query q, int configId);
+
+  public abstract Instance getTestInstance(String dbName, Schema s, Query q, List<String> structures);
 
   public abstract Instance getTestInstanceForSize(String dbName, Schema s, Structure structure);
 

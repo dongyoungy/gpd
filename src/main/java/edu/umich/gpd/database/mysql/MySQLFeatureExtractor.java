@@ -22,6 +22,8 @@ import java.util.List;
  */
 public class MySQLFeatureExtractor extends FeatureExtractor {
 
+  private List<String> structureList;
+
   public MySQLFeatureExtractor(Connection conn) {
     super(conn);
   }
@@ -30,6 +32,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
   public boolean initialize(List<SampleInfo> sampleDBs, String targetDBName, Schema s,
                             List<String> structureStrList) {
 
+    structureList = new ArrayList<>(structureStrList);
     ArrayList<Attribute> attrList = new ArrayList<>();
     ArrayList<Attribute> attrListForSize = new ArrayList<>();
     try {
@@ -135,12 +138,355 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
     attrList.add(new Attribute("numExtraUsingTemporary"));
     attrList.add(new Attribute("numExtraUsingWhere"));
     attrList.add(new Attribute("numExtraZeroLimit"));
+    for (int i = 0; i < structureList.size(); ++i) {
+      attrList.add(new Attribute("structure_" + i));
+    }
     attrList.add(new Attribute("queryTime"));
     attrListForSize.add(new Attribute("structureStr", structureStrList));
     attrListForSize.add(new Attribute("structureSize"));
 
     trainData = new Instances("trainData", attrList, 1000);
     trainDataForSize = new Instances("trainDataForSize", attrListForSize, 1000);
+    return true;
+  }
+
+  @Override
+  public boolean addTrainingData(String dbName, Schema s, Query q, List<String> structures, double queryTime) {
+
+    int queryId = q.getId();
+    long totalRowFromSimpleSelect = 0;
+    long totalRowFromPrimarySelect = 0;
+    long totalRowFromUnionSelect = 0;
+    long totalRowFromDependentUnionSelect = 0;
+    long totalRowFromUnionResultSelect = 0;
+    long totalRowFromSubquerySelect = 0;
+    long totalRowFromDependentSubquerySelect = 0;
+    long totalRowFromDerivedSelect = 0;
+    long totalRowFromMaterializedSelect = 0;
+    long totalRowFromUncacheableSubquerySelect = 0;
+    long totalRowFromUncacheableUnionSelect = 0;
+    long numJoinTypeSystem = 0;
+    long numJoinTypeConst = 0;
+    long numJoinTypeEqRef = 0;
+    long numJoinTypeRef = 0;
+    long numJoinTypeFulltext = 0;
+    long numJoinTypeRefOrNull = 0;
+    long numJoinTypeIndexMerge = 0;
+    long numJoinTypeUniqueSubquery = 0;
+    long numJoinTypeIndexSubquery = 0;
+    long numJoinTypeRange = 0;
+    long numJoinTypeIndex = 0;
+    long numJoinTypeAll = 0;
+    long numExtraChildPushedJoin = 0;
+    long numExtraConstRowNotFound = 0;
+    long numExtraDeletingAllRows = 0;
+    long numExtraDistinct = 0;
+    long numExtraFirstMatch = 0;
+    long numExtraFullScanOnNullKey = 0;
+    long numExtraImpossibleHaving = 0;
+    long numExtraImpossibleWhere = 0;
+    long numExtraImpossibleWhereNoticed = 0;
+    long numExtraLooseScan = 0;
+    long numExtraNoMatchingMinMaxRow = 0;
+    long numExtraNoMatchingRowInConstTable = 0;
+    long numExtraNoMatchingRowsAfterPartitionPruning = 0;
+    long numExtraNoTablesUsed = 0;
+    long numExtraNotExists = 0;
+    long numExtraPlanNotReadyYet = 0;
+    long numExtraRangeChecked = 0;
+    long numExtraSelecTablesOptimizedAway = 0;
+    long numExtraStartTemporary = 0;
+    long numExtraEndTemporary = 0;
+    long numExtraUniqueRowNotFound = 0;
+    long numExtraUsingFilesort = 0;
+    long numExtraUsingIndex = 0;
+    long numExtraUsingIndexCondition = 0;
+    long numExtraUsingIndexForGroupBy = 0;
+    long numExtraUsingJoinBuffer = 0;
+    long numExtraUsingMRR = 0;
+    long numExtraUsingSortUnion = 0;
+    long numExtraUsingUnion = 0;
+    long numExtraUsingIntersect = 0;
+    long numExtraUsingTemporary = 0;
+    long numExtraUsingWhere = 0;
+    long numExtraZeroLimit = 0;
+
+    try {
+      conn.setCatalog(dbName);
+      Statement stmt = conn.createStatement();
+      ResultSet res = stmt.executeQuery(String.format("EXPLAIN EXTENDED %s", q.getContent()));
+      while (res.next()) {
+        String selectType = res.getString("select_type");
+        long numRows = res.getLong("rows");
+        double filtered = res.getDouble("filtered");
+        String extra = res.getString("Extra");
+        String joinType = res.getString("type");
+
+        // extract # of rows from select
+        numRows = (long) ((numRows) * (filtered / 100.0));
+        switch (selectType.toUpperCase()) {
+          case "SIMPLE":
+            totalRowFromSimpleSelect += numRows;
+            break;
+          case "PRIMARY":
+            totalRowFromPrimarySelect += numRows;
+            break;
+          case "UNION":
+            totalRowFromUnionSelect += numRows;
+            break;
+          case "DEPENDENT UNION":
+            totalRowFromDependentUnionSelect += numRows;
+            break;
+          case "UNION RESULT":
+            totalRowFromUnionResultSelect += numRows;
+            break;
+          case "SUBQUERY":
+            totalRowFromSubquerySelect += numRows;
+            break;
+          case "DEPENDENT SUBQUERY":
+            totalRowFromDependentSubquerySelect += numRows;
+            break;
+          case "DERIVED":
+            totalRowFromDerivedSelect += numRows;
+            break;
+          case "MATERIALIZED":
+            totalRowFromMaterializedSelect += numRows;
+            break;
+          case "UNCACHEABLE SUBQUERY":
+            totalRowFromUncacheableSubquerySelect += numRows;
+            break;
+          case "UNCACHEABLE UNION":
+            totalRowFromUncacheableUnionSelect += numRows;
+            break;
+          default:
+            GPDLogger.error(this, "Unsupported Select type: " + selectType);
+            break;
+        }
+
+        // extract features on join types
+        switch (joinType.toLowerCase()) {
+          case "system":
+            numJoinTypeSystem++;
+            break;
+          case "const":
+            numJoinTypeConst++;
+            break;
+          case "eq_ref":
+            numJoinTypeEqRef++;
+            break;
+          case "ref":
+            numJoinTypeRef++;
+            break;
+          case "fulltext":
+            numJoinTypeFulltext++;
+            break;
+          case "ref_or_null":
+            numJoinTypeRefOrNull++;
+            break;
+          case "index_merge":
+            numJoinTypeIndexMerge++;
+            break;
+          case "unique_subquery":
+            numJoinTypeUniqueSubquery++;
+            break;
+          case "index_subquery":
+            numJoinTypeIndexSubquery++;
+            break;
+          case "range":
+            numJoinTypeRange++;
+            break;
+          case "index":
+            numJoinTypeIndex++;
+            break;
+          case "all":
+            numJoinTypeAll++;
+            break;
+          default:
+            GPDLogger.error(this, "Unsupported Join type: " + joinType);
+            break;
+        }
+
+        // now processes 'extra' column
+        if (extra != null) {
+          String lowerExtra = extra.toLowerCase();
+          if (lowerExtra.contains("pushed join")) {
+            numExtraChildPushedJoin++;
+          }
+          if (lowerExtra.contains("const row not found")) {
+            numExtraConstRowNotFound++;
+          }
+          if (lowerExtra.contains("deleting all rows")) {
+            numExtraDeletingAllRows++;
+          }
+          if (lowerExtra.contains("distinct")) {
+            numExtraDistinct++;
+          }
+          if (lowerExtra.contains("firstmatch")) {
+            numExtraFirstMatch++;
+          }
+          if (lowerExtra.contains("full scan on null key")) {
+            numExtraFullScanOnNullKey++;
+          }
+          if (lowerExtra.contains("impossible having")) {
+            numExtraImpossibleHaving++;
+          }
+          if (lowerExtra.contains("impossible where") && !lowerExtra.contains("noticed after")) {
+            numExtraImpossibleWhere++;
+          }
+          if (lowerExtra.contains("impossible where noticed after")) {
+            numExtraImpossibleWhereNoticed++;
+          }
+          if (lowerExtra.contains("loosescan")) {
+            numExtraLooseScan++;
+          }
+          if (lowerExtra.contains("no matching min/max")) {
+            numExtraNoMatchingMinMaxRow++;
+          }
+          if (lowerExtra.contains("no matching row in const table")) {
+            numExtraNoMatchingRowInConstTable++;
+          }
+          if (lowerExtra.contains("no matching rows after partition pruning")) {
+            numExtraNoMatchingRowsAfterPartitionPruning++;
+          }
+          if (lowerExtra.contains("no tables used")) {
+            numExtraNoTablesUsed++;
+          }
+          if (lowerExtra.contains("not exists")) {
+            numExtraNotExists++;
+          }
+          if (lowerExtra.contains("plan isn't ready yet")) {
+            numExtraPlanNotReadyYet++;
+          }
+          if (lowerExtra.contains("range checked for each record")) {
+            numExtraRangeChecked++;
+          }
+          if (lowerExtra.contains("select tables optimized away")) {
+            numExtraSelecTablesOptimizedAway++;
+          }
+          if (lowerExtra.contains("start temporary")) {
+            numExtraStartTemporary++;
+          }
+          if (lowerExtra.contains("end temporary")) {
+            numExtraEndTemporary++;
+          }
+          if (lowerExtra.contains("unique row not found")) {
+            numExtraUniqueRowNotFound++;
+          }
+          if (lowerExtra.contains("using filesort")) {
+            numExtraUsingFilesort++;
+          }
+          if (lowerExtra.contains("using index condition")) {
+            numExtraUsingIndexCondition++;
+          }
+          else if (lowerExtra.contains("using index for group-by")) {
+            numExtraUsingIndexForGroupBy++;
+          }
+          else if (lowerExtra.contains("using index")) {
+            numExtraUsingIndex++;
+          }
+          if (lowerExtra.contains("using join buffer")) {
+            numExtraUsingJoinBuffer++;
+          }
+          if (lowerExtra.contains("using mrr")) {
+            numExtraUsingMRR++;
+          }
+          if (lowerExtra.contains("using sort_union")) {
+            numExtraUsingSortUnion++;
+          }
+          if (lowerExtra.contains("using union")) {
+            numExtraUsingUnion++;
+          }
+          if (lowerExtra.contains("using intersect")) {
+            numExtraUsingIntersect++;
+          }
+          if (lowerExtra.contains("using where")) {
+            numExtraUsingWhere++;
+          }
+          if (lowerExtra.contains("zero limit")) {
+            numExtraZeroLimit++;
+          }
+        }
+
+        Instance newInstance = new SparseInstance(trainData.numAttributes());
+        newInstance.setDataset(trainData);
+        int idx = 0;
+        for (Table t : s.getTables()) {
+          newInstance.setValue(idx++, t.getRowCount(dbName));
+        }
+        newInstance.setValue(idx++, queryId);
+        newInstance.setValue(idx++, 0);
+        newInstance.setValue(idx++, totalRowFromSimpleSelect);
+        newInstance.setValue(idx++, totalRowFromPrimarySelect);
+        newInstance.setValue(idx++, totalRowFromUnionSelect);
+        newInstance.setValue(idx++, totalRowFromDependentUnionSelect);
+        newInstance.setValue(idx++, totalRowFromUnionResultSelect);
+        newInstance.setValue(idx++, totalRowFromSubquerySelect);
+        newInstance.setValue(idx++, totalRowFromDependentSubquerySelect);
+        newInstance.setValue(idx++, totalRowFromDerivedSelect);
+        newInstance.setValue(idx++, totalRowFromMaterializedSelect);
+        newInstance.setValue(idx++, totalRowFromUncacheableSubquerySelect);
+        newInstance.setValue(idx++, totalRowFromUncacheableUnionSelect);
+        newInstance.setValue(idx++, numJoinTypeSystem);
+        newInstance.setValue(idx++, numJoinTypeConst);
+        newInstance.setValue(idx++, numJoinTypeEqRef);
+        newInstance.setValue(idx++, numJoinTypeRef);
+        newInstance.setValue(idx++, numJoinTypeFulltext);
+        newInstance.setValue(idx++, numJoinTypeRefOrNull);
+        newInstance.setValue(idx++, numJoinTypeIndexMerge);
+        newInstance.setValue(idx++, numJoinTypeUniqueSubquery);
+        newInstance.setValue(idx++, numJoinTypeIndexSubquery);
+        newInstance.setValue(idx++, numJoinTypeRange);
+        newInstance.setValue(idx++, numJoinTypeIndex);
+        newInstance.setValue(idx++, numJoinTypeAll);
+        newInstance.setValue(idx++, numExtraChildPushedJoin);
+        newInstance.setValue(idx++, numExtraConstRowNotFound);
+        newInstance.setValue(idx++, numExtraDeletingAllRows);
+        newInstance.setValue(idx++, numExtraDistinct);
+        newInstance.setValue(idx++, numExtraFirstMatch);
+        newInstance.setValue(idx++, numExtraFullScanOnNullKey);
+        newInstance.setValue(idx++, numExtraImpossibleHaving);
+        newInstance.setValue(idx++, numExtraImpossibleWhere);
+        newInstance.setValue(idx++, numExtraImpossibleWhereNoticed);
+        newInstance.setValue(idx++, numExtraLooseScan);
+        newInstance.setValue(idx++, numExtraNoMatchingMinMaxRow);
+        newInstance.setValue(idx++, numExtraNoMatchingRowInConstTable);
+        newInstance.setValue(idx++, numExtraNoMatchingRowsAfterPartitionPruning);
+        newInstance.setValue(idx++, numExtraNoTablesUsed);
+        newInstance.setValue(idx++, numExtraNotExists);
+        newInstance.setValue(idx++, numExtraPlanNotReadyYet);
+        newInstance.setValue(idx++, numExtraRangeChecked);
+        newInstance.setValue(idx++, numExtraSelecTablesOptimizedAway);
+        newInstance.setValue(idx++, numExtraStartTemporary);
+        newInstance.setValue(idx++, numExtraEndTemporary);
+        newInstance.setValue(idx++, numExtraUniqueRowNotFound);
+        newInstance.setValue(idx++, numExtraUsingFilesort);
+        newInstance.setValue(idx++, numExtraUsingIndex);
+        newInstance.setValue(idx++, numExtraUsingIndexCondition);
+        newInstance.setValue(idx++, numExtraUsingIndexForGroupBy);
+        newInstance.setValue(idx++, numExtraUsingJoinBuffer);
+        newInstance.setValue(idx++, numExtraUsingMRR);
+        newInstance.setValue(idx++, numExtraUsingSortUnion);
+        newInstance.setValue(idx++, numExtraUsingUnion);
+        newInstance.setValue(idx++, numExtraUsingIntersect);
+        newInstance.setValue(idx++, numExtraUsingTemporary);
+        newInstance.setValue(idx++, numExtraUsingWhere);
+        newInstance.setValue(idx++, numExtraZeroLimit);
+        for (String structureStr : structureList) {
+          if (structures.contains(structureStr)) {
+            newInstance.setValue(idx++, 1);
+          } else {
+            newInstance.setValue(idx++, 0);
+          }
+        }
+        newInstance.setValue(idx++, queryTime);
+
+        trainData.add(newInstance);
+      }
+    } catch (SQLException e) {
+      GPDLogger.error(this, "SQLException has been caught.");
+      e.printStackTrace();
+      return false;
+    }
     return true;
   }
 
@@ -466,6 +812,9 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
         newInstance.setValue(idx++, numExtraUsingTemporary);
         newInstance.setValue(idx++, numExtraUsingWhere);
         newInstance.setValue(idx++, numExtraZeroLimit);
+        for (String structureStr : structureList) {
+          newInstance.setValue(idx++, 0);
+        }
         newInstance.setValue(idx++, queryTime);
 
         trainData.add(newInstance);
@@ -827,6 +1176,359 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
         newInstance.setValue(idx++, numExtraUsingTemporary);
         newInstance.setValue(idx++, numExtraUsingWhere);
         newInstance.setValue(idx++, numExtraZeroLimit);
+        for (String structureStr : structureList) {
+          newInstance.setValue(idx++, 0);
+        }
+
+        return newInstance;
+      }
+    } catch (SQLException e) {
+      GPDLogger.error(this, "SQLException has been caught.");
+      e.printStackTrace();
+      return null;
+    }
+    return null;
+  }
+
+  @Override
+  public Instance getTestInstance(String dbName, Schema s, Query q, List<String> structures) {
+
+    int queryId;
+    if (q == null) {
+      queryId = -1;
+    } else {
+      queryId = q.getId();
+    }
+    long totalRowFromSimpleSelect = 0;
+    long totalRowFromPrimarySelect = 0;
+    long totalRowFromUnionSelect = 0;
+    long totalRowFromDependentUnionSelect = 0;
+    long totalRowFromUnionResultSelect = 0;
+    long totalRowFromSubquerySelect = 0;
+    long totalRowFromDependentSubquerySelect = 0;
+    long totalRowFromDerivedSelect = 0;
+    long totalRowFromMaterializedSelect = 0;
+    long totalRowFromUncacheableSubquerySelect = 0;
+    long totalRowFromUncacheableUnionSelect = 0;
+    long numJoinTypeSystem = 0;
+    long numJoinTypeConst = 0;
+    long numJoinTypeEqRef = 0;
+    long numJoinTypeRef = 0;
+    long numJoinTypeFulltext = 0;
+    long numJoinTypeRefOrNull = 0;
+    long numJoinTypeIndexMerge = 0;
+    long numJoinTypeUniqueSubquery = 0;
+    long numJoinTypeIndexSubquery = 0;
+    long numJoinTypeRange = 0;
+    long numJoinTypeIndex = 0;
+    long numJoinTypeAll = 0;
+    long numExtraChildPushedJoin = 0;
+    long numExtraConstRowNotFound = 0;
+    long numExtraDeletingAllRows = 0;
+    long numExtraDistinct = 0;
+    long numExtraFirstMatch = 0;
+    long numExtraFullScanOnNullKey = 0;
+    long numExtraImpossibleHaving = 0;
+    long numExtraImpossibleWhere = 0;
+    long numExtraImpossibleWhereNoticed = 0;
+    long numExtraLooseScan = 0;
+    long numExtraNoMatchingMinMaxRow = 0;
+    long numExtraNoMatchingRowInConstTable = 0;
+    long numExtraNoMatchingRowsAfterPartitionPruning = 0;
+    long numExtraNoTablesUsed = 0;
+    long numExtraNotExists = 0;
+    long numExtraPlanNotReadyYet = 0;
+    long numExtraRangeChecked = 0;
+    long numExtraSelecTablesOptimizedAway = 0;
+    long numExtraStartTemporary = 0;
+    long numExtraEndTemporary = 0;
+    long numExtraUniqueRowNotFound = 0;
+    long numExtraUsingFilesort = 0;
+    long numExtraUsingIndex = 0;
+    long numExtraUsingIndexCondition = 0;
+    long numExtraUsingIndexForGroupBy = 0;
+    long numExtraUsingJoinBuffer = 0;
+    long numExtraUsingMRR = 0;
+    long numExtraUsingSortUnion = 0;
+    long numExtraUsingUnion = 0;
+    long numExtraUsingIntersect = 0;
+    long numExtraUsingTemporary = 0;
+    long numExtraUsingWhere = 0;
+    long numExtraZeroLimit = 0;
+
+    try {
+      conn.setCatalog(dbName);
+      Statement stmt = conn.createStatement();
+      ResultSet res = stmt.executeQuery(String.format("EXPLAIN EXTENDED %s", q.getContent()));
+      while (res.next()) {
+        String selectType = res.getString("select_type");
+        long numRows = res.getLong("rows");
+        double filtered = res.getDouble("filtered");
+        String extra = res.getString("extra");
+        String joinType = res.getString("type");
+
+        // extract # of rows from select
+        numRows = (long) ((numRows) * (filtered / 100.0));
+        switch (selectType.toUpperCase()) {
+          case "SIMPLE":
+            totalRowFromSimpleSelect += numRows;
+            break;
+          case "PRIMARY":
+            totalRowFromPrimarySelect += numRows;
+            break;
+          case "UNION":
+            totalRowFromUnionSelect += numRows;
+            break;
+          case "DEPENDENT UNION":
+            totalRowFromDependentUnionSelect += numRows;
+            break;
+          case "UNION RESULT":
+            totalRowFromUnionResultSelect += numRows;
+            break;
+          case "SUBQUERY":
+            totalRowFromSubquerySelect += numRows;
+            break;
+          case "DEPENDENT SUBQUERY":
+            totalRowFromDependentSubquerySelect += numRows;
+            break;
+          case "DERIVED":
+            totalRowFromDerivedSelect += numRows;
+            break;
+          case "MATERIALIZED":
+            totalRowFromMaterializedSelect += numRows;
+            break;
+          case "UNCACHEABLE SUBQUERY":
+            totalRowFromUncacheableSubquerySelect += numRows;
+            break;
+          case "UNCACHEABLE UNION":
+            totalRowFromUncacheableUnionSelect += numRows;
+            break;
+          default:
+            GPDLogger.error(this, "Unsupported Select type: " + selectType);
+            break;
+        }
+
+        // extract features on join types
+        switch (joinType.toLowerCase()) {
+          case "system":
+            numJoinTypeSystem++;
+            break;
+          case "const":
+            numJoinTypeConst++;
+            break;
+          case "eq_ref":
+            numJoinTypeEqRef++;
+            break;
+          case "ref":
+            numJoinTypeRef++;
+            break;
+          case "fulltext":
+            numJoinTypeFulltext++;
+            break;
+          case "ref_or_null":
+            numJoinTypeRefOrNull++;
+            break;
+          case "index_merge":
+            numJoinTypeIndexMerge++;
+            break;
+          case "unique_subquery":
+            numJoinTypeUniqueSubquery++;
+            break;
+          case "index_subquery":
+            numJoinTypeIndexSubquery++;
+            break;
+          case "range":
+            numJoinTypeRange++;
+            break;
+          case "index":
+            numJoinTypeIndex++;
+            break;
+          case "all":
+            numJoinTypeAll++;
+            break;
+          default:
+            GPDLogger.error(this, "Unsupported Join type: " + joinType);
+            break;
+        }
+
+        // now processes 'extra' column
+        if (extra != null) {
+          String lowerExtra = extra.toLowerCase();
+          if (lowerExtra.contains("pushed join")) {
+            numExtraChildPushedJoin++;
+          }
+          if (lowerExtra.contains("const row not found")) {
+            numExtraConstRowNotFound++;
+          }
+          if (lowerExtra.contains("deleting all rows")) {
+            numExtraDeletingAllRows++;
+          }
+          if (lowerExtra.contains("distinct")) {
+            numExtraDistinct++;
+          }
+          if (lowerExtra.contains("firstmatch")) {
+            numExtraFirstMatch++;
+          }
+          if (lowerExtra.contains("full scan on null key")) {
+            numExtraFullScanOnNullKey++;
+          }
+          if (lowerExtra.contains("impossible having")) {
+            numExtraImpossibleHaving++;
+          }
+          if (lowerExtra.contains("impossible where") && !lowerExtra.contains("noticed after")) {
+            numExtraImpossibleWhere++;
+          }
+          if (lowerExtra.contains("impossible where noticed after")) {
+            numExtraImpossibleWhereNoticed++;
+          }
+          if (lowerExtra.contains("loosescan")) {
+            numExtraLooseScan++;
+          }
+          if (lowerExtra.contains("no matching min/max")) {
+            numExtraNoMatchingMinMaxRow++;
+          }
+          if (lowerExtra.contains("no matching row in const table")) {
+            numExtraNoMatchingRowInConstTable++;
+          }
+          if (lowerExtra.contains("no matching rows after partition pruning")) {
+            numExtraNoMatchingRowsAfterPartitionPruning++;
+          }
+          if (lowerExtra.contains("no tables used")) {
+            numExtraNoTablesUsed++;
+          }
+          if (lowerExtra.contains("not exists")) {
+            numExtraNotExists++;
+          }
+          if (lowerExtra.contains("plan isn't ready yet")) {
+            numExtraPlanNotReadyYet++;
+          }
+          if (lowerExtra.contains("range checked for each record")) {
+            numExtraRangeChecked++;
+          }
+          if (lowerExtra.contains("select tables optimized away")) {
+            numExtraSelecTablesOptimizedAway++;
+          }
+          if (lowerExtra.contains("start temporary")) {
+            numExtraStartTemporary++;
+          }
+          if (lowerExtra.contains("end temporary")) {
+            numExtraEndTemporary++;
+          }
+          if (lowerExtra.contains("unique row not found")) {
+            numExtraUniqueRowNotFound++;
+          }
+          if (lowerExtra.contains("using filesort")) {
+            numExtraUsingFilesort++;
+          }
+          if (lowerExtra.contains("using index condition")) {
+            numExtraUsingIndexCondition++;
+          }
+          else if (lowerExtra.contains("using index for group-by")) {
+            numExtraUsingIndexForGroupBy++;
+          }
+          else if (lowerExtra.contains("using index")) {
+            numExtraUsingIndex++;
+          }
+          if (lowerExtra.contains("using join buffer")) {
+            numExtraUsingJoinBuffer++;
+          }
+          if (lowerExtra.contains("using mrr")) {
+            numExtraUsingMRR++;
+          }
+          if (lowerExtra.contains("using sort_union")) {
+            numExtraUsingSortUnion++;
+          }
+          if (lowerExtra.contains("using union")) {
+            numExtraUsingUnion++;
+          }
+          if (lowerExtra.contains("using intersect")) {
+            numExtraUsingIntersect++;
+          }
+          if (lowerExtra.contains("using where")) {
+            numExtraUsingWhere++;
+          }
+          if (lowerExtra.contains("zero limit")) {
+            numExtraZeroLimit++;
+          }
+        }
+
+        // 57 features + query time + configuration id + index size
+//        Instance newInstance = new DenseInstance(57 + 1);
+        Instance newInstance = new SparseInstance(trainData.numAttributes());
+        newInstance.setDataset(trainData);
+        int idx = 0;
+        for (Table t : s.getTables()) {
+          newInstance.setValue(idx++, t.getRowCount(dbName));
+        }
+        if (queryId == -1) {
+          idx++;
+        } else {
+          newInstance.setValue(idx++, queryId);
+        }
+        newInstance.setValue(idx++, 0);
+        newInstance.setValue(idx++, totalRowFromSimpleSelect);
+        newInstance.setValue(idx++, totalRowFromPrimarySelect);
+        newInstance.setValue(idx++, totalRowFromUnionSelect);
+        newInstance.setValue(idx++, totalRowFromDependentUnionSelect);
+        newInstance.setValue(idx++, totalRowFromUnionResultSelect);
+        newInstance.setValue(idx++, totalRowFromSubquerySelect);
+        newInstance.setValue(idx++, totalRowFromDependentSubquerySelect);
+        newInstance.setValue(idx++, totalRowFromDerivedSelect);
+        newInstance.setValue(idx++, totalRowFromMaterializedSelect);
+        newInstance.setValue(idx++, totalRowFromUncacheableSubquerySelect);
+        newInstance.setValue(idx++, totalRowFromUncacheableUnionSelect);
+        newInstance.setValue(idx++, numJoinTypeSystem);
+        newInstance.setValue(idx++, numJoinTypeConst);
+        newInstance.setValue(idx++, numJoinTypeEqRef);
+        newInstance.setValue(idx++, numJoinTypeRef);
+        newInstance.setValue(idx++, numJoinTypeFulltext);
+        newInstance.setValue(idx++, numJoinTypeRefOrNull);
+        newInstance.setValue(idx++, numJoinTypeIndexMerge);
+        newInstance.setValue(idx++, numJoinTypeUniqueSubquery);
+        newInstance.setValue(idx++, numJoinTypeIndexSubquery);
+        newInstance.setValue(idx++, numJoinTypeRange);
+        newInstance.setValue(idx++, numJoinTypeIndex);
+        newInstance.setValue(idx++, numJoinTypeAll);
+        newInstance.setValue(idx++, numExtraChildPushedJoin);
+        newInstance.setValue(idx++, numExtraConstRowNotFound);
+        newInstance.setValue(idx++, numExtraDeletingAllRows);
+        newInstance.setValue(idx++, numExtraDistinct);
+        newInstance.setValue(idx++, numExtraFirstMatch);
+        newInstance.setValue(idx++, numExtraFullScanOnNullKey);
+        newInstance.setValue(idx++, numExtraImpossibleHaving);
+        newInstance.setValue(idx++, numExtraImpossibleWhere);
+        newInstance.setValue(idx++, numExtraImpossibleWhereNoticed);
+        newInstance.setValue(idx++, numExtraLooseScan);
+        newInstance.setValue(idx++, numExtraNoMatchingMinMaxRow);
+        newInstance.setValue(idx++, numExtraNoMatchingRowInConstTable);
+        newInstance.setValue(idx++, numExtraNoMatchingRowsAfterPartitionPruning);
+        newInstance.setValue(idx++, numExtraNoTablesUsed);
+        newInstance.setValue(idx++, numExtraNotExists);
+        newInstance.setValue(idx++, numExtraPlanNotReadyYet);
+        newInstance.setValue(idx++, numExtraRangeChecked);
+        newInstance.setValue(idx++, numExtraSelecTablesOptimizedAway);
+        newInstance.setValue(idx++, numExtraStartTemporary);
+        newInstance.setValue(idx++, numExtraEndTemporary);
+        newInstance.setValue(idx++, numExtraUniqueRowNotFound);
+        newInstance.setValue(idx++, numExtraUsingFilesort);
+        newInstance.setValue(idx++, numExtraUsingIndex);
+        newInstance.setValue(idx++, numExtraUsingIndexCondition);
+        newInstance.setValue(idx++, numExtraUsingIndexForGroupBy);
+        newInstance.setValue(idx++, numExtraUsingJoinBuffer);
+        newInstance.setValue(idx++, numExtraUsingMRR);
+        newInstance.setValue(idx++, numExtraUsingSortUnion);
+        newInstance.setValue(idx++, numExtraUsingUnion);
+        newInstance.setValue(idx++, numExtraUsingIntersect);
+        newInstance.setValue(idx++, numExtraUsingTemporary);
+        newInstance.setValue(idx++, numExtraUsingWhere);
+        newInstance.setValue(idx++, numExtraZeroLimit);
+        for (String structureStr : structureList) {
+          if (structures.contains(structureStr)) {
+            newInstance.setValue(idx++, 1);
+          } else {
+            newInstance.setValue(idx++, 0);
+          }
+        }
 
         return newInstance;
       }

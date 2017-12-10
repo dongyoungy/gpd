@@ -12,8 +12,10 @@ import edu.umich.gpd.userinput.SampleInfo;
 import edu.umich.gpd.util.GPDLogger;
 import edu.umich.gpd.workload.Query;
 import edu.umich.gpd.workload.Workload;
+import org.apache.avro.generic.GenericData;
 import weka.classifiers.functions.SMOreg;
 import weka.core.Instance;
+import weka.core.Utils;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -24,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 /** Created by Dong Young Yoon on 12/6/17. */
 public class SASolver extends AbstractSolver {
   private GPDClassifier sizeEstimator;
+  private GPDClassifier costEstimator;
   Map<String, Long> structureToQueryTimeMap;
 
   public SASolver(
@@ -71,11 +74,20 @@ public class SASolver extends AbstractSolver {
     return sizeEstimates;
   }
 
-  private long getTotalQueryTime(boolean[] isBuilt) {
+  private long getTotalQueryTime(Structure[] structureArray, boolean[] isBuilt) {
 
     long cachedQueryTime = getStructureQueryTime(isBuilt);
     if (cachedQueryTime != -1) {
       return cachedQueryTime;
+    }
+
+    List<String> builtStructures = new ArrayList<>();
+    if (useRegression) {
+      for (int i = 0; i < isBuilt.length; ++i) {
+        if (isBuilt[i]) {
+          builtStructures.add(structureArray[i].getNonUniqueString());
+        }
+      }
     }
 
     List<Query> queries = workload.getQueries();
@@ -88,6 +100,7 @@ public class SASolver extends AbstractSolver {
         stmt = conn.createStatement();
 
         for (Query q : queries) {
+          long queryTime = 0;
           boolean timeout = false;
           Stopwatch stopwatch = Stopwatch.createStarted();
           try {
@@ -98,9 +111,14 @@ public class SASolver extends AbstractSolver {
             timeout = true;
           }
           if (timeout) {
-            totalQueryTime += GPDMain.userInput.getSetting().getQueryTimeout() * 1000;
+            queryTime = GPDMain.userInput.getSetting().getQueryTimeout() * 1000;
           } else {
-            totalQueryTime += stopwatch.elapsed(TimeUnit.MILLISECONDS);
+            queryTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+          }
+          if (useRegression) {
+            extractor.addTrainingData(dbName, schema, q, builtStructures, queryTime);
+          } else {
+            totalQueryTime += queryTime;
           }
         }
 
@@ -108,6 +126,14 @@ public class SASolver extends AbstractSolver {
         e.printStackTrace();
       }
     }
+    if (useRegression) {
+      for (Query q : queries) {
+        Instance testInstance = extractor.getTestInstance(dbInfo.getTargetDBName(),
+            schema, q, builtStructures);
+        totalQueryTime += (long) costEstimator.regress(testInstance);
+      }
+    }
+    GPDLogger.debug(this, String.format("Estimated query time = %d (%s)", totalQueryTime, getStructureCode(isBuilt)));
     AddStructureQueryTime(isBuilt, totalQueryTime);
     return totalQueryTime;
   }
@@ -174,21 +200,33 @@ public class SASolver extends AbstractSolver {
   @Override
   public boolean solve() {
     List<Structure> allStructures = getAllStructures(configurations);
-    Set<Structure> possibleStructures = new HashSet<>();
-    Set<String> structureStrSet = new HashSet<>();
+    Set<Structure> possibleStructures = new LinkedHashSet<>();
+    List<String> structureStrList = new ArrayList<>();
     sizeEstimator = new GPDClassifier(new SMOreg());
     sizeLimits = GPDMain.userInput.getSetting().getSizeLimits();
+
+    SMOreg smo = new SMOreg();
+    try {
+      smo.setOptions(Utils.splitOptions("-C 1.0 -N 0 " +
+          "-I \"weka.classifiers.functions.supportVector.RegSMOImproved " +
+          "-T 0.001 -V -P 1.0E-12 -L 0.001 -W 1\" " +
+          "-K \"weka.classifiers.functions.supportVector.PolyKernel -E 1.0 -C 0\""));
+    } catch (Exception e) {
+      GPDLogger.error(this, "Failed to set options for the classifier.");
+      e.printStackTrace();
+    }
+    costEstimator = new GPDClassifier(smo);
 
     // For now, only consider a single size limit.
     long sizeLimit = sizeLimits[0];
 
     for (Structure s : allStructures) {
       if (possibleStructures.add(s)) {
-        structureStrSet.add(s.getNonUniqueString());
+        structureStrList.add(s.getNonUniqueString());
       }
     }
     extractor.initialize(
-        sampleDBs, dbInfo.getTargetDBName(), schema, new ArrayList<>(structureStrSet));
+        sampleDBs, dbInfo.getTargetDBName(), schema, structureStrList);
 
     Structure[] structureArray = possibleStructures.toArray(new Structure[0]);
     int structureSize = structureArray.length;
@@ -238,14 +276,14 @@ public class SASolver extends AbstractSolver {
       GPDLogger.debug(
           this,
           String.format("(Iter #%d) Getting total query time for current solution.", numIteration));
-      currentTime = getTotalQueryTime(currentSolution);
+      currentTime = getTotalQueryTime(structureArray, currentSolution);
       buildOrDropStructure(
           structureArray[indexOfStructureToAlter], newSolution[indexOfStructureToAlter]);
       GPDLogger.debug(
           this,
           String.format(
               "(Iter #%d) Getting total query time for neighbor solution.", numIteration));
-      long newTime = getTotalQueryTime(newSolution);
+      long newTime = getTotalQueryTime(structureArray, newSolution);
 
       double normalizedTimeDiff = (double) (newTime - currentTime) / (double) currentTime;
       long sizeDiff = estimatedStructureSizes[indexOfStructureToAlter];
