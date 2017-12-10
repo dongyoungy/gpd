@@ -228,7 +228,7 @@ public class SASolver extends AbstractSolver {
       //        return Math.exp((timeDiff - (2 * sizeDiff)) / (currentTemp / (10 * targetTemp)));
       //      }
     } else {
-      return Math.exp((-10 * (timeDiff / sizeDiff))) / tempRatio;
+      return Math.exp((-5 * (timeDiff / sizeDiff))) / tempRatio;
       //      return Math.exp((-5 * (timeDiff + sizeDiff))) / ((currentTemp / (10 * targetTemp)));
     }
   }
@@ -270,7 +270,7 @@ public class SASolver extends AbstractSolver {
       GPDLogger.error(this, "Failed to set options for the classifier.");
       e.printStackTrace();
     }
-    costEstimator = new GPDClassifier(smo);
+    costEstimator = new GPDClassifier(new M5P());
 
     // For now, only consider a single size limit.
     long sizeLimit = sizeLimits[0];
