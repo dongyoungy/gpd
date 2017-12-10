@@ -145,8 +145,8 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
     attrListForSize.add(new Attribute("structureStr", structureStrList));
     attrListForSize.add(new Attribute("structureSize"));
 
-    trainData = new Instances("trainData", attrList, 1000);
-    trainDataForSize = new Instances("trainDataForSize", attrListForSize, 1000);
+    trainData = new Instances("trainData", attrList, 10000);
+    trainDataForSize = new Instances("trainDataForSize", attrListForSize, 10000);
     return true;
   }
 

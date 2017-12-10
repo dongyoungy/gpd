@@ -127,6 +127,7 @@ public class SASolver extends AbstractSolver {
       }
     }
     if (useRegression) {
+      costEstimator.build(extractor.getTrainData());
       for (Query q : queries) {
         Instance testInstance = extractor.getTestInstance(dbInfo.getTargetDBName(),
             schema, q, builtStructures);
