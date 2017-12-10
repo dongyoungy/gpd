@@ -89,7 +89,8 @@ public class SASolver extends AbstractSolver {
         return cachedQueryTime;
       }
     } else {
-      if (structureToUseCacheMap.get(getStructureCode(isBuilt))) {
+      String code = getStructureCode(isBuilt);
+      if (structureToUseCacheMap.containsKey(code) && structureToUseCacheMap.get(code)) {
         long cachedQueryTime = getStructureQueryTime(isBuilt);
         if (cachedQueryTime != -1) {
           GPDLogger.debug(
