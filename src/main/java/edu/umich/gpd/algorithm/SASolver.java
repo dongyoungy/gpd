@@ -12,8 +12,8 @@ import edu.umich.gpd.userinput.SampleInfo;
 import edu.umich.gpd.util.GPDLogger;
 import edu.umich.gpd.workload.Query;
 import edu.umich.gpd.workload.Workload;
-import org.apache.avro.generic.GenericData;
 import weka.classifiers.functions.SMOreg;
+import weka.classifiers.trees.M5P;
 import weka.core.Instance;
 import weka.core.Utils;
 
@@ -256,7 +256,7 @@ public class SASolver extends AbstractSolver {
       GPDLogger.error(this, "Failed to set options for the classifier.");
       e.printStackTrace();
     }
-    costEstimator = new GPDClassifier(smo);
+    costEstimator = new GPDClassifier(new M5P());
 
     // For now, only consider a single size limit.
     long sizeLimit = sizeLimits[0];
