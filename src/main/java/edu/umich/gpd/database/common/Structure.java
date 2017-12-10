@@ -61,14 +61,14 @@ public abstract class Structure {
    * @param conn JDBC connection to the target database
    * @return true if the creation is successful, false otherwise.
    */
-  public abstract boolean create(Connection conn);
+  public abstract boolean create(Connection conn, String dbName);
 
   /**
    * delete/drops this physical structure using the provided JDBC connection
    * @param conn JDBC connection to the target database
    * @return true if the deletion is successful, false otherwise.
    */
-  public abstract boolean drop(Connection conn);
+  public abstract boolean drop(Connection conn, String dbName);
 
   public abstract boolean isCovering(Structure other);
 

@@ -516,7 +516,7 @@ public class ILPSolverGurobi extends AbstractSolver {
             "Getting query costs using structures of configuration #%d out of %d. (sample DB #%d out of %d)", configCount + 1,
             configSize, d + 1, numSampleDBs));
         for (Structure s : configuration.getStructures()) {
-          s.create(conn);
+          s.create(conn, dbName);
           if (trainedSet.add(s)) {
             extractor.addTrainingDataForSize(dbName, schema, s);
             GPDLogger.debug(this,
@@ -592,7 +592,7 @@ public class ILPSolverGurobi extends AbstractSolver {
 //            "Removing structures for configuration #%d out of %d. (sample DB #%d out of #%d)", configCount + 1,
 //            configSize, d + 1, numSampleDBs));
         for (Structure s : configuration.getStructures()) {
-          s.drop(conn);
+          s.drop(conn, dbName);
         }
         ++configCount;
         long elapsed = runTime.elapsed(TimeUnit.SECONDS);

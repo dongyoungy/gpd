@@ -55,7 +55,7 @@ public class GreedySolver extends AbstractSolver {
           // construct all structures first
           GPDLogger.info(this, "constructing every possible structure first.");
           for (Structure s : possibleStructures) {
-            s.create(conn);
+            s.create(conn, dbName);
             extractor.addTrainingDataForSize(dbName, schema, s);
           }
         } catch (SQLException e) {

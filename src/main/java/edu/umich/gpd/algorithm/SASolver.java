@@ -53,7 +53,7 @@ public class SASolver extends AbstractSolver {
         stmt = conn.createStatement();
 
         for (Structure st : structureSet) {
-          st.create(conn);
+          st.create(conn, dbName);
           extractor.addTrainingDataForSize(dbName, schema, st);
         }
       } catch (SQLException e) {
@@ -240,8 +240,8 @@ public class SASolver extends AbstractSolver {
       try {
         conn.setCatalog(dbName);
         stmt = conn.createStatement();
-        if (build) st.create(conn);
-        else st.drop(conn);
+        if (build) st.create(conn, dbName);
+        else st.drop(conn, dbName);
       } catch (SQLException e) {
         e.printStackTrace();
       }

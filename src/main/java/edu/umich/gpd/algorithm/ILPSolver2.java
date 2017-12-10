@@ -428,7 +428,7 @@ public class ILPSolver2 extends AbstractSolver {
               "Building structures for configuration #%d out of %d. (sample DB #%d out of #%d)", configuration.getId() + 1,
               numCostVariables, d+1, numSampleDBs));
           for (Structure s : configuration.getStructures()) {
-            s.create(conn);
+            s.create(conn, dbName);
             if (trainedSet.add(s)) {
               extractor.addTrainingDataForSize(dbName, schema, s);
               GPDLogger.debug(this,
@@ -477,7 +477,7 @@ public class ILPSolver2 extends AbstractSolver {
               "Removing structures for configuration #%d out of %d. (sample DB #%d out of #%d)", configuration.getId()+1,
               numCostVariables, d+1, numSampleDBs));
           for (Structure s : configuration.getStructures()) {
-            s.drop(conn);
+            s.drop(conn, dbName);
           }
           ++count;
           long elapsed = runTime.elapsed(TimeUnit.SECONDS);
