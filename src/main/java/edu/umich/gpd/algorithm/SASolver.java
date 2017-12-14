@@ -310,7 +310,7 @@ public class SASolver extends AbstractSolver {
     // Get size estimates for all structures
     long[] estimatedStructureSizes = null;
     for (AbstractClassifier classifier : wekaClassifiers) {
-      GPDLogger.info(this, "Getting estimated structure sizes with " + classifier.toString());
+      GPDLogger.info(this, "Getting estimated structure sizes with " + classifier.getClass().getSimpleName());
       sizeEstimator = new GPDClassifier(classifier);
       estimatedStructureSizes = getSizeEstimates(structureArray, sizeEstimator);
       for (int i = 0; i < structureArray.length; ++i) {
