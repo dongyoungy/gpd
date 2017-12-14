@@ -270,7 +270,12 @@ public class SASolver extends AbstractSolver {
       GPDLogger.error(this, "Failed to set options for the classifier.");
       e.printStackTrace();
     }
-    costEstimator = new GPDClassifier(new M5P());
+    M5P m5p = new M5P();
+    m5p.setBuildRegressionTree(true);
+    m5p.setUnpruned(false);
+    m5p.setUseUnsmoothed(false);
+
+    costEstimator = new GPDClassifier(m5p);
 
     // For now, only consider a single size limit.
     long sizeLimit = sizeLimits[0];

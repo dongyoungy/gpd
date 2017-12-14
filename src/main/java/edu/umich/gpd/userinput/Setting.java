@@ -9,6 +9,8 @@ import java.util.List;
 public class Setting {
   private int maxNumColumn;
   private int maxNumColumnPerStructure;
+  private int maxNumTablePerQuery;
+  private int maxNumStructurePerTable;
   private int minRowForSample;
   private int queryTimeout;
   private long[] sizeLimits;
@@ -25,6 +27,8 @@ public class Setting {
   public Setting() {
     this.maxNumColumn = 30;
     this.maxNumColumnPerStructure = 2;
+    this.maxNumTablePerQuery = 2;
+    this.maxNumStructurePerTable = 2;
     this.minRowForSample = 1000;
     this.queryTimeout = 30;
     this.sizeLimits = new long[1];
@@ -50,6 +54,8 @@ public class Setting {
     return "Current Setting = {" +
         "maxNumColumn=" + maxNumColumn +
         ", maxNumColumnPerStructure=" + maxNumColumnPerStructure +
+        ", maxNumTablePerQuery=" + maxNumTablePerQuery +
+        ", maxNumStructurePerTable=" + maxNumStructurePerTable +
         ", minRowForSample=" + minRowForSample +
         ", queryTimeout=" + queryTimeout +
         ", sizeLimits=" + sizeLimitStr +
@@ -148,6 +154,14 @@ public class Setting {
 
   public void setIncrementalRun(boolean incrementalRun) {
     this.incrementalRun = incrementalRun;
+  }
+
+  public int getMaxNumTablePerQuery() {
+    return maxNumTablePerQuery;
+  }
+
+  public int getMaxNumStructurePerTable() {
+    return maxNumStructurePerTable;
   }
 
   public double getTolerableLatencyMultiplier() {
