@@ -12,6 +12,9 @@ import edu.umich.gpd.userinput.SampleInfo;
 import edu.umich.gpd.util.GPDLogger;
 import edu.umich.gpd.workload.Query;
 import edu.umich.gpd.workload.Workload;
+import org.apache.avro.generic.GenericData;
+import weka.classifiers.AbstractClassifier;
+import weka.classifiers.functions.MultilayerPerceptron;
 import weka.classifiers.functions.SMOreg;
 import weka.classifiers.trees.M5P;
 import weka.core.Instance;
@@ -66,12 +69,12 @@ public class SASolver extends AbstractSolver {
     return true;
   }
 
-  private long[] getSizeEstimates(Structure[] structures) {
+  private long[] getSizeEstimates(Structure[] structures, GPDClassifier estimator) {
     long[] sizeEstimates = new long[structures.length];
     for (int i = 0; i < structures.length; ++i) {
       Instance testInstance =
           extractor.getTestInstanceForSize(dbInfo.getTargetDBName(), schema, structures[i]);
-      sizeEstimates[i] = (long) sizeEstimator.regress(testInstance);
+      sizeEstimates[i] = (long) estimator.regress(testInstance);
     }
     return sizeEstimates;
   }
@@ -253,7 +256,6 @@ public class SASolver extends AbstractSolver {
     List<Structure> allStructures = getAllStructures(configurations);
     Set<Structure> possibleStructures = new LinkedHashSet<>();
     List<String> structureStrList = new ArrayList<>();
-    sizeEstimator = new GPDClassifier(new SMOreg());
     sizeLimits = GPDMain.userInput.getSetting().getSizeLimits();
 
     SMOreg smo = new SMOreg();
@@ -271,9 +273,15 @@ public class SASolver extends AbstractSolver {
       e.printStackTrace();
     }
     M5P m5p = new M5P();
+    MultilayerPerceptron mp = new MultilayerPerceptron();
     m5p.setBuildRegressionTree(true);
     m5p.setUnpruned(false);
     m5p.setUseUnsmoothed(false);
+
+    List<AbstractClassifier> wekaClassifiers = new ArrayList<>();
+    wekaClassifiers.add(smo);
+    wekaClassifiers.add(m5p);
+    wekaClassifiers.add(mp);
 
     costEstimator = new GPDClassifier(m5p);
 
@@ -300,14 +308,18 @@ public class SASolver extends AbstractSolver {
     }
 
     // Get size estimates for all structures
-    GPDLogger.info(this, "Getting estimated structure sizes.");
-    long[] estimatedStructureSizes = getSizeEstimates(structureArray);
-    for (int i = 0; i < structureArray.length; ++i) {
-      GPDLogger.debug(
-          this,
-          String.format(
-              "Estimated Structure Size = %d (%s)",
-              estimatedStructureSizes[i], structureArray[i].getQueryString()));
+    long[] estimatedStructureSizes = null;
+    for (AbstractClassifier classifier : wekaClassifiers) {
+      GPDLogger.info(this, "Getting estimated structure sizes with " + classifier.toString());
+      sizeEstimator = new GPDClassifier(classifier);
+      estimatedStructureSizes = getSizeEstimates(structureArray, sizeEstimator);
+      for (int i = 0; i < structureArray.length; ++i) {
+        GPDLogger.debug(
+            this,
+            String.format(
+                "Estimated Structure Size = %d (%s)",
+                estimatedStructureSizes[i], structureArray[i].getQueryString()));
+      }
     }
 
     // Calculate initial temperature (i.e., total estimated size)
