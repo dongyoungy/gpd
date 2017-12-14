@@ -309,17 +309,15 @@ public class SASolver extends AbstractSolver {
 
     // Get size estimates for all structures
     long[] estimatedStructureSizes = null;
-    for (AbstractClassifier classifier : wekaClassifiers) {
-      GPDLogger.info(this, "Getting estimated structure sizes with " + classifier.getClass().getSimpleName());
-      sizeEstimator = new GPDClassifier(classifier);
-      estimatedStructureSizes = getSizeEstimates(structureArray, sizeEstimator);
-      for (int i = 0; i < structureArray.length; ++i) {
-        GPDLogger.debug(
-            this,
-            String.format(
-                "Estimated Structure Size = %d (%s)",
-                estimatedStructureSizes[i], structureArray[i].getQueryString()));
-      }
+    GPDLogger.info(this, "Getting estimated structure sizes.");
+    sizeEstimator = new GPDClassifier(smo);
+    estimatedStructureSizes = getSizeEstimates(structureArray, sizeEstimator);
+    for (int i = 0; i < structureArray.length; ++i) {
+      GPDLogger.debug(
+          this,
+          String.format(
+              "Estimated Structure Size = %d (%s)",
+              estimatedStructureSizes[i], structureArray[i].getQueryString()));
     }
 
     // Calculate initial temperature (i.e., total estimated size)
