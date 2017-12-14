@@ -64,12 +64,12 @@ public class SASolver extends AbstractSolver {
         return false;
       }
     }
-    // Train size estimator.
-    sizeEstimator.build(extractor.getTrainDataForSize());
     return true;
   }
 
   private long[] getSizeEstimates(Structure[] structures, GPDClassifier estimator) {
+    // Train size estimator.
+    estimator.build(extractor.getTrainDataForSize());
     long[] sizeEstimates = new long[structures.length];
     for (int i = 0; i < structures.length; ++i) {
       Instance testInstance =
