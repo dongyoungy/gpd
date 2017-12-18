@@ -835,9 +835,10 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
     GPDLogger.debug(
         this,
         String.format(
-            "Adding row count = %d, distinct row count = %d for table %s @ %s",
+            "Adding row count = %d, distinct row count = %d, size = %d for table %s @ %s",
             structure.getTable().getRowCount(dbName),
             structure.getDistinctCount(),
+            structure.getSize(),
             structure.getTable().getName(),
             dbName));
     newInstance.setValue(idx++, structure.getNonUniqueString());
