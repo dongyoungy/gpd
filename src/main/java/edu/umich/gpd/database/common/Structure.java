@@ -17,6 +17,7 @@ public abstract class Structure {
   protected String name;
   protected Table table;
   protected long size;
+  protected long distinctCount;
   protected List<ColumnDefinition> columns;
   protected int id;
 
@@ -30,6 +31,7 @@ public abstract class Structure {
     this.name = name;
     this.table = table;
     this.size = -1;
+    this.distinctCount = -1;
     this.columns = new ArrayList<>();
     this.id = idCount++;
   }
@@ -48,6 +50,10 @@ public abstract class Structure {
 
   public long getSize() {
     return size;
+  }
+
+  public long getDistinctCount() {
+    return distinctCount;
   }
 
   @Override

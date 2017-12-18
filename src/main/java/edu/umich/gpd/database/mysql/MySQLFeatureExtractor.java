@@ -17,9 +17,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by Dong Young Yoon on 2/20/17.
- */
+/** Created by Dong Young Yoon on 2/20/17. */
 public class MySQLFeatureExtractor extends FeatureExtractor {
 
   private List<String> structureList;
@@ -29,8 +27,8 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
   }
 
   @Override
-  public boolean initialize(List<SampleInfo> sampleDBs, String targetDBName, Schema s,
-                            List<String> structureStrList) {
+  public boolean initialize(
+      List<SampleInfo> sampleDBs, String targetDBName, Schema s, List<String> structureStrList) {
 
     structureList = new ArrayList<>(structureStrList);
     ArrayList<Attribute> attrList = new ArrayList<>();
@@ -43,10 +41,11 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
             String dbName = sample.getDbName();
             conn.setCatalog(dbName);
             Statement stmt = conn.createStatement();
-            ResultSet res = stmt.executeQuery(String.format("SELECT COUNT(*) FROM %s", t.getName()));
+            ResultSet res =
+                stmt.executeQuery(String.format("SELECT COUNT(*) FROM %s", t.getName()));
             if (!res.next()) {
-              GPDLogger.error(this, String.format("Failed to the row counts from table '%s'",
-                  t.getName()));
+              GPDLogger.error(
+                  this, String.format("Failed to the row counts from table '%s'", t.getName()));
               return false;
             } else {
               Long count = res.getLong(1);
@@ -54,25 +53,25 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
             }
           }
         } else {
-          GPDLogger.error(this, "There are no sample databases to extract " +
-              "features.");
+          GPDLogger.error(this, "There are no sample databases to extract " + "features.");
           return false;
         }
         attrList.add(new Attribute("numRow_" + t.getName()));
-//
-//        String dbName = targetDBName;
-//        conn.setCatalog(dbName);
-//        Statement stmt = conn.createStatement();
-//        ResultSet res = stmt.executeQuery(String.format("SELECT COUNT(*) FROM %s", t.getName()));
-//        if (!res.next()) {
-//          GPDLogger.error(this, String.format("Failed to the row counts from table '%s'",
-//              t.getName()));
-//          return false;
-//        } else {
-//          Long count = res.getLong(1);
-//          t.addRowCount(dbName, count.longValue());
-//          attrList.add(new Attribute("numRow" + t.getName()));
-//        }
+        //
+        //        String dbName = targetDBName;
+        //        conn.setCatalog(dbName);
+        //        Statement stmt = conn.createStatement();
+        //        ResultSet res = stmt.executeQuery(String.format("SELECT COUNT(*) FROM %s",
+        // t.getName()));
+        //        if (!res.next()) {
+        //          GPDLogger.error(this, String.format("Failed to the row counts from table '%s'",
+        //              t.getName()));
+        //          return false;
+        //        } else {
+        //          Long count = res.getLong(1);
+        //          t.addRowCount(dbName, count.longValue());
+        //          attrList.add(new Attribute("numRow" + t.getName()));
+        //        }
       }
 
     } catch (SQLException e) {
@@ -143,6 +142,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
     }
     attrList.add(new Attribute("queryTime"));
     attrListForSize.add(new Attribute("structureStr", structureStrList));
+    attrListForSize.add(new Attribute("distinctRowCount"));
     attrListForSize.add(new Attribute("structureSize"));
 
     trainData = new Instances("trainData", attrList, 10000);
@@ -151,7 +151,8 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
   }
 
   @Override
-  public boolean addTrainingData(String dbName, Schema s, Query q, List<String> structures, double queryTime) {
+  public boolean addTrainingData(
+      String dbName, Schema s, Query q, List<String> structures, double queryTime) {
 
     int queryId = q.getId();
     long totalRowFromSimpleSelect = 0;
@@ -377,11 +378,9 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
           }
           if (lowerExtra.contains("using index condition")) {
             numExtraUsingIndexCondition++;
-          }
-          else if (lowerExtra.contains("using index for group-by")) {
+          } else if (lowerExtra.contains("using index for group-by")) {
             numExtraUsingIndexForGroupBy++;
-          }
-          else if (lowerExtra.contains("using index")) {
+          } else if (lowerExtra.contains("using index")) {
             numExtraUsingIndex++;
           }
           if (lowerExtra.contains("using join buffer")) {
@@ -491,8 +490,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
   }
 
   @Override
-  public boolean addTrainingData(String dbName, Schema s, Query q, int configId,
-                                 double queryTime) {
+  public boolean addTrainingData(String dbName, Schema s, Query q, int configId, double queryTime) {
 
     int queryId = q.getId();
     long totalRowFromSimpleSelect = 0;
@@ -718,11 +716,9 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
           }
           if (lowerExtra.contains("using index condition")) {
             numExtraUsingIndexCondition++;
-          }
-          else if (lowerExtra.contains("using index for group-by")) {
+          } else if (lowerExtra.contains("using index for group-by")) {
             numExtraUsingIndexForGroupBy++;
-          }
-          else if (lowerExtra.contains("using index")) {
+          } else if (lowerExtra.contains("using index")) {
             numExtraUsingIndex++;
           }
           if (lowerExtra.contains("using join buffer")) {
@@ -832,13 +828,20 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
     Instance newInstance = new DenseInstance(trainDataForSize.numAttributes());
     newInstance.setDataset(trainDataForSize);
     int idx = 0;
-//    for (Table t : s.getTables()) {
-//      newInstance.setValue(idx++, t.getRowCount(dbName));
-//    }
+    //    for (Table t : s.getTables()) {
+    //      newInstance.setValue(idx++, t.getRowCount(dbName));
+    //    }
     newInstance.setValue(idx++, structure.getTable().getRowCount(dbName));
-    GPDLogger.debug(this, String.format("Adding row count = %d for table %s @ %s",
-        structure.getTable().getRowCount(dbName), structure.getTable().getName(), dbName));
+    GPDLogger.debug(
+        this,
+        String.format(
+            "Adding row count = %d, distinct row count = %d for table %s @ %s",
+            structure.getTable().getRowCount(dbName),
+            structure.getDistinctCount(),
+            structure.getTable().getName(),
+            dbName));
     newInstance.setValue(idx++, structure.getNonUniqueString());
+    newInstance.setValue(idx++, structure.getDistinctCount());
     newInstance.setValue(idx++, structure.getSize());
     trainDataForSize.add(newInstance);
     return true;
@@ -1076,11 +1079,9 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
           }
           if (lowerExtra.contains("using index condition")) {
             numExtraUsingIndexCondition++;
-          }
-          else if (lowerExtra.contains("using index for group-by")) {
+          } else if (lowerExtra.contains("using index for group-by")) {
             numExtraUsingIndexForGroupBy++;
-          }
-          else if (lowerExtra.contains("using index")) {
+          } else if (lowerExtra.contains("using index")) {
             numExtraUsingIndex++;
           }
           if (lowerExtra.contains("using join buffer")) {
@@ -1107,7 +1108,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
         }
 
         // 57 features + query time + configuration id + index size
-//        Instance newInstance = new DenseInstance(57 + 1);
+        //        Instance newInstance = new DenseInstance(57 + 1);
         Instance newInstance = new SparseInstance(trainData.numAttributes());
         newInstance.setDataset(trainData);
         int idx = 0;
@@ -1422,11 +1423,9 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
           }
           if (lowerExtra.contains("using index condition")) {
             numExtraUsingIndexCondition++;
-          }
-          else if (lowerExtra.contains("using index for group-by")) {
+          } else if (lowerExtra.contains("using index for group-by")) {
             numExtraUsingIndexForGroupBy++;
-          }
-          else if (lowerExtra.contains("using index")) {
+          } else if (lowerExtra.contains("using index")) {
             numExtraUsingIndex++;
           }
           if (lowerExtra.contains("using join buffer")) {
@@ -1453,7 +1452,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
         }
 
         // 57 features + query time + configuration id + index size
-//        Instance newInstance = new DenseInstance(57 + 1);
+        //        Instance newInstance = new DenseInstance(57 + 1);
         Instance newInstance = new SparseInstance(trainData.numAttributes());
         newInstance.setDataset(trainData);
         int idx = 0;
@@ -1544,13 +1543,20 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
     Instance newInstance = new DenseInstance(trainDataForSize.numAttributes());
     newInstance.setDataset(trainDataForSize);
     int idx = 0;
-//    for (Table t : s.getTables()) {
-//      newInstance.setValue(idx++, t.getRowCount(dbName));
-//    }
+    //    for (Table t : s.getTables()) {
+    //      newInstance.setValue(idx++, t.getRowCount(dbName));
+    //    }
     newInstance.setValue(idx++, structure.getTable().getRowCount(dbName));
-    GPDLogger.debug(this, String.format("Getting row count = %d for table %s @ %s",
-        structure.getTable().getRowCount(dbName), structure.getTable().getName(), dbName));
+    GPDLogger.debug(
+        this,
+        String.format(
+            "Getting row count = %d, distinct count = %d for table %s @ %s",
+            structure.getTable().getRowCount(dbName),
+            structure.getDistinctCount(),
+            structure.getTable().getName(),
+            dbName));
     newInstance.setValue(idx++, structure.getNonUniqueString());
+    newInstance.setValue(idx++, structure.getDistinctCount());
     return newInstance;
   }
 }

@@ -14,9 +14,7 @@ import java.util.Set;
 import java.util.List;
 import java.util.ArrayList;
 
-/**
- * Created by Dong Young Yoon on 2/13/17.
- */
+/** Created by Dong Young Yoon on 2/13/17. */
 public class MySQLIndex extends Structure {
 
   public MySQLIndex(String name, Table table) {
@@ -37,7 +35,7 @@ public class MySQLIndex extends Structure {
   @Override
   public boolean equals(Object o) {
     if (o instanceof MySQLIndex) {
-      MySQLIndex other = (MySQLIndex)o;
+      MySQLIndex other = (MySQLIndex) o;
       if (!other.getTable().getName().equals(this.table.getName())) {
         return false;
       }
@@ -105,7 +103,7 @@ public class MySQLIndex extends Structure {
 
   public boolean create(Connection conn, String dbName) {
     String columnStr = "";
-    //ColumnDefinition[] cols = (ColumnDefinition[])columns.toArray();
+    // ColumnDefinition[] cols = (ColumnDefinition[])columns.toArray();
     List<ColumnDefinition> columnList = new ArrayList<>(columns);
     for (int i = 0; i < columnList.size(); ++i) {
       columnStr += columnList.get(i).getColumnName();
@@ -117,18 +115,37 @@ public class MySQLIndex extends Structure {
       conn.setCatalog(dbName);
       Statement stmt = conn.createStatement();
       String targetDBName = conn.getCatalog();
-      stmt.execute(String.format("CREATE INDEX %s ON %s (%s)", this.name, table.getName(), columnStr));
-      GPDLogger.debug(this, "Executed: " + String.format("CREATE INDEX %s ON %s (%s) @ %s", this.name, table.getName(), columnStr, targetDBName));
+      stmt.execute(
+          String.format("CREATE INDEX %s ON %s (%s)", this.name, table.getName(), columnStr));
+      GPDLogger.debug(
+          this,
+          "Executed: "
+              + String.format(
+                  "CREATE INDEX %s ON %s (%s) @ %s",
+                  this.name, table.getName(), columnStr, targetDBName));
 
-      ResultSet res = stmt.executeQuery(String.format("SELECT stat_value*@@innodb_page_size FROM " +
-          "mysql.innodb_index_stats WHERE stat_name = 'size' and database_name = '%s' and " +
-          "index_name = '%s'", dbName, this.name));
+      ResultSet res =
+          stmt.executeQuery(
+              String.format(
+                  "SELECT stat_value*@@innodb_page_size FROM "
+                      + "mysql.innodb_index_stats WHERE stat_name = 'size' and database_name = '%s' and "
+                      + "index_name = '%s'",
+                  dbName, this.name));
       if (res.next()) {
         this.size = res.getLong(1);
+      } else {
+        GPDLogger.info(this, "Failed to obtain the size of this physical " + "structure: " + name);
       }
-      else {
-        GPDLogger.info(this, "Failed to obtain the size of this physical " +
-            "structure: " + name);
+      res.close();
+      res =
+          stmt.executeQuery(
+              String.format("SELECT COUNT(DISTINCT %s) FROM %s;", columnStr, table.getName()));
+      if (res.next()) {
+        this.distinctCount = res.getLong(1);
+      } else {
+        GPDLogger.info(
+            this,
+            "Failed to obtain the distinct row count of this physical " + "structure: " + name);
       }
     } catch (Exception e) {
       e.printStackTrace();
@@ -143,7 +160,11 @@ public class MySQLIndex extends Structure {
       Statement stmt = conn.createStatement();
       String targetDBName = conn.getCatalog();
       stmt.execute(String.format("DROP INDEX %s ON %s", this.name, table.getName()));
-      GPDLogger.debug(this, "Executed: " + String.format("DROP INDEX %s ON %s @ %s", this.name, table.getName(), targetDBName));
+      GPDLogger.debug(
+          this,
+          "Executed: "
+              + String.format(
+                  "DROP INDEX %s ON %s @ %s", this.name, table.getName(), targetDBName));
     } catch (Exception e) {
       e.printStackTrace();
       return false;
@@ -161,7 +182,8 @@ public class MySQLIndex extends Structure {
       ColumnDefinition myColumn = columns.get(i);
       ColumnDefinition otherColumn = otherColumns.get(j);
       if (myColumn.getColumnName().equals(otherColumn.getColumnName())) {
-        ++i; ++j;
+        ++i;
+        ++j;
       } else {
         return false;
       }
