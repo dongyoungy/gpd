@@ -15,12 +15,15 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /** Created by Dong Young Yoon on 2/20/17. */
 public class MySQLFeatureExtractor extends FeatureExtractor {
 
-  private List<String> structureList;
+  private Set<Structure> structureSet;
+  private List<String> structureStrList;
 
   public MySQLFeatureExtractor(Connection conn) {
     super(conn);
@@ -28,9 +31,14 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
 
   @Override
   public boolean initialize(
-      List<SampleInfo> sampleDBs, String targetDBName, Schema s, List<String> structureStrList) {
+      List<SampleInfo> sampleDBs,
+      String targetDBName,
+      Schema s,
+      Set<Structure> structureSet,
+      List<String> structureStrList) {
 
-    structureList = new ArrayList<>(structureStrList);
+    this.structureSet = new LinkedHashSet<>(structureSet);
+    this.structureStrList = new ArrayList<>(structureStrList);
     ArrayList<Attribute> attrList = new ArrayList<>();
     ArrayList<Attribute> attrListForSize = new ArrayList<>();
     try {
@@ -49,7 +57,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
               return false;
             } else {
               Long count = res.getLong(1);
-              t.addRowCount(dbName, count.longValue());
+              t.addRowCount(dbName, count);
             }
           }
         } else {
@@ -72,6 +80,27 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
         //          t.addRowCount(dbName, count.longValue());
         //          attrList.add(new Attribute("numRow" + t.getName()));
         //        }
+      }
+
+      // Get distinct row counts from original DB
+      for (Structure structure : structureSet) {
+        conn.setCatalog(targetDBName);
+        Statement stmt = conn.createStatement();
+        String columnStr = structure.getColumnString();
+        ResultSet res =
+            stmt.executeQuery(
+                String.format(
+                    "SELECT COUNT(DISTINCT %s) FROM %s;",
+                    columnStr, structure.getTable().getName()));
+        if (res.next()) {
+          structure.getTable().setDistinctRowCount(targetDBName, columnStr, res.getLong(1));
+        } else {
+          GPDLogger.info(
+              this,
+              "Failed to obtain the distinct row count for columns in this physical "
+                  + "structure: "
+                  + structure.getName());
+        }
       }
 
     } catch (SQLException e) {
@@ -137,7 +166,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
     attrList.add(new Attribute("numExtraUsingTemporary"));
     attrList.add(new Attribute("numExtraUsingWhere"));
     attrList.add(new Attribute("numExtraZeroLimit"));
-    for (int i = 0; i < structureList.size(); ++i) {
+    for (int i = 0; i < structureStrList.size(); ++i) {
       attrList.add(new Attribute("structure_" + i));
     }
     attrList.add(new Attribute("queryTime"));
@@ -470,7 +499,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
         newInstance.setValue(idx++, numExtraUsingTemporary);
         newInstance.setValue(idx++, numExtraUsingWhere);
         newInstance.setValue(idx++, numExtraZeroLimit);
-        for (String structureStr : structureList) {
+        for (String structureStr : structureStrList) {
           if (structures.contains(structureStr)) {
             newInstance.setValue(idx++, 1);
           } else {
@@ -808,7 +837,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
         newInstance.setValue(idx++, numExtraUsingTemporary);
         newInstance.setValue(idx++, numExtraUsingWhere);
         newInstance.setValue(idx++, numExtraZeroLimit);
-        for (String structureStr : structureList) {
+        for (String structureStr : structureStrList) {
           newInstance.setValue(idx++, 0);
         }
         newInstance.setValue(idx++, queryTime);
@@ -837,12 +866,12 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
         String.format(
             "Adding row count = %d, distinct row count = %d, size = %d for table %s @ %s",
             structure.getTable().getRowCount(dbName),
-            structure.getDistinctCount(),
+            structure.getTable().getDistinctRowCount(dbName, structure.getColumnString()),
             structure.getSize(),
             structure.getTable().getName(),
             dbName));
     newInstance.setValue(idx++, structure.getNonUniqueString());
-    newInstance.setValue(idx++, structure.getDistinctCount());
+    newInstance.setValue(idx++, structure.getTable().getDistinctRowCount(dbName, structure.getColumnString()));
     newInstance.setValue(idx++, structure.getSize());
     trainDataForSize.add(newInstance);
     return true;
@@ -1178,7 +1207,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
         newInstance.setValue(idx++, numExtraUsingTemporary);
         newInstance.setValue(idx++, numExtraUsingWhere);
         newInstance.setValue(idx++, numExtraZeroLimit);
-        for (String structureStr : structureList) {
+        for (String structureStr : structureStrList) {
           newInstance.setValue(idx++, 0);
         }
 
@@ -1522,7 +1551,7 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
         newInstance.setValue(idx++, numExtraUsingTemporary);
         newInstance.setValue(idx++, numExtraUsingWhere);
         newInstance.setValue(idx++, numExtraZeroLimit);
-        for (String structureStr : structureList) {
+        for (String structureStr : structureStrList) {
           if (structures.contains(structureStr)) {
             newInstance.setValue(idx++, 1);
           } else {
@@ -1553,11 +1582,11 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
         String.format(
             "Getting row count = %d, distinct count = %d for table %s @ %s",
             structure.getTable().getRowCount(dbName),
-            structure.getDistinctCount(),
+            structure.getTable().getDistinctRowCount(dbName, structure.getColumnString()),
             structure.getTable().getName(),
             dbName));
     newInstance.setValue(idx++, structure.getNonUniqueString());
-    newInstance.setValue(idx++, structure.getDistinctCount());
+    newInstance.setValue(idx++, structure.getTable().getDistinctRowCount(dbName, structure.getColumnString()));
     return newInstance;
   }
 }

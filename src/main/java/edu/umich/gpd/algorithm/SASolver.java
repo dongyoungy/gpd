@@ -113,7 +113,8 @@ public class SASolver extends AbstractSolver {
         GPDLogger.debug(
             this,
             String.format(
-                "Estimated query time (from cache) = %d (%s)", cachedQueryTime, getStructureCode(isBuilt)));
+                "Estimated query time (from cache) = %d (%s)",
+                cachedQueryTime, getStructureCode(isBuilt)));
         return cachedQueryTime;
       }
     }
@@ -293,7 +294,8 @@ public class SASolver extends AbstractSolver {
         structureStrList.add(s.getNonUniqueString());
       }
     }
-    extractor.initialize(sampleDBs, dbInfo.getTargetDBName(), schema, structureStrList);
+    extractor.initialize(
+        sampleDBs, dbInfo.getTargetDBName(), schema, possibleStructures, structureStrList);
 
     Structure[] structureArray = possibleStructures.toArray(new Structure[0]);
     int structureSize = structureArray.length;

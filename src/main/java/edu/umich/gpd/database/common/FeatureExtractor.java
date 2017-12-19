@@ -11,6 +11,7 @@ import weka.core.Instances;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by Dong Young Yoon on 2/20/17.
@@ -26,6 +27,7 @@ public abstract class FeatureExtractor {
   }
 
   public abstract boolean initialize(List<SampleInfo> sampleDBs, String targetDBName, Schema s,
+                                     Set<Structure> structureSet,
                                      List<String> structureStrList);
 
   public abstract boolean addTrainingData(String dbName, Schema s, Query q, int configId,

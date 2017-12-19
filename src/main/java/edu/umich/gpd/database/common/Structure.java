@@ -17,9 +17,9 @@ public abstract class Structure {
   protected String name;
   protected Table table;
   protected long size;
-  protected long distinctCount;
   protected List<ColumnDefinition> columns;
   protected int id;
+  protected String columnString;
 
   private static int idCount = 1;
 
@@ -31,9 +31,9 @@ public abstract class Structure {
     this.name = name;
     this.table = table;
     this.size = -1;
-    this.distinctCount = -1;
     this.columns = new ArrayList<>();
     this.id = idCount++;
+    this.columnString = "";
   }
 
   public int getId() {
@@ -50,10 +50,6 @@ public abstract class Structure {
 
   public long getSize() {
     return size;
-  }
-
-  public long getDistinctCount() {
-    return distinctCount;
   }
 
   @Override
@@ -81,6 +77,8 @@ public abstract class Structure {
   public abstract String getQueryString();
 
   public abstract String getNonUniqueString();
+
+  public abstract String getColumnString();
 
   public void addColumn(ColumnDefinition column) {
     this.columns.add(column);

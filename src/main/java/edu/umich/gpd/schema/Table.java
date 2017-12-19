@@ -1,16 +1,18 @@
 package edu.umich.gpd.schema;
 
+import com.google.common.collect.HashBasedTable;
+import edu.umich.gpd.util.GPDLogger;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 
 import java.util.*;
 
-/**
- * Created by Dong Young Yoon on 2/13/17.
- */
+/** Created by Dong Young Yoon on 2/13/17. */
 public class Table {
   private String name;
   private String createStatement;
   private Map<String, Long> rowCount;
+  // dbname, column str, row count
+  private com.google.common.collect.Table<String, String, Long> distinctRowCountTable;
   private Set<ColumnDefinition> columns;
   private Set<String> indexedColumns;
   private Set<String> primaryKeys;
@@ -21,6 +23,7 @@ public class Table {
     indexedColumns = new LinkedHashSet<>();
     primaryKeys = new LinkedHashSet<>();
     rowCount = new HashMap<>();
+    distinctRowCountTable = HashBasedTable.create();
   }
 
   public Table(String name) {
@@ -29,6 +32,7 @@ public class Table {
     indexedColumns = new LinkedHashSet<>();
     primaryKeys = new LinkedHashSet<>();
     rowCount = new HashMap<>();
+    distinctRowCountTable = HashBasedTable.create();
   }
 
   public Table(String name, String createStatement) {
@@ -37,6 +41,7 @@ public class Table {
     indexedColumns = new LinkedHashSet<>();
     primaryKeys = new LinkedHashSet<>();
     rowCount = new HashMap<>();
+    distinctRowCountTable = HashBasedTable.create();
   }
 
   @Override
@@ -68,13 +73,14 @@ public class Table {
 
   /**
    * filters uninteresting columns + already indexed columns.
+   *
    * @param columnNameSet a set of interesting column names
    */
   public void filterUninteresting(Set<String> columnNameSet) {
     Set<ColumnDefinition> newColumns = new LinkedHashSet<>();
     for (ColumnDefinition colDef : columns) {
-      if (columnNameSet.contains(colDef.getColumnName()) &&
-          !indexedColumns.contains(colDef.getColumnName())) {
+      if (columnNameSet.contains(colDef.getColumnName())
+          && !indexedColumns.contains(colDef.getColumnName())) {
         newColumns.add(colDef);
       }
     }
@@ -119,6 +125,18 @@ public class Table {
 
   public void addRowCount(String dbName, long count) {
     rowCount.put(dbName, count);
+  }
+
+  public void setDistinctRowCount(String dbName, String columnStr, long count) {
+    GPDLogger.debug(
+        this,
+        String.format(
+            "Set distinct row count for: %s (%s) @ %s = %d", name, columnStr, dbName, count));
+    distinctRowCountTable.put(dbName, columnStr, count);
+  }
+
+  public long getDistinctRowCount(String dbName, String columnStr) {
+    return distinctRowCountTable.get(dbName, columnStr);
   }
 
   public void copyRowCount(Map<String, Long> rowCount) {

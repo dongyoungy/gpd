@@ -103,6 +103,25 @@ public class MySQLUniqueIndex extends Structure {
     return String.format("CREATE UNIQUE INDEX ON %s (%s);", table.getName(), columnStr);
   }
 
+  @Override
+  public String getColumnString() {
+    if (!columnString.isEmpty()) {
+      return columnString;
+    }
+    String columnStr = "";
+    int length = columns.size();
+    int i = 0;
+    for (ColumnDefinition colDef : columns) {
+      columnStr += colDef.getColumnName();
+      if (i < length - 1) {
+        columnStr += ",";
+      }
+      ++i;
+    }
+    columnString = columnStr;
+    return columnStr;
+  }
+
   public boolean create(Connection conn, String dbName) {
     String columnStr = "";
     // ColumnDefinition[] cols = (ColumnDefinition[])columns.toArray();
@@ -144,7 +163,7 @@ public class MySQLUniqueIndex extends Structure {
           stmt.executeQuery(
               String.format("SELECT COUNT(DISTINCT %s) FROM %s;", columnStr, table.getName()));
       if (res.next()) {
-        this.distinctCount = res.getLong(1);
+        this.table.setDistinctRowCount(dbName, columnStr, res.getLong(1));
       } else {
         GPDLogger.info(
             this,
