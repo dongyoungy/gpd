@@ -287,7 +287,7 @@ public class SASolver extends AbstractSolver {
     wekaClassifiers.add(m5p);
     wekaClassifiers.add(mp);
 
-    costEstimator = new GPDClassifier(linear);
+    costEstimator = new GPDClassifier(m5p);
 
     // For now, only consider a single size limit.
     long sizeLimit = sizeLimits[0];
