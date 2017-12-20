@@ -5,6 +5,7 @@ import edu.umich.gpd.classifier.GPDClassifier;
 import edu.umich.gpd.database.common.Configuration;
 import edu.umich.gpd.database.common.FeatureExtractor;
 import edu.umich.gpd.database.common.Structure;
+import edu.umich.gpd.database.mysql.MySQLFeatureExtractor;
 import edu.umich.gpd.main.GPDMain;
 import edu.umich.gpd.schema.Schema;
 import edu.umich.gpd.userinput.DatabaseInfo;
@@ -34,6 +35,8 @@ public class SASolver extends AbstractSolver {
   Map<String, Long> structureToQueryTimeMap;
   Map<String, Boolean> structureToUseCacheMap;
 
+  Map<Query, FeatureExtractor> queryToExtractorMap;
+
   public SASolver(
       Connection conn,
       Workload workload,
@@ -46,6 +49,7 @@ public class SASolver extends AbstractSolver {
     super(conn, workload, schema, configurations, sampleDBs, dbInfo, extractor, useRegression);
     structureToQueryTimeMap = new HashMap<>();
     structureToUseCacheMap = new HashMap<>();
+    queryToExtractorMap = new HashMap<>();
   }
 
   private boolean buildInitialFullStructure(Set<Structure> structureSet) {
@@ -156,7 +160,11 @@ public class SASolver extends AbstractSolver {
             queryTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
           }
           if (useRegression) {
-            extractor.addTrainingData(dbName, schema, q, builtStructures, queryTime);
+            // temp
+            if (!queryToExtractorMap.containsKey(q)) {
+              queryToExtractorMap.put(q, new MySQLFeatureExtractor(conn));
+            }
+            queryToExtractorMap.get(q).addTrainingData(dbName, schema, q, builtStructures, queryTime);
           } else {
             totalQueryTime += queryTime;
           }
@@ -167,10 +175,10 @@ public class SASolver extends AbstractSolver {
       }
     }
     if (useRegression) {
-      costEstimator.build(extractor.getTrainData());
       for (Query q : queries) {
+        costEstimator.build(queryToExtractorMap.get(q).getTrainData());
         Instance testInstance =
-            extractor.getTestInstance(dbInfo.getTargetDBName(), schema, q, builtStructures);
+            queryToExtractorMap.get(q).getTestInstance(dbInfo.getTargetDBName(), schema, q, builtStructures);
         if (testInstance == null) {
           GPDLogger.error(this, "test instance null.");
         }
