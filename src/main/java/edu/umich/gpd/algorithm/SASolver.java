@@ -225,7 +225,7 @@ public class SASolver extends AbstractSolver {
           String.format(
               "Previous time = %d, current time = %d (%s)", previousTime.longValue(), time, code));
       if (Math.abs((double) (previousTime.longValue() - time) / (double) previousTime.longValue())
-          < 0.01) {
+          < 0.001) {
         GPDLogger.debug(this, String.format("Using cache for %s", code));
         structureToUseCacheMap.put(code, true);
       }
