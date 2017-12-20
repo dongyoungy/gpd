@@ -127,6 +127,7 @@ public class SASolver extends AbstractSolver {
           builtStructures.add(structureArray[i].getNonUniqueString());
         }
       }
+      extractor.clearTrainData();
     }
 
     List<Query> queries = workload.getQueries();
@@ -287,7 +288,7 @@ public class SASolver extends AbstractSolver {
     wekaClassifiers.add(m5p);
     wekaClassifiers.add(mp);
 
-    costEstimator = new GPDClassifier(m5p);
+    costEstimator = new GPDClassifier(smo);
 
     // For now, only consider a single size limit.
     long sizeLimit = sizeLimits[0];

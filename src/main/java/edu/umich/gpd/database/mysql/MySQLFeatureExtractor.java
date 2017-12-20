@@ -1569,6 +1569,11 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
   }
 
   @Override
+  public void clearTrainData() {
+    trainData.clear();
+  }
+
+  @Override
   public Instance getTestInstanceForSize(String dbName, Schema s, Structure structure) {
     Instance newInstance = new DenseInstance(trainDataForSize.numAttributes());
     newInstance.setDataset(trainDataForSize);

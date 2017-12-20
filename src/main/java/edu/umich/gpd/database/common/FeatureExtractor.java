@@ -44,6 +44,8 @@ public abstract class FeatureExtractor {
 
   public abstract Instance getTestInstanceForSize(String dbName, Schema s, Structure structure);
 
+  public abstract void clearTrainData();
+
   public Instances getTrainData() {
     return trainData;
   }
