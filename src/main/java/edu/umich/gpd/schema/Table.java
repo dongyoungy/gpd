@@ -127,6 +127,10 @@ public class Table {
     rowCount.put(dbName, count);
   }
 
+  public boolean containsDistinctRowCount(String dbName, String columnStr) {
+    return distinctRowCountTable.contains(dbName, columnStr);
+  }
+
   public void setDistinctRowCount(String dbName, String columnStr, long count) {
     GPDLogger.debug(
         this,

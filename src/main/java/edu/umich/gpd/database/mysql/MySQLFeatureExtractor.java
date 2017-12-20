@@ -84,25 +84,26 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
 
       // Get distinct row counts from original DB
       for (Structure structure : structureSet) {
-        conn.setCatalog(targetDBName);
-        Statement stmt = conn.createStatement();
         String columnStr = structure.getColumnString();
-        ResultSet res =
-            stmt.executeQuery(
-                String.format(
-                    "SELECT COUNT(DISTINCT %s) FROM %s;",
-                    columnStr, structure.getTable().getName()));
-        if (res.next()) {
-          structure.getTable().setDistinctRowCount(targetDBName, columnStr, res.getLong(1));
-        } else {
-          GPDLogger.info(
-              this,
-              "Failed to obtain the distinct row count for columns in this physical "
-                  + "structure: "
-                  + structure.getName());
+        if (!structure.getTable().containsDistinctRowCount(targetDBName, columnStr)) {
+          conn.setCatalog(targetDBName);
+          Statement stmt = conn.createStatement();
+          ResultSet res =
+              stmt.executeQuery(
+                  String.format(
+                      "SELECT COUNT(DISTINCT %s) FROM %s;",
+                      columnStr, structure.getTable().getName()));
+          if (res.next()) {
+            structure.getTable().setDistinctRowCount(targetDBName, columnStr, res.getLong(1));
+          } else {
+            GPDLogger.info(
+                this,
+                "Failed to obtain the distinct row count for columns in this physical "
+                    + "structure: "
+                    + structure.getName());
+          }
         }
       }
-
     } catch (SQLException e) {
       GPDLogger.error(this, "SQLException has been caught.");
       e.printStackTrace();
