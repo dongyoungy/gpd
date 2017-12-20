@@ -25,6 +25,7 @@ public class GPDClassifier {
       // assuming the last attribute is the class attribute
       trainData.setClassIndex(trainData.numAttributes() - 1);
       classifier.buildClassifier(trainData);
+      GPDLogger.debug(this, "Built classifier = " + classifier.toString());
       hasBuilt = true;
     } catch (Exception e) {
       Log.error("GPDRegression", "Error while building classifier.");

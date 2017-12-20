@@ -14,6 +14,7 @@ import edu.umich.gpd.workload.Query;
 import edu.umich.gpd.workload.Workload;
 import org.apache.avro.generic.GenericData;
 import weka.classifiers.AbstractClassifier;
+import weka.classifiers.functions.LinearRegression;
 import weka.classifiers.functions.MultilayerPerceptron;
 import weka.classifiers.functions.SMOreg;
 import weka.classifiers.trees.M5P;
@@ -70,6 +71,7 @@ public class SASolver extends AbstractSolver {
   private long[] getSizeEstimates(Structure[] structures, GPDClassifier estimator) {
     // Train size estimator.
     estimator.build(extractor.getTrainDataForSize());
+
     long[] sizeEstimates = new long[structures.length];
     for (int i = 0; i < structures.length; ++i) {
       Instance testInstance =
@@ -278,13 +280,14 @@ public class SASolver extends AbstractSolver {
     m5p.setBuildRegressionTree(true);
     m5p.setUnpruned(false);
     m5p.setUseUnsmoothed(false);
+    LinearRegression linear = new LinearRegression();
 
     List<AbstractClassifier> wekaClassifiers = new ArrayList<>();
     wekaClassifiers.add(smo);
     wekaClassifiers.add(m5p);
     wekaClassifiers.add(mp);
 
-    costEstimator = new GPDClassifier(m5p);
+    costEstimator = new GPDClassifier(linear);
 
     // For now, only consider a single size limit.
     long sizeLimit = sizeLimits[0];
