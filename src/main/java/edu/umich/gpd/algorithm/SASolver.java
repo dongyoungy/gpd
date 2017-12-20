@@ -36,6 +36,8 @@ public class SASolver extends AbstractSolver {
   Map<String, Boolean> structureToUseCacheMap;
 
   Map<Query, FeatureExtractor> queryToExtractorMap;
+  Set<Structure> possibleStructures;
+  List<String> structureStrList;
 
   public SASolver(
       Connection conn,
@@ -163,8 +165,18 @@ public class SASolver extends AbstractSolver {
             // temp
             if (!queryToExtractorMap.containsKey(q)) {
               queryToExtractorMap.put(q, new MySQLFeatureExtractor(conn));
+              queryToExtractorMap
+                  .get(q)
+                  .initialize(
+                      sampleDBs,
+                      dbInfo.getTargetDBName(),
+                      schema,
+                      possibleStructures,
+                      structureStrList);
             }
-            queryToExtractorMap.get(q).addTrainingData(dbName, schema, q, builtStructures, queryTime);
+            queryToExtractorMap
+                .get(q)
+                .addTrainingData(dbName, schema, q, builtStructures, queryTime);
           } else {
             totalQueryTime += queryTime;
           }
@@ -178,7 +190,9 @@ public class SASolver extends AbstractSolver {
       for (Query q : queries) {
         costEstimator.build(queryToExtractorMap.get(q).getTrainData());
         Instance testInstance =
-            queryToExtractorMap.get(q).getTestInstance(dbInfo.getTargetDBName(), schema, q, builtStructures);
+            queryToExtractorMap
+                .get(q)
+                .getTestInstance(dbInfo.getTargetDBName(), schema, q, builtStructures);
         if (testInstance == null) {
           GPDLogger.error(this, "test instance null.");
         }
@@ -266,8 +280,8 @@ public class SASolver extends AbstractSolver {
   @Override
   public boolean solve() {
     List<Structure> allStructures = getAllStructures(configurations);
-    Set<Structure> possibleStructures = new LinkedHashSet<>();
-    List<String> structureStrList = new ArrayList<>();
+    possibleStructures = new LinkedHashSet<>();
+    structureStrList = new ArrayList<>();
     sizeLimits = GPDMain.userInput.getSetting().getSizeLimits();
 
     SMOreg smo = new SMOreg();
