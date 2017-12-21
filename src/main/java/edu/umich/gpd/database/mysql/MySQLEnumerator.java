@@ -30,8 +30,8 @@ public class MySQLEnumerator extends StructureEnumerator {
 
   @Override
   public Set<Configuration> enumerateStructures(Schema s, Workload w) {
-//    return this.enumerateStructuresWithRestrictedSets(s, w);
-    return this.enumerateStructuresWithCartesianProduct(s,w);
+    return this.enumerateStructuresWithRestrictedSets(s, w);
+//    return this.enumerateStructuresWithCartesianProduct(s,w);
   }
 
   private Set<Configuration> enumerateStructuresWithRestrictedSets(Schema s, Workload w) {
