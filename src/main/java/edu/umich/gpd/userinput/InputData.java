@@ -31,6 +31,7 @@ public class InputData {
     for (SampleInfo s : setting.getSamples()) {
       str += "\n\t\t" + s.getDbName() + ", " + s.getRatio();
     }
+    str += "\n";
     str += "\tsampleForSizeCheck:";
     str +=
         "\n\t\t"
