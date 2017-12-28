@@ -1,8 +1,6 @@
 package edu.umich.gpd.userinput;
 
-/**
- * Created by Dong Young Yoon on 2/15/17.
- */
+/** Created by Dong Young Yoon on 2/15/17. */
 public class InputData {
   private Setting setting;
   private DatabaseInfo databaseInfo;
@@ -33,6 +31,12 @@ public class InputData {
     for (SampleInfo s : setting.getSamples()) {
       str += "\n\t\t" + s.getDbName() + ", " + s.getRatio();
     }
+    str += "\tsampleForSizeCheck:";
+    str +=
+        "\n\t\t"
+            + setting.getSampleForSizeCheck().getDbName()
+            + ", "
+            + setting.getSampleForSizeCheck().getRatio();
     str += "\n";
     str += "databaseInfo:\n";
     str += "\ttype: " + databaseInfo.getType() + "\n";
