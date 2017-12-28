@@ -5,10 +5,7 @@ import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by Dong Young Yoon on 2/13/17.
@@ -16,7 +13,7 @@ import java.util.Set;
 public abstract class Structure {
   protected String name;
   protected Table table;
-  protected long size;
+  protected Map<String, Long> sizeMap;
   protected List<ColumnDefinition> columns;
   protected int id;
   protected String columnString;
@@ -30,7 +27,7 @@ public abstract class Structure {
   public Structure(String name, Table table) {
     this.name = name;
     this.table = table;
-    this.size = -1;
+    this.sizeMap = new HashMap<>();
     this.columns = new ArrayList<>();
     this.id = idCount++;
     this.columnString = "";
@@ -48,8 +45,8 @@ public abstract class Structure {
     return table;
   }
 
-  public long getSize() {
-    return size;
+  public long getSize(String dbName) {
+    return sizeMap.get(dbName);
   }
 
   @Override

@@ -21,6 +21,7 @@ public class Setting {
   private boolean incrementalRun;
   private int ilpTimeLimit;
   private List<SampleInfo> samples;
+  private SampleInfo sampleForSizeCheck;
   private String algorithm;
   private double tolerableLatencyMultiplier;
 
@@ -40,6 +41,7 @@ public class Setting {
     this.debug = false;
     this.algorithm = "ilp";
     this.samples = new ArrayList<>();
+    this.sampleForSizeCheck = new SampleInfo("gpd_size_sample", 0.25);
     this.tolerableLatencyMultiplier = 10.0;
   }
 
@@ -162,6 +164,10 @@ public class Setting {
 
   public int getMaxNumStructurePerTable() {
     return maxNumStructurePerTable;
+  }
+
+  public SampleInfo getSampleForSizeCheck() {
+    return sampleForSizeCheck;
   }
 
   public double getTolerableLatencyMultiplier() {

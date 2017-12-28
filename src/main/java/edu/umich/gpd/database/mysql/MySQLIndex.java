@@ -151,7 +151,7 @@ public class MySQLIndex extends Structure {
                       + "index_name = '%s'",
                   dbName, this.name));
       if (res.next()) {
-        this.size = res.getLong(1);
+        this.sizeMap.put(dbName, res.getLong(1));
       } else {
         GPDLogger.info(this, "Failed to obtain the size of this physical " + "structure: " + name);
       }

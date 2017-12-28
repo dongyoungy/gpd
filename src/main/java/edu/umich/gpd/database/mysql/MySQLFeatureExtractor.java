@@ -868,12 +868,12 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
             "Adding row count = %d, distinct row count = %d, size = %d for table %s @ %s",
             structure.getTable().getRowCount(dbName),
             structure.getTable().getDistinctRowCount(dbName, structure.getColumnString()),
-            structure.getSize(),
+            structure.getSize(dbName),
             structure.getTable().getName(),
             dbName));
     newInstance.setValue(idx++, structure.getNonUniqueString());
     newInstance.setValue(idx++, structure.getTable().getDistinctRowCount(dbName, structure.getColumnString()));
-    newInstance.setValue(idx++, structure.getSize());
+    newInstance.setValue(idx++, structure.getSize(dbName));
     trainDataForSize.add(newInstance);
     return true;
   }

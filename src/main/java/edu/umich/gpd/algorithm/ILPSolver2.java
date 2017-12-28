@@ -461,7 +461,7 @@ public class ILPSolver2 extends AbstractSolver {
                   this,
                   String.format(
                       "Added training data for size: %s = %d @ %s",
-                      s.getQueryString(), s.getSize(), dbName));
+                      s.getQueryString(), s.getSize(dbName), dbName));
             }
           }
 

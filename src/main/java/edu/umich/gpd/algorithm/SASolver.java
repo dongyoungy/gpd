@@ -30,6 +30,8 @@ import java.util.concurrent.TimeUnit;
 
 /** Created by Dong Young Yoon on 12/6/17. */
 public class SASolver extends AbstractSolver {
+
+  SampleInfo sizeSample;
   private GPDClassifier sizeEstimator;
   private GPDClassifier costEstimator;
   Map<String, Long> structureToQueryTimeMap;
@@ -52,6 +54,7 @@ public class SASolver extends AbstractSolver {
     structureToQueryTimeMap = new HashMap<>();
     structureToUseCacheMap = new HashMap<>();
     queryToExtractorMap = new HashMap<>();
+    sizeSample = GPDMain.userInput.getSetting().getSampleForSizeCheck();
   }
 
   private boolean buildInitialFullStructure(Set<Structure> structureSet) {
@@ -71,17 +74,32 @@ public class SASolver extends AbstractSolver {
         return false;
       }
     }
+
+    // create structure for size sample as well.
+    String dbName = sizeSample.getDbName();
+    Statement stmt;
+    try {
+      conn.setCatalog(dbName);
+      stmt = conn.createStatement();
+
+      for (Structure st : structureSet) {
+        st.create(conn, dbName);
+      }
+    } catch (SQLException e) {
+      e.printStackTrace();
+      return false;
+    }
+
     return true;
   }
 
-  private long[] getSizeEstimates(Structure[] structures, GPDClassifier estimator) {
+  private long[] getSizeEstimates(String dbName, Structure[] structures, GPDClassifier estimator) {
     // Train size estimator.
     estimator.build(extractor.getTrainDataForSize());
 
     long[] sizeEstimates = new long[structures.length];
     for (int i = 0; i < structures.length; ++i) {
-      Instance testInstance =
-          extractor.getTestInstanceForSize(dbInfo.getTargetDBName(), schema, structures[i]);
+      Instance testInstance = extractor.getTestInstanceForSize(dbName, schema, structures[i]);
       sizeEstimates[i] = (long) estimator.regress(testInstance);
     }
     return sizeEstimates;
@@ -309,6 +327,7 @@ public class SASolver extends AbstractSolver {
     wekaClassifiers.add(smo);
     wekaClassifiers.add(m5p);
     wekaClassifiers.add(mp);
+    wekaClassifiers.add(linear);
 
     costEstimator = new GPDClassifier(smo);
 
@@ -335,11 +354,39 @@ public class SASolver extends AbstractSolver {
       return false;
     }
 
+    // Get actual size from size sample
+    long[] sizeFromSizeSample = new long[structureSize];
+    for (int i = 0; i < structureSize; ++i) {
+      sizeFromSizeSample[i] = structureArray[i].getSize(sizeSample.getDbName());
+    }
+
+    AbstractClassifier bestSizeClassifier = null;
+    double minError = Double.MAX_VALUE;
+    for (AbstractClassifier classifier : wekaClassifiers) {
+      sizeEstimator = new GPDClassifier(classifier);
+      long[] estimatedStructureSizes =
+          getSizeEstimates(sizeSample.getDbName(), structureArray, sizeEstimator);
+      double errorSum = 0.0;
+      for (int i = 0; i < structureSize; ++i) {
+        errorSum += Math.pow((sizeFromSizeSample[i] - estimatedStructureSizes[i]), 2);
+      }
+      double error = Math.sqrt(errorSum / structureSize);
+      GPDLogger.debug(
+          this, String.format("Size classifier error for %s = %f", classifier.toString(), error));
+      if (error < minError) {
+        minError = error;
+        bestSizeClassifier = classifier;
+      }
+    }
+    GPDLogger.debug(
+        this, String.format("Best size classifier = %s", bestSizeClassifier.toString()));
+
     // Get size estimates for all structures
     long[] estimatedStructureSizes = null;
     GPDLogger.info(this, "Getting estimated structure sizes.");
-    sizeEstimator = new GPDClassifier(smo);
-    estimatedStructureSizes = getSizeEstimates(structureArray, sizeEstimator);
+    sizeEstimator = new GPDClassifier(bestSizeClassifier);
+    estimatedStructureSizes =
+        getSizeEstimates(dbInfo.getTargetDBName(), structureArray, sizeEstimator);
     for (int i = 0; i < structureArray.length; ++i) {
       GPDLogger.debug(
           this,

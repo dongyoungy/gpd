@@ -155,6 +155,15 @@ public class GPDMain {
           Log.error("GPDMain", "Sampling databases failed.");
           System.exit(-1);
         }
+        List<SampleInfo> sizeSample = new ArrayList<>();
+        sizeSample.add(setting.getSampleForSizeCheck());
+        Log.info("GPDMain", "Generating sample databases for size check...");
+        if (sampler.sample(conn, schema, minRowForSample, sizeSample)) {
+          Log.info("GPDMain", "Sampling databases for size check done.");
+        } else {
+          Log.error("GPDMain", "Sampling databases for size check failed.");
+          System.exit(-1);
+        }
       } else {
         Log.info("GPDMain", String.format("Using the target database '%s' for" +
             " calculating optimal physical design. Regression has been disabled.", targetDBName));
