@@ -43,10 +43,10 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
     ArrayList<Attribute> attrListForSize = new ArrayList<>();
     try {
       attrListForSize.add(new Attribute("numRow"));
-      for (Table t : s.getTables()) {
-        if (sampleDBs != null) {
-          for (SampleInfo sample : sampleDBs) {
-            String dbName = sample.getDbName();
+      if (sampleDBs != null) {
+        for (SampleInfo sample : sampleDBs) {
+          String dbName = sample.getDbName();
+          for (Table t : s.getTables()) {
             conn.setCatalog(dbName);
             Statement stmt = conn.createStatement();
             ResultSet res =
@@ -59,28 +59,53 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
               Long count = res.getLong(1);
               t.addRowCount(dbName, count);
             }
+            res.close();
           }
-        } else {
-          GPDLogger.error(this, "There are no sample databases to extract " + "features.");
-          return false;
+
+          for (Structure structure : structureSet) {
+            String columnStr = structure.getColumnString();
+            if (!structure.getTable().containsDistinctRowCount(dbName, columnStr)) {
+              conn.setCatalog(dbName);
+              Statement stmt = conn.createStatement();
+              ResultSet res =
+                  stmt.executeQuery(
+                      String.format(
+                          "SELECT COUNT(DISTINCT %s) FROM %s;",
+                          columnStr, structure.getTable().getName()));
+              if (res.next()) {
+                structure.getTable().setDistinctRowCount(dbName, columnStr, res.getLong(1));
+              } else {
+                GPDLogger.info(
+                    this,
+                    "Failed to obtain the distinct row count for columns in this physical "
+                        + "structure: "
+                        + structure.getName());
+              }
+            }
+          }
         }
-        attrList.add(new Attribute("numRow_" + t.getName()));
-        //
-        //        String dbName = targetDBName;
-        //        conn.setCatalog(dbName);
-        //        Statement stmt = conn.createStatement();
-        //        ResultSet res = stmt.executeQuery(String.format("SELECT COUNT(*) FROM %s",
-        // t.getName()));
-        //        if (!res.next()) {
-        //          GPDLogger.error(this, String.format("Failed to the row counts from table '%s'",
-        //              t.getName()));
-        //          return false;
-        //        } else {
-        //          Long count = res.getLong(1);
-        //          t.addRowCount(dbName, count.longValue());
-        //          attrList.add(new Attribute("numRow" + t.getName()));
-        //        }
+      } else {
+        GPDLogger.error(this, "There are no sample databases to extract " + "features.");
+        return false;
       }
+      for (Table t : s.getTables()) {
+        attrList.add(new Attribute("numRow_" + t.getName()));
+      }
+      //
+      //        String dbName = targetDBName;
+      //        conn.setCatalog(dbName);
+      //        Statement stmt = conn.createStatement();
+      //        ResultSet res = stmt.executeQuery(String.format("SELECT COUNT(*) FROM %s",
+      // t.getName()));
+      //        if (!res.next()) {
+      //          GPDLogger.error(this, String.format("Failed to the row counts from table '%s'",
+      //              t.getName()));
+      //          return false;
+      //        } else {
+      //          Long count = res.getLong(1);
+      //          t.addRowCount(dbName, count.longValue());
+      //          attrList.add(new Attribute("numRow" + t.getName()));
+      //        }
 
       // Get distinct row counts from original DB
       for (Structure structure : structureSet) {
@@ -872,7 +897,8 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
             structure.getTable().getName(),
             dbName));
     newInstance.setValue(idx++, structure.getNonUniqueString());
-    newInstance.setValue(idx++, structure.getTable().getDistinctRowCount(dbName, structure.getColumnString()));
+    newInstance.setValue(
+        idx++, structure.getTable().getDistinctRowCount(dbName, structure.getColumnString()));
     newInstance.setValue(idx++, structure.getSize(dbName));
     trainDataForSize.add(newInstance);
     return true;
@@ -1592,7 +1618,8 @@ public class MySQLFeatureExtractor extends FeatureExtractor {
             structure.getTable().getName(),
             dbName));
     newInstance.setValue(idx++, structure.getNonUniqueString());
-    newInstance.setValue(idx++, structure.getTable().getDistinctRowCount(dbName, structure.getColumnString()));
+    newInstance.setValue(
+        idx++, structure.getTable().getDistinctRowCount(dbName, structure.getColumnString()));
     return newInstance;
   }
 }

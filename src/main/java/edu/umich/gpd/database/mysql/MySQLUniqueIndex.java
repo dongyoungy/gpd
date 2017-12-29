@@ -159,16 +159,16 @@ public class MySQLUniqueIndex extends Structure {
         GPDLogger.info(this, "Failed to obtain the size of this physical " + "structure: " + name);
       }
       res.close();
-      res =
-          stmt.executeQuery(
-              String.format("SELECT COUNT(DISTINCT %s) FROM %s;", columnStr, table.getName()));
-      if (res.next()) {
-        this.table.setDistinctRowCount(dbName, columnStr, res.getLong(1));
-      } else {
-        GPDLogger.info(
-            this,
-            "Failed to obtain the distinct row count of this physical " + "structure: " + name);
-      }
+//      res =
+//          stmt.executeQuery(
+//              String.format("SELECT COUNT(DISTINCT %s) FROM %s;", columnStr, table.getName()));
+//      if (res.next()) {
+//        this.table.setDistinctRowCount(dbName, columnStr, res.getLong(1));
+//      } else {
+//        GPDLogger.info(
+//            this,
+//            "Failed to obtain the distinct row count of this physical " + "structure: " + name);
+//      }
     } catch (SQLException e) {
       e.printStackTrace();
       return false;

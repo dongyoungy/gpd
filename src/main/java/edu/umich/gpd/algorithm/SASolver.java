@@ -339,8 +339,10 @@ public class SASolver extends AbstractSolver {
         structureStrList.add(s.getNonUniqueString());
       }
     }
+    List<SampleInfo> samples = new ArrayList<>(sampleDBs);
+    samples.add(sizeSample);
     extractor.initialize(
-        sampleDBs, dbInfo.getTargetDBName(), schema, possibleStructures, structureStrList);
+        samples, dbInfo.getTargetDBName(), schema, possibleStructures, structureStrList);
 
     Structure[] structureArray = possibleStructures.toArray(new Structure[0]);
     int structureSize = structureArray.length;
