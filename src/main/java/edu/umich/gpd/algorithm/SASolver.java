@@ -323,11 +323,11 @@ public class SASolver extends AbstractSolver {
     m5p.setUseUnsmoothed(false);
     LinearRegression linear = new LinearRegression();
 
-    List<AbstractClassifier> wekaClassifiers = new ArrayList<>();
-    wekaClassifiers.add(smo);
-    wekaClassifiers.add(m5p);
-    wekaClassifiers.add(mp);
-    wekaClassifiers.add(linear);
+    Map<String, AbstractClassifier> wekaClassifiers = new HashMap<>();
+    wekaClassifiers.put("SMO", smo);
+    wekaClassifiers.put("M5P", m5p);
+    wekaClassifiers.put("MultiPerceptron", mp);
+    wekaClassifiers.put("Linear", linear);
 
     costEstimator = new GPDClassifier(smo);
 
@@ -364,8 +364,8 @@ public class SASolver extends AbstractSolver {
 
     AbstractClassifier bestSizeClassifier = null;
     double minError = Double.MAX_VALUE;
-    for (AbstractClassifier classifier : wekaClassifiers) {
-      sizeEstimator = new GPDClassifier(classifier);
+    for (Map.Entry<String, AbstractClassifier> classifier : wekaClassifiers.entrySet()) {
+      sizeEstimator = new GPDClassifier(classifier.getValue());
       long[] estimatedStructureSizes =
           getSizeEstimates(sizeSample.getDbName(), structureArray, sizeEstimator);
       double errorSum = 0.0;
@@ -373,12 +373,11 @@ public class SASolver extends AbstractSolver {
         errorSum += Math.pow((sizeFromSizeSample[i] - estimatedStructureSizes[i]), 2);
       }
       double error = Math.sqrt(errorSum / structureSize);
-      GPDLogger.debug(
-          this, String.format("Size classifier error for %s:", classifier.toString()));
+      GPDLogger.debug(this, String.format("Size classifier error for %s:", classifier.getKey()));
       GPDLogger.debug(this, String.format("error = %f", error));
       if (error < minError) {
         minError = error;
-        bestSizeClassifier = classifier;
+        bestSizeClassifier = classifier.getValue();
       }
     }
     GPDLogger.debug(
@@ -397,13 +396,13 @@ public class SASolver extends AbstractSolver {
               "Estimated Structure Size = %d (%s)",
               estimatedStructureSizes[i], structureArray[i].getQueryString()));
     }
+
     GPDLogger.info(this, "Getting estimated structure sizes from all classifiers.");
-    for (AbstractClassifier classifier : wekaClassifiers) {
-      sizeEstimator = new GPDClassifier(classifier);
+    for (Map.Entry<String, AbstractClassifier> classifier : wekaClassifiers.entrySet()) {
+      sizeEstimator = new GPDClassifier(classifier.getValue());
       estimatedStructureSizes =
           getSizeEstimates(dbInfo.getTargetDBName(), structureArray, sizeEstimator);
-      GPDLogger.debug(
-          this, String.format("Current size classifier = %s", classifier.toString()));
+      GPDLogger.debug(this, String.format("Current size classifier = %s", classifier.getKey()));
       for (int i = 0; i < structureArray.length; ++i) {
         GPDLogger.debug(
             this,
