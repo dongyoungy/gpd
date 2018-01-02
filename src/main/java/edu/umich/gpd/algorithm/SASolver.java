@@ -374,7 +374,8 @@ public class SASolver extends AbstractSolver {
       }
       double error = Math.sqrt(errorSum / structureSize);
       GPDLogger.debug(
-          this, String.format("Size classifier error for %s = %f", classifier.toString(), error));
+          this, String.format("Size classifier error for %s:", classifier.toString()));
+      GPDLogger.debug(this, String.format("error = %f", error));
       if (error < minError) {
         minError = error;
         bestSizeClassifier = classifier;
@@ -385,7 +386,7 @@ public class SASolver extends AbstractSolver {
 
     // Get size estimates for all structures
     long[] estimatedStructureSizes = null;
-    GPDLogger.info(this, "Getting estimated structure sizes.");
+    GPDLogger.info(this, "Getting estimated structure sizes from the best classifier.");
     sizeEstimator = new GPDClassifier(bestSizeClassifier);
     estimatedStructureSizes =
         getSizeEstimates(dbInfo.getTargetDBName(), structureArray, sizeEstimator);
@@ -395,6 +396,21 @@ public class SASolver extends AbstractSolver {
           String.format(
               "Estimated Structure Size = %d (%s)",
               estimatedStructureSizes[i], structureArray[i].getQueryString()));
+    }
+    GPDLogger.info(this, "Getting estimated structure sizes from all classifiers.");
+    for (AbstractClassifier classifier : wekaClassifiers) {
+      sizeEstimator = new GPDClassifier(classifier);
+      estimatedStructureSizes =
+          getSizeEstimates(dbInfo.getTargetDBName(), structureArray, sizeEstimator);
+      GPDLogger.debug(
+          this, String.format("Current size classifier = %s", classifier.toString()));
+      for (int i = 0; i < structureArray.length; ++i) {
+        GPDLogger.debug(
+            this,
+            String.format(
+                "Estimated Structure Size = %d (%s)",
+                estimatedStructureSizes[i], structureArray[i].getQueryString()));
+      }
     }
 
     // Calculate initial temperature (i.e., total estimated size)
