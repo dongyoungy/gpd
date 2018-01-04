@@ -90,7 +90,6 @@ public class SASolver extends AbstractSolver {
 
         for (Structure st : structureSet) {
           st.create(conn, actualDBName);
-          extractor.addTrainingDataForSize(actualDBName, schema, st);
         }
       } catch (SQLException e) {
         e.printStackTrace();

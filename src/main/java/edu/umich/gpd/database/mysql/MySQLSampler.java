@@ -111,6 +111,8 @@ public class MySQLSampler extends Sampler {
       try {
         conn.setCatalog(originalDBName);
         Statement stmt = conn.createStatement();
+        // drop the DB if exists
+        stmt.execute(String.format("DROP DATABASE IF EXISTS %s", actualDBName));
         // create sample DB
         stmt.execute(String.format("CREATE DATABASE %s", actualDBName));
 
