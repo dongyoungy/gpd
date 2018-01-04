@@ -82,7 +82,7 @@ public class SASolver extends AbstractSolver {
     }
 
     // build full structure on actual DB if option is on.
-    if (useActualSize) {
+    if (useActualSize || useActualQueryTime) {
       Statement stmt;
       try {
         conn.setCatalog(actualDBName);
