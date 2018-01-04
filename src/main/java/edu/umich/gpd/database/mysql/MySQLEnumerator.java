@@ -31,7 +31,7 @@ public class MySQLEnumerator extends StructureEnumerator {
   @Override
   public Set<Configuration> enumerateStructures(Schema s, Workload w) {
     return this.enumerateStructuresWithRestrictedSets(s, w);
-//    return this.enumerateStructuresWithCartesianProduct(s,w);
+    //    return this.enumerateStructuresWithCartesianProduct(s,w);
   }
 
   private Set<Configuration> enumerateStructuresWithRestrictedSets(Schema s, Workload w) {
@@ -73,9 +73,14 @@ public class MySQLEnumerator extends StructureEnumerator {
         Set<Structure> structuresForTable = new HashSet<>();
         Table t = s.getTable(tableName);
         Set<ColumnDefinition> columnsToAdd = new HashSet<>();
+        Set<String> uniqueColumnSet = new HashSet(uniqueIndexMap.get(tableName));
+
         for (ColumnDefinition cd : t.getColumns()) {
           if (interestingColumnList.contains(cd.getColumnName())
               && feasibleColumnNameSet.contains(cd.getColumnName())) {
+            columnsToAdd.add(cd);
+          }
+          if (uniqueColumnSet.contains(cd.getColumnName())) {
             columnsToAdd.add(cd);
           }
         }
@@ -89,11 +94,19 @@ public class MySQLEnumerator extends StructureEnumerator {
         }
 
         Structure structure;
-        Set<Set<ColumnDefinition>> columnPowerSet = Sets.powerSet(columnsToAdd);
+        Set<Set<ColumnDefinition>> columnPowerSet = new HashSet<>();
+
+        for (int i = 1;
+            i <= GPDMain.userInput.getSetting().getMaxNumColumnPerStructure()
+                && i <= columnsToAdd.size();
+            ++i) {
+          columnPowerSet.addAll(Sets.combinations(columnsToAdd, i));
+        }
         for (Set<ColumnDefinition> columnSet : columnPowerSet) {
-          if (columnSet.size() > GPDMain.userInput.getSetting().getMaxNumColumnPerStructure()) {
-            continue;
-          }
+          //          if (columnSet.size() >
+          // GPDMain.userInput.getSetting().getMaxNumColumnPerStructure()) {
+          //            continue;
+          //          }
           Collection<List<ColumnDefinition>> perms = Collections2.permutations(columnSet);
           Set<String> columnSetString = new LinkedHashSet<>();
           for (ColumnDefinition cd : columnSet) {
@@ -103,8 +116,8 @@ public class MySQLEnumerator extends StructureEnumerator {
             if (perm.isEmpty()) {
               continue;
             }
-            Set<String> uniqueColumnSet = new HashSet(uniqueIndexMap.get(tableName));
-//            if (uniqueColumnSet.containsAll(columnSetString)) {
+//            Set<String> uniqueColumnSet = new HashSet(uniqueIndexMap.get(tableName));
+            //            if (uniqueColumnSet.containsAll(columnSetString)) {
             if (Sets.symmetricDifference(uniqueColumnSet, columnSetString).isEmpty()) {
               structure =
                   new MySQLUniqueIndex(
@@ -122,25 +135,27 @@ public class MySQLEnumerator extends StructureEnumerator {
         // Identify structure sets for a table.
         Set<List<Structure>> structureSetsForTable = new HashSet<>();
         ICombinatoricsVector<Structure> initVector = Factory.createVector(structuresForTable);
-//        for (int i = 1; i <= GPDMain.userInput.getSetting().getMaxNumStructurePerTable(); ++i) {
-          int maxStructuresPerTable = GPDMain.userInput.getSetting().getMaxNumStructurePerTable();
-          int numStructureToConsider =
-              (initVector.getSize() > maxStructuresPerTable)
-                  ? maxStructuresPerTable
-                  : initVector.getSize();
-          Generator<Structure> gen = Factory.createSimpleCombinationGenerator(initVector, numStructureToConsider);
-          for (ICombinatoricsVector<Structure> comb : gen) {
-            List<Structure> combList = comb.getVector();
-            // For now, only consider the max # structure per table = 2
-            if (combList.size() > 1) {
-              if (!combList.get(0).isCovering(combList.get(1))) {
-                structureSetsForTable.add(combList);
-              }
-            } else {
+        //        for (int i = 1; i <= GPDMain.userInput.getSetting().getMaxNumStructurePerTable();
+        // ++i) {
+        int maxStructuresPerTable = GPDMain.userInput.getSetting().getMaxNumStructurePerTable();
+        int numStructureToConsider =
+            (initVector.getSize() > maxStructuresPerTable)
+                ? maxStructuresPerTable
+                : initVector.getSize();
+        Generator<Structure> gen =
+            Factory.createSimpleCombinationGenerator(initVector, numStructureToConsider);
+        for (ICombinatoricsVector<Structure> comb : gen) {
+          List<Structure> combList = comb.getVector();
+          // For now, only consider the max # structure per table = 2
+          if (combList.size() > 1) {
+            if (!combList.get(0).isCovering(combList.get(1))) {
               structureSetsForTable.add(combList);
             }
+          } else {
+            structureSetsForTable.add(combList);
           }
-//        }
+        }
+        //        }
         tableToStructureSetMap.put(tableName, structureSetsForTable);
       }
 
@@ -148,7 +163,9 @@ public class MySQLEnumerator extends StructureEnumerator {
       //      for (int i = 1; i <= GPDMain.userInput.getSetting().getMaxNumTablePerQuery(); ++i) {
       int maxNumTablePerQuery = GPDMain.userInput.getSetting().getMaxNumTablePerQuery();
       int numTableToConsider =
-          (tableVector.getSize() > maxNumTablePerQuery) ? maxNumTablePerQuery : tableVector.getSize();
+          (tableVector.getSize() > maxNumTablePerQuery)
+              ? maxNumTablePerQuery
+              : tableVector.getSize();
       Generator<String> gen =
           Factory.createSimpleCombinationGenerator(tableVector, numTableToConsider);
 

@@ -156,6 +156,14 @@ public class Setting {
     return incrementalRunTime;
   }
 
+  public void setMaxNumTablePerQuery(int maxNumTablePerQuery) {
+    this.maxNumTablePerQuery = maxNumTablePerQuery;
+  }
+
+  public void setMaxNumStructurePerTable(int maxNumStructurePerTable) {
+    this.maxNumStructurePerTable = maxNumStructurePerTable;
+  }
+
   public void setIncrementalRunTime(long incrementalRunTime) {
     this.incrementalRunTime = incrementalRunTime;
   }
