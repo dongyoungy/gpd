@@ -382,6 +382,7 @@ public class SASolver extends AbstractSolver {
   @Override
   public boolean solve() {
     List<Structure> allStructures = getAllStructures(configurations);
+    Map<String, Integer> tableIndexCount = new HashMap<>();
     possibleStructures = new LinkedHashSet<>();
     structureStrList = new ArrayList<>();
     sizeLimits = GPDMain.userInput.getSetting().getSizeLimits();
@@ -419,8 +420,20 @@ public class SASolver extends AbstractSolver {
     long sizeLimit = sizeLimits[0];
 
     for (Structure s : allStructures) {
-      if (possibleStructures.add(s)) {
-        structureStrList.add(s.getNonUniqueString());
+      int count = 0;
+      if (!tableIndexCount.containsKey(s.getTable().getName())) {
+        tableIndexCount.put(s.getTable().getName(), 1);
+        count = 1;
+      } else {
+        int currentCount = tableIndexCount.get(s.getTable().getName());
+        tableIndexCount.put(s.getTable().getName(), currentCount + 1);
+        count = currentCount + 1;
+      }
+      // TODO: this is temp fix to handle 64 max key limits in MySQL.
+      if (count <= 64) {
+        if (possibleStructures.add(s)) {
+          structureStrList.add(s.getNonUniqueString());
+        }
       }
     }
     List<SampleInfo> samples = new ArrayList<>(sampleDBs);
