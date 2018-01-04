@@ -1,5 +1,6 @@
 package edu.umich.gpd.database.mysql;
 
+import edu.umich.gpd.main.GPDMain;
 import edu.umich.gpd.userinput.SampleInfo;
 import edu.umich.gpd.database.common.Sampler;
 import edu.umich.gpd.schema.Schema;
@@ -73,18 +74,18 @@ public class MySQLSampler extends Sampler {
           stmt.execute(t.getCreateStatement());
 
           long rowCount = tableRowCounts.get(t);
-          if (rowCount <= minRow) {
+          if (rowCount <= minRow || sampleRatio == 1) {
             // copy as-is
             stmt.execute(
                 String.format(
                     "INSERT INTO %s SELECT * FROM %s.%s", tableName, originalDBName, tableName));
-//          } else if (rowCount * sampleRatio <= minRow) {
-//            // use a new sample ratio
-//            double newRatio = (double)(minRow * sampleDBCount) / (double)rowCount;
-//            stmt.execute(
-//                String.format(
-//                    "INSERT INTO %s SELECT * FROM %s.%s WHERE rand() <= %f",
-//                    tableName, originalDBName, tableName, newRatio));
+            //          } else if (rowCount * sampleRatio <= minRow) {
+            //            // use a new sample ratio
+            //            double newRatio = (double)(minRow * sampleDBCount) / (double)rowCount;
+            //            stmt.execute(
+            //                String.format(
+            //                    "INSERT INTO %s SELECT * FROM %s.%s WHERE rand() <= %f",
+            //                    tableName, originalDBName, tableName, newRatio));
           } else {
             // copy using sample ratio (approx.)
             stmt.execute(
@@ -95,11 +96,50 @@ public class MySQLSampler extends Sampler {
         }
         ++sampleDBCount;
       }
+
     } catch (SQLException e) {
       GPDLogger.error(this, "A SQLException has been caught.");
       e.printStackTrace();
       return false;
     }
+
+    // create a copy of original DB with any of 'actual' options are true.
+    if (GPDMain.userInput.getSetting().useActualQueryTime()
+        || GPDMain.userInput.getSetting().useActualSize()) {
+      GPDLogger.info(this, "Creating a copy of the original DB...");
+      String actualDBName = originalDBName + "_gpd_actual";
+      try {
+        conn.setCatalog(originalDBName);
+        Statement stmt = conn.createStatement();
+        // create sample DB
+        stmt.execute(String.format("CREATE DATABASE %s", actualDBName));
+
+        conn.setCatalog(actualDBName);
+        stmt = conn.createStatement();
+        List<Table> tableList = schema.getTables();
+        for (Table t : tableList) {
+          String tableName = t.getName();
+          // drop table if exists
+          stmt.execute(String.format("DROP TABLE IF EXISTS %s", tableName));
+          // create table
+          stmt.execute(t.getCreateStatement());
+          stmt.execute(
+              String.format(
+                  "INSERT INTO %s SELECT * FROM %s.%s", tableName, originalDBName, tableName));
+        }
+      } catch (SQLException e) {
+        if (e.getErrorCode() == 1007) {
+          GPDLogger.info(
+              this, "A copy of the original DB already exists. Skipping the creation step.");
+        } else {
+          GPDLogger.error(this, "A SQLException has been caught.");
+          e.printStackTrace();
+          return false;
+        }
+      }
+      GPDLogger.info(this, "A copy of the original DB has been created.");
+    }
+
     return true;
   }
 }

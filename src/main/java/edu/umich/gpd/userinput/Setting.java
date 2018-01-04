@@ -19,6 +19,8 @@ public class Setting {
   private boolean useRegression;
   private boolean debug;
   private boolean incrementalRun;
+  private boolean useActualSize;
+  private boolean useActualQueryTime;
   private int ilpTimeLimit;
   private List<SampleInfo> samples;
   private SampleInfo sampleForSizeCheck;
@@ -36,6 +38,8 @@ public class Setting {
     this.useSampling = false;
     this.useRegression = false;
     this.incrementalRun = false;
+    this.useActualSize = false;
+    this.useActualQueryTime = false;
     this.incrementalRunTime = 0;
     this.ilpTimeLimit = 1800;
     this.debug = false;
@@ -63,6 +67,8 @@ public class Setting {
         ", sizeLimits=" + sizeLimitStr +
         ", useSampling=" + useSampling +
         ", useRegression=" + useRegression +
+        ", useActualSize=" + useActualSize +
+        ", useActualQueryTime=" + useActualQueryTime +
         ", incrementalRun=" + incrementalRun +
         ", incrementalRunTime=" + incrementalRunTime +
         ", tolerableLatencyMultipler=" + tolerableLatencyMultiplier +
@@ -75,6 +81,14 @@ public class Setting {
 
   public void setMaxNumColumnPerStructure(int maxNumColumnPerStructure) {
     this.maxNumColumnPerStructure = maxNumColumnPerStructure;
+  }
+
+  public boolean useActualSize() {
+    return useActualSize;
+  }
+
+  public boolean useActualQueryTime() {
+    return useActualQueryTime;
   }
 
   public void setDebug(boolean debug) {

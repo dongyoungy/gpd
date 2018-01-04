@@ -32,6 +32,9 @@ import java.util.concurrent.TimeUnit;
 public class SASolver extends AbstractSolver {
 
   SampleInfo sizeSample;
+  boolean useActualSize;
+  boolean useActualQueryTime;
+  String actualDBName;
   private GPDClassifier sizeEstimator;
   private GPDClassifier costEstimator;
   Map<String, Long> structureToQueryTimeMap;
@@ -55,6 +58,9 @@ public class SASolver extends AbstractSolver {
     structureToUseCacheMap = new HashMap<>();
     queryToExtractorMap = new HashMap<>();
     sizeSample = GPDMain.userInput.getSetting().getSampleForSizeCheck();
+    useActualSize = GPDMain.userInput.getSetting().useActualSize();
+    useActualQueryTime = GPDMain.userInput.getSetting().useActualQueryTime();
+    actualDBName = dbInfo.getTargetDBName() + "_gpd_actual";
   }
 
   private boolean buildInitialFullStructure(Set<Structure> structureSet) {
@@ -75,20 +81,37 @@ public class SASolver extends AbstractSolver {
       }
     }
 
-    // create structure for size sample as well.
-    String dbName = sizeSample.getDbName();
-    Statement stmt;
-    try {
-      conn.setCatalog(dbName);
-      stmt = conn.createStatement();
+    // build full structure on actual DB if option is on.
+    if (useActualSize) {
+      Statement stmt;
+      try {
+        conn.setCatalog(actualDBName);
+        stmt = conn.createStatement();
 
-      for (Structure st : structureSet) {
-        st.create(conn, dbName);
+        for (Structure st : structureSet) {
+          st.create(conn, actualDBName);
+          extractor.addTrainingDataForSize(actualDBName, schema, st);
+        }
+      } catch (SQLException e) {
+        e.printStackTrace();
+        return false;
       }
-    } catch (SQLException e) {
-      e.printStackTrace();
-      return false;
     }
+
+    // create structure for size sample as well.
+    //    String dbName = sizeSample.getDbName();
+    //    Statement stmt;
+    //    try {
+    //      conn.setCatalog(dbName);
+    //      stmt = conn.createStatement();
+    //
+    //      for (Structure st : structureSet) {
+    //        st.create(conn, dbName);
+    //      }
+    //    } catch (SQLException e) {
+    //      e.printStackTrace();
+    //      return false;
+    //    }
 
     return true;
   }
@@ -156,11 +179,10 @@ public class SASolver extends AbstractSolver {
 
     List<Query> queries = workload.getQueries();
     long totalQueryTime = 0;
-    for (SampleInfo s : sampleDBs) {
-      String dbName = s.getDbName();
+    if (useActualQueryTime) {
       Statement stmt;
       try {
-        conn.setCatalog(dbName);
+        conn.setCatalog(actualDBName);
         stmt = conn.createStatement();
 
         for (Query q : queries) {
@@ -194,7 +216,7 @@ public class SASolver extends AbstractSolver {
             }
             queryToExtractorMap
                 .get(q)
-                .addTrainingData(dbName, schema, q, builtStructures, queryTime);
+                .addTrainingData(actualDBName, schema, q, builtStructures, queryTime);
           } else {
             totalQueryTime += queryTime;
           }
@@ -203,18 +225,67 @@ public class SASolver extends AbstractSolver {
       } catch (SQLException e) {
         e.printStackTrace();
       }
-    }
-    if (useRegression) {
-      for (Query q : queries) {
-        costEstimator.build(queryToExtractorMap.get(q).getTrainData());
-        Instance testInstance =
-            queryToExtractorMap
-                .get(q)
-                .getTestInstance(dbInfo.getTargetDBName(), schema, q, builtStructures);
-        if (testInstance == null) {
-          GPDLogger.error(this, "test instance null.");
+    } else {
+      for (SampleInfo s : sampleDBs) {
+        String dbName = s.getDbName();
+        Statement stmt;
+        try {
+          conn.setCatalog(dbName);
+          stmt = conn.createStatement();
+
+          for (Query q : queries) {
+            long queryTime = 0;
+            boolean timeout = false;
+            Stopwatch stopwatch = Stopwatch.createStarted();
+            try {
+              stmt.setQueryTimeout(GPDMain.userInput.getSetting().getQueryTimeout());
+              stmt.execute(q.getContent());
+            } catch (SQLException e) {
+              GPDLogger.debug(this, String.format("Query #%d has been timed out.", q.getId()));
+              timeout = true;
+            }
+            if (timeout) {
+              queryTime = GPDMain.userInput.getSetting().getQueryTimeout() * 1000;
+            } else {
+              queryTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+            }
+            if (useRegression) {
+              // temp
+              if (!queryToExtractorMap.containsKey(q)) {
+                queryToExtractorMap.put(q, new MySQLFeatureExtractor(conn));
+                queryToExtractorMap
+                    .get(q)
+                    .initialize(
+                        sampleDBs,
+                        dbInfo.getTargetDBName(),
+                        schema,
+                        possibleStructures,
+                        structureStrList);
+              }
+              queryToExtractorMap
+                  .get(q)
+                  .addTrainingData(dbName, schema, q, builtStructures, queryTime);
+            } else {
+              totalQueryTime += queryTime;
+            }
+          }
+
+        } catch (SQLException e) {
+          e.printStackTrace();
         }
-        totalQueryTime += (long) costEstimator.regress(testInstance);
+      }
+      if (useRegression) {
+        for (Query q : queries) {
+          costEstimator.build(queryToExtractorMap.get(q).getTrainData());
+          Instance testInstance =
+              queryToExtractorMap
+                  .get(q)
+                  .getTestInstance(dbInfo.getTargetDBName(), schema, q, builtStructures);
+          if (testInstance == null) {
+            GPDLogger.error(this, "test instance null.");
+          }
+          totalQueryTime += (long) costEstimator.regress(testInstance);
+        }
       }
     }
     GPDLogger.debug(
@@ -281,8 +352,8 @@ public class SASolver extends AbstractSolver {
   }
 
   private void buildOrDropStructure(Structure st, boolean build) {
-    for (SampleInfo s : sampleDBs) {
-      String dbName = s.getDbName();
+    if (useActualQueryTime) {
+      String dbName = actualDBName;
       Statement stmt;
       try {
         conn.setCatalog(dbName);
@@ -291,6 +362,19 @@ public class SASolver extends AbstractSolver {
         else st.drop(conn, dbName);
       } catch (SQLException e) {
         e.printStackTrace();
+      }
+    } else {
+      for (SampleInfo s : sampleDBs) {
+        String dbName = s.getDbName();
+        Statement stmt;
+        try {
+          conn.setCatalog(dbName);
+          stmt = conn.createStatement();
+          if (build) st.create(conn, dbName);
+          else st.drop(conn, dbName);
+        } catch (SQLException e) {
+          e.printStackTrace();
+        }
       }
     }
   }
@@ -357,52 +441,46 @@ public class SASolver extends AbstractSolver {
     }
 
     // Get actual size from size sample
-    long[] sizeFromSizeSample = new long[structureSize];
-    for (int i = 0; i < structureSize; ++i) {
-      sizeFromSizeSample[i] = structureArray[i].getSize(sizeSample.getDbName());
-    }
+    //    long[] sizeFromSizeSample = new long[structureSize];
+    //    for (int i = 0; i < structureSize; ++i) {
+    //      sizeFromSizeSample[i] = structureArray[i].getSize(sizeSample.getDbName());
+    //    }
 
-    AbstractClassifier bestSizeClassifier = null;
-    double minError = Double.MAX_VALUE;
-    for (Map.Entry<String, AbstractClassifier> classifier : wekaClassifiers.entrySet()) {
-      sizeEstimator = new GPDClassifier(classifier.getValue());
-      long[] estimatedStructureSizes =
-          getSizeEstimates(sizeSample.getDbName(), structureArray, sizeEstimator);
-      double errorSum = 0.0;
-      for (int i = 0; i < structureSize; ++i) {
-        errorSum += Math.pow((sizeFromSizeSample[i] - estimatedStructureSizes[i]), 2);
-      }
-      double error = Math.sqrt(errorSum / structureSize);
-      GPDLogger.debug(this, String.format("Size classifier error for %s:", classifier.getKey()));
-      GPDLogger.debug(this, String.format("error = %f", error));
-      if (error < minError) {
-        minError = error;
-        bestSizeClassifier = classifier.getValue();
-      }
-    }
-    GPDLogger.debug(
-        this, String.format("Best size classifier = %s", bestSizeClassifier.toString()));
+    //    AbstractClassifier bestSizeClassifier = null;
+    //    double minError = Double.MAX_VALUE;
+    //    for (Map.Entry<String, AbstractClassifier> classifier : wekaClassifiers.entrySet()) {
+    //      sizeEstimator = new GPDClassifier(classifier.getValue());
+    //      long[] estimatedStructureSizes =
+    //          getSizeEstimates(sizeSample.getDbName(), structureArray, sizeEstimator);
+    //      double errorSum = 0.0;
+    //      for (int i = 0; i < structureSize; ++i) {
+    //        errorSum += Math.pow((sizeFromSizeSample[i] - estimatedStructureSizes[i]), 2);
+    //      }
+    //      double error = Math.sqrt(errorSum / structureSize);
+    //      GPDLogger.debug(this, String.format("Size classifier error for %s:",
+    // classifier.getKey()));
+    //      GPDLogger.debug(this, String.format("error = %f", error));
+    //      if (error < minError) {
+    //        minError = error;
+    //        bestSizeClassifier = classifier.getValue();
+    //      }
+    //    }
+    //    GPDLogger.debug(
+    //        this, String.format("Best size classifier = %s", bestSizeClassifier.toString()));
 
     // Get size estimates for all structures
     long[] estimatedStructureSizes = null;
-    GPDLogger.info(this, "Getting estimated structure sizes from the best classifier.");
-    sizeEstimator = new GPDClassifier(bestSizeClassifier);
-    estimatedStructureSizes =
-        getSizeEstimates(dbInfo.getTargetDBName(), structureArray, sizeEstimator);
-    for (int i = 0; i < structureArray.length; ++i) {
-      GPDLogger.debug(
-          this,
-          String.format(
-              "Estimated Structure Size = %d (%s)",
-              estimatedStructureSizes[i], structureArray[i].getQueryString()));
-    }
-
-    GPDLogger.info(this, "Getting estimated structure sizes from all classifiers.");
-    for (Map.Entry<String, AbstractClassifier> classifier : wekaClassifiers.entrySet()) {
-      sizeEstimator = new GPDClassifier(classifier.getValue());
+    if (useActualSize) {
+      estimatedStructureSizes = new long[structureSize];
+      for (int i = 0; i < structureSize; ++i) {
+        GPDLogger.info(this, "Getting structure sizes from the actual database.");
+        estimatedStructureSizes[i] = structureArray[i].getSize(actualDBName);
+      }
+    } else {
+      GPDLogger.info(this, "Getting estimated structure sizes from the best classifier.");
+      sizeEstimator = new GPDClassifier(smo);
       estimatedStructureSizes =
           getSizeEstimates(dbInfo.getTargetDBName(), structureArray, sizeEstimator);
-      GPDLogger.debug(this, String.format("Current size classifier = %s", classifier.getKey()));
       for (int i = 0; i < structureArray.length; ++i) {
         GPDLogger.debug(
             this,
@@ -411,6 +489,22 @@ public class SASolver extends AbstractSolver {
                 estimatedStructureSizes[i], structureArray[i].getQueryString()));
       }
     }
+    //
+    //    GPDLogger.info(this, "Getting estimated structure sizes from all classifiers.");
+    //    for (Map.Entry<String, AbstractClassifier> classifier : wekaClassifiers.entrySet()) {
+    //      sizeEstimator = new GPDClassifier(classifier.getValue());
+    //      estimatedStructureSizes =
+    //          getSizeEstimates(dbInfo.getTargetDBName(), structureArray, sizeEstimator);
+    //      GPDLogger.debug(this, String.format("Current size classifier = %s",
+    // classifier.getKey()));
+    //      for (int i = 0; i < structureArray.length; ++i) {
+    //        GPDLogger.debug(
+    //            this,
+    //            String.format(
+    //                "Estimated Structure Size = %d (%s)",
+    //                estimatedStructureSizes[i], structureArray[i].getQueryString()));
+    //      }
+    //    }
 
     // Calculate initial temperature (i.e., total estimated size)
     long temperature = 0;
