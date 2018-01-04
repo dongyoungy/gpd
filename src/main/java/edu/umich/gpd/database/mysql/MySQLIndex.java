@@ -134,14 +134,14 @@ public class MySQLIndex extends Structure {
       conn.setCatalog(dbName);
       Statement stmt = conn.createStatement();
       String targetDBName = conn.getCatalog();
-      stmt.execute(
-          String.format("CREATE INDEX %s ON %s (%s)", this.name, table.getName(), columnStr));
       GPDLogger.debug(
           this,
           "Executed: "
               + String.format(
-                  "CREATE INDEX %s ON %s (%s) @ %s",
-                  this.name, table.getName(), columnStr, targetDBName));
+              "CREATE INDEX %s ON %s (%s) @ %s",
+              this.name, table.getName(), columnStr, targetDBName));
+      stmt.execute(
+          String.format("CREATE INDEX %s ON %s (%s)", this.name, table.getName(), columnStr));
 
       ResultSet res =
           stmt.executeQuery(

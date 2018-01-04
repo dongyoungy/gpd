@@ -136,15 +136,15 @@ public class MySQLUniqueIndex extends Structure {
       conn.setCatalog(dbName);
       Statement stmt = conn.createStatement();
       String targetDbName = conn.getCatalog();
-      stmt.execute(
-          String.format(
-              "CREATE UNIQUE INDEX %s ON %s (%s)", this.name, table.getName(), columnStr));
       GPDLogger.debug(
           this,
           "Executed: "
               + String.format(
-                  "CREATE UNIQUE INDEX %s ON %s (%s) @ %s",
-                  this.name, table.getName(), columnStr, targetDbName));
+              "CREATE UNIQUE INDEX %s ON %s (%s) @ %s",
+              this.name, table.getName(), columnStr, targetDbName));
+      stmt.execute(
+          String.format(
+              "CREATE UNIQUE INDEX %s ON %s (%s)", this.name, table.getName(), columnStr));
 
       ResultSet res =
           stmt.executeQuery(
