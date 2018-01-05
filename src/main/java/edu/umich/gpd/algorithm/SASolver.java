@@ -23,6 +23,7 @@ import weka.core.Instance;
 import weka.core.Utils;
 
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.*;
@@ -363,6 +364,18 @@ public class SASolver extends AbstractSolver {
         e.printStackTrace();
       }
     } else {
+      if (useActualSize) {
+        String dbName = actualDBName;
+        Statement stmt;
+        try {
+          conn.setCatalog(dbName);
+          stmt = conn.createStatement();
+          if (build) st.create(conn, dbName);
+          else st.drop(conn, dbName);
+        } catch (SQLException e) {
+          e.printStackTrace();
+        }
+      }
       for (SampleInfo s : sampleDBs) {
         String dbName = s.getDbName();
         Statement stmt;
@@ -376,6 +389,27 @@ public class SASolver extends AbstractSolver {
         }
       }
     }
+  }
+
+  private long getCurrentSize() {
+    String dbName = actualDBName;
+    Statement stmt;
+    try {
+      conn.setCatalog(dbName);
+      stmt = conn.createStatement();
+      ResultSet res =
+          stmt.executeQuery(
+              String.format(
+                  "SELECT SUM(stat_value*@@innodb_page_size) FROM "
+                      + "mysql.innodb_index_stats WHERE stat_name = 'size' and database_name = '%s'",
+                  dbName));
+      if (res.next()) {
+        return res.getLong(1);
+      }
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
+    return 0;
   }
 
   @Override
@@ -526,8 +560,12 @@ public class SASolver extends AbstractSolver {
     // Calculate initial temperature (i.e., total estimated size)
     long temperature = 0;
     long targetTemperature = sizeLimit;
-    for (long sz : estimatedStructureSizes) {
-      temperature += sz;
+    if (useActualSize) {
+      temperature = getCurrentSize();
+    } else {
+      for (long sz : estimatedStructureSizes) {
+        temperature += sz;
+      }
     }
 
     long totalStructureSize = temperature;
@@ -558,8 +596,13 @@ public class SASolver extends AbstractSolver {
       long newTime = getTotalQueryTime(structureArray, newSolution);
 
       double normalizedTimeDiff = (double) (newTime - currentTime) / (double) currentTime;
-      long sizeDiff = estimatedStructureSizes[indexOfStructureToAlter];
-      if (!newSolution[indexOfStructureToAlter]) sizeDiff = sizeDiff * -1;
+      long sizeDiff = 0;
+      if (useActualSize) {
+        sizeDiff = temperature - getCurrentSize();
+      } else {
+        sizeDiff = estimatedStructureSizes[indexOfStructureToAlter];
+        if (!newSolution[indexOfStructureToAlter]) sizeDiff = sizeDiff * -1;
+      }
       double normalizedSizeDiff = (double) (sizeDiff) / (double) temperature;
 
       double acceptanceProb =
