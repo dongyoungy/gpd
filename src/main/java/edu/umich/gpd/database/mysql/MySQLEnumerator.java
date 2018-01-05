@@ -205,7 +205,7 @@ public class MySQLEnumerator extends StructureEnumerator {
     }
 
     Set<String> feasibleColumnNameSet = finder.getFeasibleColumnNameSet();
-    Set<Configuration> configurations = new HashSet<>();
+    SortedSet<Configuration> configurations = new TreeSet<>();
 
     // add empty set first
     //    configurations.add(new Configuration());
