@@ -598,7 +598,7 @@ public class SASolver extends AbstractSolver {
       double normalizedTimeDiff = (double) (newTime - currentTime) / (double) currentTime;
       long sizeDiff = 0;
       if (useActualSize) {
-        sizeDiff = temperature - getCurrentSize();
+        sizeDiff = getCurrentSize() - temperature;
       } else {
         sizeDiff = estimatedStructureSizes[indexOfStructureToAlter];
         if (!newSolution[indexOfStructureToAlter]) sizeDiff = sizeDiff * -1;
