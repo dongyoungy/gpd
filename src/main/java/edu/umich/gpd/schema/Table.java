@@ -140,6 +140,9 @@ public class Table {
   }
 
   public long getDistinctRowCount(String dbName, String columnStr) {
+    if (!distinctRowCountTable.contains(dbName, columnStr)) {
+      return 0;
+    }
     return distinctRowCountTable.get(dbName, columnStr);
   }
 
