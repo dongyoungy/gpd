@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * Created by Dong Young Yoon on 3/5/17.
  */
-public class Configuration {
+public class Configuration implements Comparable {
 
   private static int idCount = 0;
   private int id;
@@ -67,5 +67,13 @@ public class Configuration {
 
   public List<Query> getQueries() {
     return queries;
+  }
+
+  @Override
+  public int compareTo(Object o) {
+    Configuration other = (Configuration)o;
+    if (this.id < other.getId()) return -1;
+    else if (this.id > other.getId()) return 1;
+    else return 0;
   }
 }
