@@ -40,7 +40,7 @@ public class MySQLEnumerator extends StructureEnumerator {
       return null;
     }
     Set<String> feasibleColumnNameSet = finder.getFeasibleColumnNameSet();
-    Set<Configuration> configurations = new HashSet<>();
+    SortedSet<Configuration> configurations = new TreeSet<>();
 
     // Get possible unique index
     List<StructureInfo> structureInfos =
