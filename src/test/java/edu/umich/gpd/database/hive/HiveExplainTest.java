@@ -31,7 +31,38 @@ public class HiveExplainTest {
       conn.setCatalog(dbName);
       Statement stmt = conn.createStatement();
       stmt.execute("USE " + dbName);
-      ResultSet res = stmt.executeQuery("EXPLAIN SELECT * FROM CUSTOMER");
+      ResultSet res = stmt.executeQuery("EXPLAIN select\n" +
+          "\tc_custkey,\n" +
+          "\tc_name,\n" +
+          "\tsum(l_extendedprice * (1 - l_discount)) as revenue,\n" +
+          "\tc_acctbal,\n" +
+          "\tn_name,\n" +
+          "\tc_address,\n" +
+          "\tc_phone,\n" +
+          "\tc_comment\n" +
+          "from\n" +
+          "\tcustomer,\n" +
+          "\torders,\n" +
+          "\tlineitem,\n" +
+          "\tnation\n" +
+          "where\n" +
+          "\tc_custkey = o_custkey\n" +
+          "\tand l_orderkey = o_orderkey\n" +
+          "\tand o_orderdate >= date '1993-08-01'\n" +
+          "\tand o_orderdate < date '1993-08-01' + interval '3' month\n" +
+          "\tand l_returnflag = 'R'\n" +
+          "\tand c_nationkey = n_nationkey\n" +
+          "group by\n" +
+          "\tc_custkey,\n" +
+          "\tc_name,\n" +
+          "\tc_acctbal,\n" +
+          "\tc_phone,\n" +
+          "\tn_name,\n" +
+          "\tc_address,\n" +
+          "\tc_comment\n" +
+          "order by\n" +
+          "\trevenue desc\n" +
+          "limit 20;");
       while (res.next()) {
         System.out.println(res.getString(1));
       }
