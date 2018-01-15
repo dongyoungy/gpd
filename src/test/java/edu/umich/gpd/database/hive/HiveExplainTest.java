@@ -30,6 +30,7 @@ public class HiveExplainTest {
     try {
       conn.setCatalog(dbName);
       Statement stmt = conn.createStatement();
+      stmt.executeQuery("USE " + dbName);
       ResultSet res = stmt.executeQuery("EXPLAIN SELECT * FROM CUSTOMER");
       while (res.next()) {
         System.out.println(res.getString(1));
