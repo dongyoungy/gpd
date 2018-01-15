@@ -16,6 +16,6 @@ public abstract class Sampler {
     this.originalDBName = originalDBName;
   }
 
-  public abstract boolean sample(Connection conn, Schema schema,
+  public abstract List<SampleInfo> sample(Connection conn, Schema schema,
                                  long minRow, List<SampleInfo> sampleInfoList);
 }

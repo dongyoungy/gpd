@@ -1,24 +1,26 @@
-package edu.umich.gpd.database.mysql;
+package edu.umich.gpd.database.hive;
 
 import edu.umich.gpd.database.common.Structure;
+import edu.umich.gpd.main.GPDMain;
 import edu.umich.gpd.schema.Table;
+import edu.umich.gpd.userinput.DatabaseInfo;
 import edu.umich.gpd.util.GPDLogger;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
+import org.apache.hadoop.fs.Path;
 
 import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.LinkedHashSet;
-import java.util.Set;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
-/** Created by Dong Young Yoon on 2/13/17. */
-public class MySQLIndex extends Structure {
+/** Created by Dong Young Yoon on 1/12/18. */
+public class HiveCompactIndex extends Structure {
 
-  public MySQLIndex(String name, Table table) {
+  private HiveFileType fileType;
+
+  public HiveCompactIndex(String name, Table table, HiveFileType fileType) {
     super(name, table);
+    this.fileType = fileType;
   }
 
   @Override
@@ -26,6 +28,13 @@ public class MySQLIndex extends Structure {
     final int prime = 31;
     int result = 1;
     result = result * prime + table.getName().hashCode();
+    try {
+      result = result + prime + fileType.getString().hashCode();
+    } catch (Exception e) {
+      GPDLogger.error(this, "Unknown Hive file type exception caught.");
+      e.printStackTrace();
+      return -1;
+    }
     for (ColumnDefinition cd : columns) {
       result = result * prime + cd.getColumnName().hashCode();
     }
@@ -34,8 +43,8 @@ public class MySQLIndex extends Structure {
 
   @Override
   public boolean equals(Object o) {
-    if (o instanceof MySQLIndex) {
-      MySQLIndex other = (MySQLIndex) o;
+    if (o instanceof HiveCompactIndex) {
+      HiveCompactIndex other = (HiveCompactIndex) o;
       if (!other.getTable().getName().equals(this.table.getName())) {
         return false;
       }
@@ -58,52 +67,8 @@ public class MySQLIndex extends Structure {
   }
 
   @Override
-  public String toString() {
-    String columnStr = "";
-    int length = columns.size();
-    int i = 0;
-    for (ColumnDefinition colDef : columns) {
-      columnStr += colDef.getColumnName();
-      if (i < length - 1) {
-        columnStr += ",";
-      }
-      ++i;
-    }
-    return String.format("CREATE INDEX %s ON %s (%s);", this.name, table.getName(), columnStr);
-  }
-
-  public String getQueryString() {
-    String columnStr = "";
-    int length = columns.size();
-    int i = 0;
-    for (ColumnDefinition colDef : columns) {
-      columnStr += colDef.getColumnName();
-      if (i < length - 1) {
-        columnStr += ",";
-      }
-      ++i;
-    }
-    return String.format("CREATE INDEX %s ON %s (%s);", this.name, table.getName(), columnStr);
-  }
-
-  @Override
-  public String getNonUniqueString() {
-    String columnStr = "";
-    int length = columns.size();
-    int i = 0;
-    for (ColumnDefinition colDef : columns) {
-      columnStr += colDef.getColumnName();
-      if (i < length - 1) {
-        columnStr += ",";
-      }
-      ++i;
-    }
-    return String.format("CREATE INDEX ON %s (%s);", table.getName(), columnStr);
-  }
-
   public boolean create(Connection conn, String dbName) {
     String columnStr = "";
-    // ColumnDefinition[] cols = (ColumnDefinition[])columns.toArray();
     List<ColumnDefinition> columnList = new ArrayList<>(columns);
     for (int i = 0; i < columnList.size(); ++i) {
       columnStr += columnList.get(i).getColumnName();
@@ -119,34 +84,33 @@ public class MySQLIndex extends Structure {
           this,
           "Executed: "
               + String.format(
-              "CREATE INDEX %s ON %s (%s) @ %s",
-              this.name, table.getName(), columnStr, targetDBName));
+                  "CREATE INDEX %s ON %s (%s) AS 'COMPACT' WITH DEFERRED REBUILD STORED AS %s @ %s",
+                  this.name, table.getName(), columnStr, fileType.getString(), targetDBName));
       stmt.execute(
-          String.format("CREATE INDEX %s ON %s (%s)", this.name, table.getName(), columnStr));
+          String.format(
+              "CREATE INDEX %s ON %s (%s) AS 'COMPACT' WITH DEFERRED REBUILD STORED AS %s",
+              this.name, table.getName(), columnStr, fileType.getString()));
+      GPDLogger.debug(
+          this,
+          "Executed :" + String.format("ALTER INDEX %s ON %s REBUILD", this.name, table.getName()));
+      stmt.execute(String.format("ALTER INDEX %s ON %s REBUILD", this.name, table.getName()));
 
-      ResultSet res =
-          stmt.executeQuery(
-              String.format(
-                  "SELECT stat_value*@@innodb_page_size FROM "
-                      + "mysql.innodb_index_stats WHERE stat_name = 'size' and database_name = '%s' and "
-                      + "index_name = '%s'",
-                  dbName, this.name));
-      if (res.next()) {
-        this.sizeMap.put(dbName, res.getLong(1));
-      } else {
-        GPDLogger.info(this, "Failed to obtain the size of this physical " + "structure: " + name);
-      }
-      res.close();
-//      res =
-//          stmt.executeQuery(
-//              String.format("SELECT COUNT(DISTINCT %s) FROM %s;", columnStr, table.getName()));
-//      if (res.next()) {
-//        this.table.setDistinctRowCount(dbName, columnStr, res.getLong(1));
-//      } else {
-//        GPDLogger.info(
-//            this,
-//            "Failed to obtain the distinct row count of this physical " + "structure: " + name);
-//      }
+      // Get Size
+      DatabaseInfo dbInfo = GPDMain.userInput.getDatabaseInfo();
+      long size =
+          GPDMain.hadoopFS
+              .getFileStatus(
+                  new Path(
+                      String.format(
+                          "/%s/%s.db/%s__%s_%s__",
+                          dbInfo.getHiveHDFSPath(),
+                          dbInfo.getTargetDBName(),
+                          dbInfo.getTargetDBName(),
+                          table.getName(),
+                          this.name)))
+              .getLen();
+
+      this.sizeMap.put(dbName, size);
     } catch (Exception e) {
       e.printStackTrace();
       return false;
@@ -154,6 +118,7 @@ public class MySQLIndex extends Structure {
     return true;
   }
 
+  @Override
   public boolean drop(Connection conn, String dbName) {
     try {
       conn.setCatalog(dbName);
@@ -172,8 +137,9 @@ public class MySQLIndex extends Structure {
     return true;
   }
 
+  @Override
   public boolean isCovering(Structure other) {
-    if (!(other instanceof MySQLIndex || other instanceof MySQLUniqueIndex)) {
+    if (!(other instanceof HiveCompactIndex)) {
       return false;
     }
     List<ColumnDefinition> otherColumns = other.getColumns();
@@ -189,5 +155,39 @@ public class MySQLIndex extends Structure {
       }
     }
     return true;
+  }
+
+  @Override
+  public String getQueryString() {
+    String columnStr = "";
+    int length = columns.size();
+    int i = 0;
+    for (ColumnDefinition colDef : columns) {
+      columnStr += colDef.getColumnName();
+      if (i < length - 1) {
+        columnStr += ",";
+      }
+      ++i;
+    }
+    return String.format(
+        "CREATE INDEX %s ON %s (%s) AS 'COMPACT' STORED AS %s;",
+        this.name, table.getName(), columnStr, fileType.getString());
+  }
+
+  @Override
+  public String getNonUniqueString() {
+    String columnStr = "";
+    int length = columns.size();
+    int i = 0;
+    for (ColumnDefinition colDef : columns) {
+      columnStr += colDef.getColumnName();
+      if (i < length - 1) {
+        columnStr += ",";
+      }
+      ++i;
+    }
+    return String.format(
+        "CREATE INDEX ON %s (%s) AS 'COMPACT' STORED AS %s;",
+        table.getName(), columnStr, fileType.getString());
   }
 }

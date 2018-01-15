@@ -15,6 +15,13 @@ public class DatabaseInfo {
   private String targetDBName;
   private String id;
   private String password;
+  private String hiveHDFSPath;
+
+  public String getHdfsURI() {
+    return hdfsURI;
+  }
+
+  private String hdfsURI;
   private List<StructureInfo> availableStructures;
 
   public DatabaseInfo() {
@@ -71,6 +78,10 @@ public class DatabaseInfo {
 
   public void setPassword(String password) {
     this.password = password;
+  }
+
+  public String getHiveHDFSPath() {
+    return hiveHDFSPath;
   }
 
   public String getPassword() {

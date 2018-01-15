@@ -23,11 +23,11 @@ public class MySQLSampler extends Sampler {
   }
 
   @Override
-  public boolean sample(
+  public List<SampleInfo> sample(
       Connection conn, Schema schema, long minRow, List<SampleInfo> sampleInfoList) {
     if (sampleInfoList.isEmpty()) {
       GPDLogger.error(this, "Empty sampling information.");
-      return false;
+      return null;
     }
     try {
       conn.setCatalog(originalDBName);
@@ -54,7 +54,7 @@ public class MySQLSampler extends Sampler {
         double sampleRatio = sampleInfo.getRatio();
         if (sampleRatio < 0 || sampleRatio > 1) {
           GPDLogger.error(this, "Sampling ratio must be between 0 and 1.");
-          return false;
+          return null;
         }
 
         // drop the DB if exists
@@ -100,7 +100,7 @@ public class MySQLSampler extends Sampler {
     } catch (SQLException e) {
       GPDLogger.error(this, "A SQLException has been caught.");
       e.printStackTrace();
-      return false;
+      return null;
     }
 
     // create a copy of original DB with any of 'actual' options are true.
@@ -136,12 +136,12 @@ public class MySQLSampler extends Sampler {
         } else {
           GPDLogger.error(this, "A SQLException has been caught.");
           e.printStackTrace();
-          return false;
+          return null;
         }
       }
       GPDLogger.info(this, "A copy of the original DB has been created.");
     }
 
-    return true;
+    return sampleInfoList;
   }
 }

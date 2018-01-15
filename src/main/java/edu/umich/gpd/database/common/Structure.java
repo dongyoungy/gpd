@@ -75,7 +75,23 @@ public abstract class Structure {
 
   public abstract String getNonUniqueString();
 
-  public abstract String getColumnString();
+  public String getColumnString(){
+    if (!columnString.isEmpty()) {
+      return columnString;
+    }
+    String columnStr = "";
+    int length = columns.size();
+    int i = 0;
+    for (ColumnDefinition colDef : columns) {
+      columnStr += colDef.getColumnName();
+      if (i < length - 1) {
+        columnStr += ",";
+      }
+      ++i;
+    }
+    columnString = columnStr;
+    return columnStr;
+  }
 
   public void addColumn(ColumnDefinition column) {
     this.columns.add(column);

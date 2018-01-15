@@ -13,9 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created by Dong Young Yoon on 2/20/17.
- */
+/** Created by Dong Young Yoon on 2/20/17. */
 public abstract class FeatureExtractor {
 
   protected Connection conn;
@@ -26,21 +24,25 @@ public abstract class FeatureExtractor {
     this.conn = conn;
   }
 
-  public abstract boolean initialize(List<SampleInfo> sampleDBs, String targetDBName, Schema s,
-                                     Set<Structure> structureSet,
-                                     List<String> structureStrList);
+  public abstract boolean initialize(
+      List<SampleInfo> sampleDBs,
+      String targetDBName,
+      Schema s,
+      Set<Structure> structureSet,
+      List<String> structureStrList);
 
-  public abstract boolean addTrainingData(String dbName, Schema s, Query q, int configId,
-                                          double queryTime);
+  public abstract boolean addTrainingData(
+      String dbName, Schema s, Query q, int configId, double queryTime);
 
-  public abstract boolean addTrainingData(String dbName, Schema s, Query q, List<String> structures,
-                                          double queryTime);
+  public abstract boolean addTrainingData(
+      String dbName, Schema s, Query q, List<String> structures, double queryTime);
 
   public abstract boolean addTrainingDataForSize(String dbName, Schema s, Structure structure);
 
   public abstract Instance getTestInstance(String dbName, Schema s, Query q, int configId);
 
-  public abstract Instance getTestInstance(String dbName, Schema s, Query q, List<String> structures);
+  public abstract Instance getTestInstance(
+      String dbName, Schema s, Query q, List<String> structures);
 
   public abstract Instance getTestInstanceForSize(String dbName, Schema s, Structure structure);
 

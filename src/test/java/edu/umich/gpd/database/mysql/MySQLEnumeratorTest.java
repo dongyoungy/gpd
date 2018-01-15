@@ -34,9 +34,11 @@ public class MySQLEnumeratorTest {
     file = new File("/Users/dyoon/work/gpd/examples/sample.json");
     GPDMain.userInput = InputDataParser.parse(file);
 
-    GPDMain.userInput.getSetting().setMaxNumColumn(100);
+    GPDMain.userInput.getSetting().setMaxNumColumn(300);
     GPDMain.userInput.getSetting().setDebug(true);
     GPDMain.userInput.getSetting().setMaxNumColumnPerStructure(2);
+    GPDMain.userInput.getSetting().setMaxNumStructurePerTable(2);
+    GPDMain.userInput.getSetting().setMaxNumTablePerQuery(2);
 //    GPDMain.userInput.getDatabaseInfo().getAvailableStructures().add(
 //        new StructureInfo("unique_index", "customer" ,"c_custkey")
 //    );

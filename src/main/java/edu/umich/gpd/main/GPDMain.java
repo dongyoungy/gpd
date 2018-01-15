@@ -3,6 +3,7 @@ package edu.umich.gpd.main;
 import com.esotericsoftware.minlog.Log;
 import edu.umich.gpd.algorithm.*;
 import edu.umich.gpd.database.common.*;
+import edu.umich.gpd.database.hive.HiveJDBCConnection;
 import edu.umich.gpd.database.mysql.MySQLEnumerator;
 import edu.umich.gpd.database.mysql.MySQLFeatureExtractor;
 import edu.umich.gpd.database.mysql.MySQLJDBCConnection;
@@ -12,11 +13,15 @@ import edu.umich.gpd.parser.SchemaParser;
 import edu.umich.gpd.parser.WorkloadParser;
 import edu.umich.gpd.schema.Schema;
 import edu.umich.gpd.userinput.*;
+import edu.umich.gpd.util.GPDLogger;
 import edu.umich.gpd.util.UtilFunctions;
 import edu.umich.gpd.workload.Workload;
+import org.apache.hadoop.fs.FileSystem;
 
 import javax.rmi.CORBA.Util;
 import java.io.File;
+import java.io.IOException;
+import java.net.URI;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +32,8 @@ import java.util.Set;
  */
 public class GPDMain {
   public static InputData userInput = new InputData();
+  public static FileSystem hadoopFS = null;
+
   public static void main(String[] args) {
     if (args.length != 1) {
       System.out.println("USAGE: GPDMain <json_spec_file>");
@@ -100,6 +107,26 @@ public class GPDMain {
       enumerator = new MySQLEnumerator();
       sampler = new MySQLSampler(dbInfo.getTargetDBName());
       extractor = new MySQLFeatureExtractor(conn);
+    } else if (dbInfo.getType().equalsIgnoreCase("hive")) {
+      // TODO: hive API
+      HiveJDBCConnection hiveConn = new HiveJDBCConnection();
+      conn = hiveConn.getConnection(dbInfo);
+
+      // setup hadoop FS
+      org.apache.hadoop.conf.Configuration hadoopConf = new org.apache.hadoop.conf.Configuration();
+      if (dbInfo.getHdfsURI().isEmpty()) {
+        Log.error("GPDMain", "hdfsURI must be provided for Hive.");
+        System.exit(-1);
+      }
+      String hdfsURI = dbInfo.getHdfsURI();
+      hadoopConf.set("fs.defaultFS", dbInfo.getHdfsURI());
+      try {
+        hadoopFS = FileSystem.get(URI.create(hdfsURI), hadoopConf);
+      } catch (IOException e) {
+        Log.error("GPDMain", "IOException thrown while configuring HDFS.");
+        e.printStackTrace();
+        System.exit(-1);
+      }
     } else {
       Log.error("GPDMain", "Unsupported database type.");
       System.exit(-1);
@@ -149,7 +176,7 @@ public class GPDMain {
 
       if (useSampling) {
         Log.info("GPDMain", "Generating sample databases...");
-        if (sampler.sample(conn, schema, minRowForSample, samples)) {
+        if (sampler.sample(conn, schema, minRowForSample, samples) != null) {
           Log.info("GPDMain", "Sampling databases done.");
         } else {
           Log.error("GPDMain", "Sampling databases failed.");
@@ -158,7 +185,7 @@ public class GPDMain {
         List<SampleInfo> sizeSample = new ArrayList<>();
         sizeSample.add(setting.getSampleForSizeCheck());
         Log.info("GPDMain", "Generating sample databases for size check...");
-        if (sampler.sample(conn, schema, minRowForSample, sizeSample)) {
+        if (sampler.sample(conn, schema, minRowForSample, sizeSample) != null) {
           Log.info("GPDMain", "Sampling databases for size check done.");
         } else {
           Log.error("GPDMain", "Sampling databases for size check failed.");
