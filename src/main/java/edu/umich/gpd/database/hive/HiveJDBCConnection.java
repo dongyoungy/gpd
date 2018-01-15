@@ -12,7 +12,7 @@ import java.sql.SQLException;
  */
 public class HiveJDBCConnection extends JDBCConnection{
 
-  private static final String driverName = "org.apache.hadoop.hive.jdbc.HiveDriver";
+  private static final String driverName = "org.apache.hive.jdbc.HiveDriver";
   @Override
   public Connection getConnection(DatabaseInfo dbInfo) {
     String host = dbInfo.getHost();
