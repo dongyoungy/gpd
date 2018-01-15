@@ -62,7 +62,7 @@ public class HiveExplainTest {
           "\tc_comment\n" +
           "order by\n" +
           "\trevenue desc\n" +
-          "limit 20;");
+          "limit 20");
       while (res.next()) {
         System.out.println(res.getString(1));
       }
