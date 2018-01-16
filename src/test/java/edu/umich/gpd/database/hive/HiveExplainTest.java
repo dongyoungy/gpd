@@ -75,9 +75,9 @@ public class HiveExplainTest {
         while (tokenizer.hasMoreTokens()) {
           String line = tokenizer.nextToken().trim();
           String[] words = line.split("\\s+");
-          System.out.println(words[0]);
           if (line.contains("Operator") || line.contains("TableScan")) {
             lastOperator = line;
+            System.out.println(line);
           }
           if (words[0].equals("Statistics:")) {
             long currentRow = 0;
