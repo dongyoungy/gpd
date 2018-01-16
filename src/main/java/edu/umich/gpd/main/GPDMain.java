@@ -154,7 +154,9 @@ public class GPDMain {
     } else if (dbInfo.getType().equalsIgnoreCase("hive")) {
       structures = enumerator.getStructures(schema, workload);
     }
-    while (configurations == null && inputData.getSetting().getMaxNumColumn() > 1) {
+    while (configurations == null
+        && structures == null
+        && inputData.getSetting().getMaxNumColumn() > 1) {
       int newMaxColumn = inputData.getSetting().getMaxNumColumn() - 1;
       Log.info(
           "GPDMain",
@@ -164,8 +166,8 @@ public class GPDMain {
       inputData.getSetting().setMaxNumColumn(newMaxColumn);
       configurations = enumerator.enumerateStructures(schema, workload);
     }
-    if (configurations == null || configurations.isEmpty()) {
-      Log.error("GPDMain", "Empty configurations.");
+    if ((configurations == null || configurations.isEmpty()) && structures == null) {
+      Log.error("GPDMain", "Empty configurations and also structures.");
       System.exit(-1);
     }
     Log.info("GPDMain", "Enumeration completed.");
