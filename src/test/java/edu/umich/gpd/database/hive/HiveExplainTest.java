@@ -77,8 +77,8 @@ public class HiveExplainTest {
           String[] words = line.split("\\s+");
           if (line.contains("Operator") || line.contains("TableScan")) {
             lastOperator = line;
-            System.out.println(line);
           }
+          System.out.println(line + " => " + words[0]);
           if (words[0].equals("Statistics:")) {
             long currentRow = 0;
             if (!operatorRowMap.containsKey(lastOperator)) {
