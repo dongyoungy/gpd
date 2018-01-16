@@ -62,7 +62,7 @@ public class HiveSampler extends Sampler {
         for (HiveFileType fileType : HiveFileType.values()) {
           String sampleDBName = sampleDBNamePrefix + "_" + fileType.getString();
           // drop the DB if exists
-          stmt.execute(String.format("DROP DATABASE IF EXISTS %s", sampleDBName));
+          stmt.execute(String.format("DROP DATABASE IF EXISTS %s CASCADE", sampleDBName));
           // create sample DB
           stmt.execute(String.format("CREATE DATABASE %s", sampleDBName));
 
@@ -113,7 +113,7 @@ public class HiveSampler extends Sampler {
         try {
           Statement stmt = conn.createStatement();
           // drop the DB if exists
-          stmt.execute(String.format("DROP DATABASE IF EXISTS %s", actualDBName));
+          stmt.execute(String.format("DROP DATABASE IF EXISTS %s CASCADE", actualDBName));
           // create sample DB
           stmt.execute(String.format("CREATE DATABASE %s", actualDBName));
 
