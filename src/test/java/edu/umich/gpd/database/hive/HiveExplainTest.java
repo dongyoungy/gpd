@@ -80,6 +80,7 @@ public class HiveExplainTest {
           }
           System.out.println(line + " => " + words[0]);
           if (words[0].equals("Statistics:")) {
+            System.out.println("HERE");
             long currentRow = 0;
             if (!operatorRowMap.containsKey(lastOperator)) {
               operatorRowMap.put(lastOperator, 0L);
