@@ -3,7 +3,10 @@ package edu.umich.gpd.main;
 import com.esotericsoftware.minlog.Log;
 import edu.umich.gpd.algorithm.*;
 import edu.umich.gpd.database.common.*;
+import edu.umich.gpd.database.hive.HiveEnumerator;
+import edu.umich.gpd.database.hive.HiveFeatureExtractor;
 import edu.umich.gpd.database.hive.HiveJDBCConnection;
+import edu.umich.gpd.database.hive.HiveSampler;
 import edu.umich.gpd.database.mysql.MySQLEnumerator;
 import edu.umich.gpd.database.mysql.MySQLFeatureExtractor;
 import edu.umich.gpd.database.mysql.MySQLJDBCConnection;
@@ -27,9 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created by Dong Young Yoon on 2/15/17.
- */
+/** Created by Dong Young Yoon on 2/15/17. */
 public class GPDMain {
   public static InputData userInput = new InputData();
   public static FileSystem hadoopFS = null;
@@ -51,14 +52,12 @@ public class GPDMain {
     DatabaseInfo dbInfo = inputData.getDatabaseInfo();
     SchemaInfo schemaInfo = inputData.getSchemaInfo();
     if (schemaInfo.getPath() == null) {
-      Log.error("GPDMain", "'schemaInfo' is missing 'path' in the JSON " +
-          "specification file.");
+      Log.error("GPDMain", "'schemaInfo' is missing 'path' in the JSON " + "specification file.");
       System.exit(-1);
     }
     WorkloadInfo workloadInfo = inputData.getWorkloadInfo();
     if (workloadInfo.getPath() == null) {
-      Log.error("GPDMain", "'workloadInfo' is missing 'path' in the JSON " +
-          "specification file.");
+      Log.error("GPDMain", "'workloadInfo' is missing 'path' in the JSON " + "specification file.");
       System.exit(-1);
     }
 
@@ -87,13 +86,15 @@ public class GPDMain {
     Workload workload = workloadParser.parse(new File(workloadInfo.getPath()));
 
     if (schema == null) {
-      Log.error("GPDMain", "Failed to parse the schema file. Please make sure " +
-          "that the schema file exists.");
+      Log.error(
+          "GPDMain",
+          "Failed to parse the schema file. Please make sure " + "that the schema file exists.");
       System.exit(-1);
     }
     if (workload == null) {
-      Log.error("GPDMain", "Failed to parse the schema file. Please make sure " +
-          "that the workload file exists.");
+      Log.error(
+          "GPDMain",
+          "Failed to parse the schema file. Please make sure " + "that the workload file exists.");
       System.exit(-1);
     }
 
@@ -108,9 +109,11 @@ public class GPDMain {
       sampler = new MySQLSampler(dbInfo.getTargetDBName());
       extractor = new MySQLFeatureExtractor(conn);
     } else if (dbInfo.getType().equalsIgnoreCase("hive")) {
-      // TODO: hive API
       HiveJDBCConnection hiveConn = new HiveJDBCConnection();
       conn = hiveConn.getConnection(dbInfo);
+      enumerator = new HiveEnumerator();
+      sampler = new HiveSampler(dbInfo.getTargetDBName());
+      extractor = new HiveFeatureExtractor(conn);
 
       // setup hadoop FS
       org.apache.hadoop.conf.Configuration hadoopConf = new org.apache.hadoop.conf.Configuration();
@@ -141,11 +144,21 @@ public class GPDMain {
     }
 
     Log.info("GPDMain", "Enumerating every possible design structures...");
-    Set<Configuration> configurations = enumerator.enumerateStructures(schema, workload);
+    Set<Configuration> configurations = null;
+    Set<Structure> structures = null;
+
+    if (dbInfo.getType().equalsIgnoreCase("mysql")) {
+      configurations = enumerator.enumerateStructures(schema, workload);
+    } else if (dbInfo.getType().equalsIgnoreCase("hive")) {
+      structures = enumerator.getStructures(schema, workload);
+    }
     while (configurations == null && inputData.getSetting().getMaxNumColumn() > 1) {
       int newMaxColumn = inputData.getSetting().getMaxNumColumn() - 1;
-      Log.info("GPDMain", "There are too many interesting columns to consider. " +
-          "Reducing the maximum number of columns to consider to: " + newMaxColumn);
+      Log.info(
+          "GPDMain",
+          "There are too many interesting columns to consider. "
+              + "Reducing the maximum number of columns to consider to: "
+              + newMaxColumn);
       inputData.getSetting().setMaxNumColumn(newMaxColumn);
       configurations = enumerator.enumerateStructures(schema, workload);
     }
@@ -154,10 +167,15 @@ public class GPDMain {
       System.exit(-1);
     }
     Log.info("GPDMain", "Enumeration completed.");
-    Log.info("GPDMain", String.format("Total number of interesting design " +
-        "configurations = %d", configurations.size()));
-    Log.info("GPDMain", String.format("Total number of physical design structures " +
-        "= %d", UtilFunctions.getPossibleStructures(configurations).size()));
+    Log.info(
+        "GPDMain",
+        String.format(
+            "Total number of interesting design " + "configurations = %d", configurations.size()));
+    Log.info(
+        "GPDMain",
+        String.format(
+            "Total number of physical design structures " + "= %d",
+            UtilFunctions.getPossibleStructures(configurations).size()));
 
     Log.info("GPDMain", "Possible design structures:");
     for (Structure s : UtilFunctions.getPossibleStructures(configurations)) {
@@ -192,8 +210,12 @@ public class GPDMain {
           System.exit(-1);
         }
       } else {
-        Log.info("GPDMain", String.format("Using the target database '%s' for" +
-            " calculating optimal physical design. Regression has been disabled.", targetDBName));
+        Log.info(
+            "GPDMain",
+            String.format(
+                "Using the target database '%s' for"
+                    + " calculating optimal physical design. Regression has been disabled.",
+                targetDBName));
         samples = new ArrayList<>();
         SampleInfo aSample = new SampleInfo(targetDBName, 1.0);
         samples.add(aSample);
@@ -206,24 +228,59 @@ public class GPDMain {
       switch (algorithm) {
         case "ilp":
         case "glpk":
-          solver = new ILPSolver2(conn, workload, schema, configurations, samples, dbInfo,
-              extractor, useRegression);
+          solver =
+              new ILPSolver2(
+                  conn,
+                  workload,
+                  schema,
+                  configurations,
+                  structures,
+                  samples,
+                  dbInfo,
+                  extractor,
+                  useRegression);
           break;
         case "gurobi":
-          solver = new ILPSolverGurobi(conn, workload, schema, configurations, samples, dbInfo,
-              extractor, useRegression);
+          solver =
+              new ILPSolverGurobi(
+                  conn,
+                  workload,
+                  schema,
+                  configurations,
+                  structures,
+                  samples,
+                  dbInfo,
+                  extractor,
+                  useRegression);
           break;
         case "greedy":
-          solver = new GreedySolver(conn, workload, schema, configurations, samples, dbInfo,
-              extractor, useRegression);
+          solver =
+              new GreedySolver(
+                  conn,
+                  workload,
+                  schema,
+                  configurations,
+                  structures,
+                  samples,
+                  dbInfo,
+                  extractor,
+                  useRegression);
           break;
         case "sa":
-          solver = new SASolver(conn, workload, schema, configurations, samples, dbInfo,
-              extractor, useRegression);
+          solver =
+              new SASolver(
+                  conn,
+                  workload,
+                  schema,
+                  configurations,
+                  structures,
+                  samples,
+                  dbInfo,
+                  extractor,
+                  useRegression);
           break;
         default:
-          Log.error("GPDMain", "Unsupported algorithm: " +
-              setting.getAlgorithm());
+          Log.error("GPDMain", "Unsupported algorithm: " + setting.getAlgorithm());
           System.exit(-1);
       }
 
@@ -232,8 +289,7 @@ public class GPDMain {
         System.exit(-1);
       }
     } else {
-      Log.error("GPDMain",
-          String.format("Setting null."));
+      Log.error("GPDMain", String.format("Setting null."));
       System.exit(-1);
     }
   }

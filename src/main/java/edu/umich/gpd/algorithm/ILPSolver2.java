@@ -59,12 +59,22 @@ public class ILPSolver2 extends AbstractSolver {
       Workload workload,
       Schema schema,
       Set<Configuration> configurations,
+      Set<Structure> structures,
       List<SampleInfo> sampleDBs,
       DatabaseInfo dbInfo,
       FeatureExtractor extractor,
       boolean useRegression) {
 
-    super(conn, workload, schema, configurations, sampleDBs, dbInfo, extractor, useRegression);
+    super(
+        conn,
+        workload,
+        schema,
+        configurations,
+        structures,
+        sampleDBs,
+        dbInfo,
+        extractor,
+        useRegression);
     this.numCostVariables = workload.getTotalConfigurationCount();
     this.rawCostArray = new double[sampleDBs.size()][numCostVariables];
     this.costArrayNoRegression = new double[numCostVariables];

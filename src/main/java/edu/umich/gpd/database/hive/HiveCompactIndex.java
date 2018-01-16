@@ -48,6 +48,9 @@ public class HiveCompactIndex extends Structure {
       if (!other.getTable().getName().equals(this.table.getName())) {
         return false;
       }
+      if (other.getFileType() != this.getFileType()) {
+        return false;
+      }
       List<ColumnDefinition> otherColumns = other.getColumns();
       if (columns.size() != otherColumns.size()) {
         return false;
@@ -77,15 +80,14 @@ public class HiveCompactIndex extends Structure {
       }
     }
     try {
-      conn.setCatalog(dbName);
       Statement stmt = conn.createStatement();
-      String targetDBName = conn.getCatalog();
+      stmt.execute("USE " + dbName);
       GPDLogger.debug(
           this,
           "Executed: "
               + String.format(
                   "CREATE INDEX %s ON %s (%s) AS 'COMPACT' WITH DEFERRED REBUILD STORED AS %s @ %s",
-                  this.name, table.getName(), columnStr, fileType.getString(), targetDBName));
+                  this.name, table.getName(), columnStr, fileType.getString(), dbName));
       stmt.execute(
           String.format(
               "CREATE INDEX %s ON %s (%s) AS 'COMPACT' WITH DEFERRED REBUILD STORED AS %s",
@@ -121,15 +123,13 @@ public class HiveCompactIndex extends Structure {
   @Override
   public boolean drop(Connection conn, String dbName) {
     try {
-      conn.setCatalog(dbName);
       Statement stmt = conn.createStatement();
-      String targetDBName = conn.getCatalog();
+      stmt.execute("USE " + dbName);
       stmt.execute(String.format("DROP INDEX %s ON %s", this.name, table.getName()));
       GPDLogger.debug(
           this,
           "Executed: "
-              + String.format(
-                  "DROP INDEX %s ON %s @ %s", this.name, table.getName(), targetDBName));
+              + String.format("DROP INDEX %s ON %s @ %s", this.name, table.getName(), dbName));
     } catch (Exception e) {
       e.printStackTrace();
       return false;
@@ -139,9 +139,9 @@ public class HiveCompactIndex extends Structure {
 
   @Override
   public boolean isCovering(Structure other) {
-    if (!(other instanceof HiveCompactIndex)) {
-      return false;
-    }
+    //    if (!(other instanceof HiveCompactIndex)) {
+    //      return false;
+    //    }
     List<ColumnDefinition> otherColumns = other.getColumns();
     int i = 0, j = 0;
     while (i < columns.size() && j < otherColumns.size()) {
@@ -189,5 +189,9 @@ public class HiveCompactIndex extends Structure {
     return String.format(
         "CREATE INDEX ON %s (%s) AS 'COMPACT' STORED AS %s;",
         table.getName(), columnStr, fileType.getString());
+  }
+
+  public HiveFileType getFileType() {
+    return fileType;
   }
 }

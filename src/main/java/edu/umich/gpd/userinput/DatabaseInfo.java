@@ -15,17 +15,16 @@ public class DatabaseInfo {
   private String targetDBName;
   private String id;
   private String password;
-  private String hiveHDFSPath;
-
-  public String getHdfsURI() {
-    return hdfsURI;
-  }
-
   private String hdfsURI;
+  private String hiveHDFSPath;
   private List<StructureInfo> availableStructures;
 
   public DatabaseInfo() {
     this.availableStructures = new ArrayList<>();
+  }
+
+  public String getHdfsURI() {
+    return hdfsURI;
   }
 
   public List<StructureInfo> getAvailableStructures() {
@@ -76,16 +75,16 @@ public class DatabaseInfo {
     this.id = id;
   }
 
-  public void setPassword(String password) {
-    this.password = password;
-  }
-
   public String getHiveHDFSPath() {
     return hiveHDFSPath;
   }
 
   public String getPassword() {
     return password;
+  }
+
+  public void setPassword(String password) {
+    this.password = password;
   }
 }
 

@@ -5,9 +5,9 @@ package edu.umich.gpd.database.hive;
  */
 public enum HiveFileType {
   TEXTFILE,
-  SEQUENCEFILE,
+//  SEQUENCEFILE,
   AVRO,
-  RCFILE,
+//  RCFILE,
   PARQUET,
   ORC;
 
@@ -15,12 +15,12 @@ public enum HiveFileType {
     switch (this) {
       case TEXTFILE:
         return "TEXTFILE";
-      case SEQUENCEFILE:
-        return "SEQUENCEFILE";
+//      case SEQUENCEFILE:
+//        return "SEQUENCEFILE";
       case AVRO:
         return "AVRO";
-      case RCFILE:
-        return "RCFILE";
+//      case RCFILE:
+//        return "RCFILE";
       case PARQUET:
         return "PARQUET";
       case ORC:

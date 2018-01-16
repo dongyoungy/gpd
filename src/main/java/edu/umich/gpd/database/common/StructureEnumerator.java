@@ -13,4 +13,5 @@ import java.util.Set;
  */
 public abstract class StructureEnumerator {
   public abstract Set<Configuration> enumerateStructures(Schema s, Workload w);
+  public abstract Set<Structure> getStructures(Schema s, Workload w);
 }

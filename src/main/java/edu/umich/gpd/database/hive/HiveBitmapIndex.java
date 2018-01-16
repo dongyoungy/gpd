@@ -48,6 +48,9 @@ public class HiveBitmapIndex extends Structure {
       if (!other.getTable().getName().equals(this.table.getName())) {
         return false;
       }
+      if (other.getFileType() != this.getFileType()) {
+        return false;
+      }
       List<ColumnDefinition> otherColumns = other.getColumns();
       if (columns.size() != otherColumns.size()) {
         return false;
@@ -77,15 +80,14 @@ public class HiveBitmapIndex extends Structure {
       }
     }
     try {
-      conn.setCatalog(dbName);
       Statement stmt = conn.createStatement();
-      String targetDBName = conn.getCatalog();
+      stmt.execute("USE " + dbName);
       GPDLogger.debug(
           this,
           "Executed: "
               + String.format(
                   "CREATE INDEX %s ON %s (%s) AS 'BITMAP' WITH DEFERRED REBUILD STORED AS %s @ %s",
-                  this.name, table.getName(), columnStr, fileType.getString(), targetDBName));
+                  this.name, table.getName(), columnStr, fileType.getString(), dbName));
       stmt.execute(
           String.format(
               "CREATE INDEX %s ON %s (%s) AS 'BITMAP' WITH DEFERRED REBUILD STORED AS %s",
@@ -121,15 +123,14 @@ public class HiveBitmapIndex extends Structure {
   @Override
   public boolean drop(Connection conn, String dbName) {
     try {
-      conn.setCatalog(dbName);
       Statement stmt = conn.createStatement();
-      String targetDBName = conn.getCatalog();
+      stmt.execute("USE " + dbName);
       stmt.execute(String.format("DROP INDEX %s ON %s", this.name, table.getName()));
       GPDLogger.debug(
           this,
           "Executed: "
               + String.format(
-                  "DROP INDEX %s ON %s @ %s", this.name, table.getName(), targetDBName));
+                  "DROP INDEX %s ON %s @ %s", this.name, table.getName(), dbName));
     } catch (Exception e) {
       e.printStackTrace();
       return false;
@@ -139,9 +140,9 @@ public class HiveBitmapIndex extends Structure {
 
   @Override
   public boolean isCovering(Structure other) {
-    if (!(other instanceof HiveBitmapIndex)) {
-      return false;
-    }
+//    if (!(other instanceof HiveBitmapIndex)) {
+//      return false;
+//    }
     List<ColumnDefinition> otherColumns = other.getColumns();
     int i = 0, j = 0;
     while (i < columns.size() && j < otherColumns.size()) {
@@ -172,6 +173,10 @@ public class HiveBitmapIndex extends Structure {
     return String.format(
         "CREATE INDEX %s ON %s (%s) AS 'BITMAP' STORED AS %s;",
         this.name, table.getName(), columnStr, fileType.getString());
+  }
+
+  public HiveFileType getFileType() {
+    return fileType;
   }
 
   @Override

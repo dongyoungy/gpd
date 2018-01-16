@@ -17,15 +17,29 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created by Dong Young Yoon on 2/26/17.
- */
+/** Created by Dong Young Yoon on 2/26/17. */
 public class GreedySolver extends AbstractSolver {
 
-  public GreedySolver(Connection conn, Workload workload, Schema schema,
-                      Set<Configuration> configurations, List<SampleInfo> sampleDBs,
-                      DatabaseInfo dbInfo, FeatureExtractor extractor, boolean useRegression) {
-    super(conn, workload, schema, configurations, sampleDBs, dbInfo, extractor, useRegression);
+  public GreedySolver(
+      Connection conn,
+      Workload workload,
+      Schema schema,
+      Set<Configuration> configurations,
+      Set<Structure> structures,
+      List<SampleInfo> sampleDBs,
+      DatabaseInfo dbInfo,
+      FeatureExtractor extractor,
+      boolean useRegression) {
+    super(
+        conn,
+        workload,
+        schema,
+        configurations,
+        structures,
+        sampleDBs,
+        dbInfo,
+        extractor,
+        useRegression);
   }
 
   @Override
@@ -38,7 +52,7 @@ public class GreedySolver extends AbstractSolver {
     if (sizeLimits[0] <= 0) {
       System.out.println("Optimal structures:");
       for (int t = 0; t < numStructures; ++t) {
-        System.out.println("\t"+possibleStructures.get(t).getQueryString());
+        System.out.println("\t" + possibleStructures.get(t).getQueryString());
       }
       return true;
     }

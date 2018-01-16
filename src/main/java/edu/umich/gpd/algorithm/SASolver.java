@@ -50,11 +50,21 @@ public class SASolver extends AbstractSolver {
       Workload workload,
       Schema schema,
       Set<Configuration> configurations,
+      Set<Structure> structures,
       List<SampleInfo> sampleDBs,
       DatabaseInfo dbInfo,
       FeatureExtractor extractor,
       boolean useRegression) {
-    super(conn, workload, schema, configurations, sampleDBs, dbInfo, extractor, useRegression);
+    super(
+        conn,
+        workload,
+        schema,
+        configurations,
+        structures,
+        sampleDBs,
+        dbInfo,
+        extractor,
+        useRegression);
     structureToQueryTimeMap = new HashMap<>();
     structureToUseCacheMap = new HashMap<>();
     queryToExtractorMap = new HashMap<>();
@@ -414,7 +424,12 @@ public class SASolver extends AbstractSolver {
 
   @Override
   public boolean solve() {
-    List<Structure> allStructures = getAllStructures(configurations);
+    List<Structure> allStructures = null;
+    if (structures == null) {
+      allStructures = getAllStructures(configurations);
+    } else {
+      allStructures = new ArrayList<>(structures);
+    }
     Map<String, Integer> tableIndexCount = new HashMap<>();
     possibleStructures = new LinkedHashSet<>();
     structureStrList = new ArrayList<>();
@@ -463,14 +478,20 @@ public class SASolver extends AbstractSolver {
         count = currentCount + 1;
       }
       // TODO: this is temp fix to handle 64 max key limits in MySQL.
-      if (count <= 64) {
+      if (GPDMain.userInput.getDatabaseInfo().getType().equalsIgnoreCase("mysql")) {
+        if (count <= 64) {
+          if (possibleStructures.add(s)) {
+            structureStrList.add(s.getNonUniqueString());
+          }
+        }
+      } else {
         if (possibleStructures.add(s)) {
           structureStrList.add(s.getNonUniqueString());
         }
       }
     }
     List<SampleInfo> samples = new ArrayList<>(sampleDBs);
-    samples.add(sizeSample);
+//    samples.add(sizeSample);
     extractor.initialize(
         samples, dbInfo.getTargetDBName(), schema, possibleStructures, structureStrList);
 

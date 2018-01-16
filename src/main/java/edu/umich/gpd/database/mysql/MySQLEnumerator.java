@@ -34,6 +34,11 @@ public class MySQLEnumerator extends StructureEnumerator {
     //    return this.enumerateStructuresWithCartesianProduct(s,w);
   }
 
+  @Override
+  public Set<Structure> getStructures(Schema s, Workload w) {
+    return null;
+  }
+
   private Set<Configuration> enumerateStructuresWithRestrictedSets(Schema s, Workload w) {
     InterestingSchemaFinder finder = new InterestingSchemaFinder();
     if (!finder.getInterestingSchema(w)) {

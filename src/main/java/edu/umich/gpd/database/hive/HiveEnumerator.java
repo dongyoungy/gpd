@@ -28,6 +28,93 @@ public class HiveEnumerator extends StructureEnumerator {
     return this.enumerateStructuresWithRestrictedSets(s, w);
   }
 
+  @Override
+  public Set<Structure> getStructures(Schema s, Workload w) {
+    Set<Structure> structures = new LinkedHashSet<>();
+    InterestingSchemaFinder finder = new InterestingSchemaFinder();
+    if (!finder.getInterestingSchema(w)) {
+      return null;
+    }
+    Set<String> feasibleColumnNameSet = finder.getFeasibleColumnNameSet();
+    SortedSet<Configuration> configurations = new TreeSet<>();
+
+    // For each query, generate sets of structures that are 'interesting'
+    for (Query q : w.getQueries()) {
+
+      Map<String, Set<List<Structure>>> tableToStructureSetMap = new HashMap<>();
+      Set<String> interestingTableSet = q.getTables();
+      Set<String> interestingColumnList = q.getColumns();
+      Set<Structure> interestingStructures = new LinkedHashSet<>();
+      List<Set<Structure>> structuresForQuery = new ArrayList<>();
+
+      for (String tableName : interestingTableSet) {
+        Set<Structure> structuresForTable = new HashSet<>();
+        Table t = s.getTable(tableName);
+        Set<ColumnDefinition> columnsToAdd = new HashSet<>();
+
+        for (ColumnDefinition cd : t.getColumns()) {
+          if (interestingColumnList.contains(cd.getColumnName())
+              && feasibleColumnNameSet.contains(cd.getColumnName())) {
+            columnsToAdd.add(cd);
+          }
+        }
+        if (columnsToAdd.size() > 30) {
+          GPDLogger.error(
+              this,
+              "Too many interesting columns for a query."
+                  + " The number must be less than 31. The current number is "
+                  + columnsToAdd.size());
+          return null;
+        }
+
+        Structure structure;
+        Set<Set<ColumnDefinition>> columnPowerSet = new HashSet<>();
+
+        for (int i = 1;
+             i <= GPDMain.userInput.getSetting().getMaxNumColumnPerStructure()
+                 && i <= columnsToAdd.size();
+             ++i) {
+          columnPowerSet.addAll(Sets.combinations(columnsToAdd, i));
+        }
+        for (Set<ColumnDefinition> columnSet : columnPowerSet) {
+          Collection<List<ColumnDefinition>> perms = Collections2.permutations(columnSet);
+          Set<String> columnSetString = new LinkedHashSet<>();
+          for (ColumnDefinition cd : columnSet) {
+            columnSetString.add(cd.getColumnName());
+          }
+          for (List<ColumnDefinition> perm : perms) {
+            if (perm.isEmpty()) {
+              continue;
+            }
+
+            for (HiveFileType fileType : HiveFileType.values()) {
+              structure =
+                  new HiveBitmapIndex(
+                      String.format(
+                          "%s_bitmap_index_%s_%d",
+                          t.getName(), fileType.getString(), UniqueNumberGenerator.getUniqueID()),
+                      t,
+                      fileType);
+              structure.setColumns(perm);
+              structures.add(structure);
+
+              structure =
+                  new HiveCompactIndex(
+                      String.format(
+                          "%s_compact_index_%s_%d",
+                          t.getName(), fileType.getString(), UniqueNumberGenerator.getUniqueID()),
+                      t,
+                      fileType);
+              structure.setColumns(perm);
+              structures.add(structure);
+            }
+          }
+        }
+      }
+    }
+    return structures;
+  }
+
   private Set<Configuration> enumerateStructuresWithRestrictedSets(Schema s, Workload w) {
     InterestingSchemaFinder finder = new InterestingSchemaFinder();
     if (!finder.getInterestingSchema(w)) {
