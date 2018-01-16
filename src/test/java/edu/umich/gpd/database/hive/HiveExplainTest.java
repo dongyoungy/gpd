@@ -73,7 +73,7 @@ public class HiveExplainTest {
         StringTokenizer tokenizer = new StringTokenizer(explainText, "\n");
         String lastOperator = "";
         while (tokenizer.hasMoreTokens()) {
-          String line = tokenizer.nextToken();
+          String line = tokenizer.nextToken().trim();
           String[] words = line.split("\\s+");
           System.out.println(words[0]);
           if (line.contains("Operator") || line.contains("TableScan")) {
