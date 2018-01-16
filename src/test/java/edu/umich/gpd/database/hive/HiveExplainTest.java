@@ -67,12 +67,11 @@ public class HiveExplainTest {
                   + "order by\n"
                   + "\trevenue desc\n"
                   + "limit 20");
+      String lastOperator = "";
       Map<String, Long> operatorRowMap = new HashMap<>();
       while (res.next()) {
-        System.out.println("RES");
         String explainText = res.getString(1);
         StringTokenizer tokenizer = new StringTokenizer(explainText, "\n");
-        String lastOperator = "";
         while (tokenizer.hasMoreTokens()) {
           String line = tokenizer.nextToken().trim();
           String[] words = line.split("\\s+");
