@@ -33,12 +33,11 @@ public class HiveSampler extends Sampler {
       return null;
     }
     try {
-      conn.setCatalog(originalDBName);
-
       // get row counts for each table
       List<Table> tableList = schema.getTables();
       Map<Table, Long> tableRowCounts = new HashMap<>();
       Statement stmt = conn.createStatement();
+      stmt.execute("USE " + originalDBName);
 
       GPDLogger.info(this, "Getting table row counts from the original DB.");
       for (Table t : tableList) {
@@ -67,8 +66,8 @@ public class HiveSampler extends Sampler {
           // create sample DB
           stmt.execute(String.format("CREATE DATABASE %s", sampleDBName));
 
-          conn.setCatalog(sampleDBName);
           stmt = conn.createStatement();
+          stmt.execute("USE " + sampleDBName);
 
           // sample tables
           for (Table t : tableList) {
@@ -111,15 +110,15 @@ public class HiveSampler extends Sampler {
       for (HiveFileType fileType : HiveFileType.values()) {
         String actualDBName = actualDBNamePrefix + "_" + fileType.getString();
         try {
-          conn.setCatalog(originalDBName);
           Statement stmt = conn.createStatement();
           // drop the DB if exists
           stmt.execute(String.format("DROP DATABASE IF EXISTS %s", actualDBName));
           // create sample DB
           stmt.execute(String.format("CREATE DATABASE %s", actualDBName));
 
-          conn.setCatalog(actualDBName);
           stmt = conn.createStatement();
+          stmt.execute("USE " + actualDBName);
+
           List<Table> tableList = schema.getTables();
           for (Table t : tableList) {
             String tableName = t.getName();
