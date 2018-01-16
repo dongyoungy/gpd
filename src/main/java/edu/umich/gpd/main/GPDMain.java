@@ -171,19 +171,31 @@ public class GPDMain {
       System.exit(-1);
     }
     Log.info("GPDMain", "Enumeration completed.");
-    Log.info(
-        "GPDMain",
-        String.format(
-            "Total number of interesting design " + "configurations = %d", configurations.size()));
-    Log.info(
-        "GPDMain",
-        String.format(
-            "Total number of physical design structures " + "= %d",
-            UtilFunctions.getPossibleStructures(configurations).size()));
+    if (configurations != null) {
+      Log.info(
+          "GPDMain",
+          String.format(
+              "Total number of interesting design " + "configurations = %d", configurations.size()));
+      Log.info(
+          "GPDMain",
+          String.format(
+              "Total number of physical design structures " + "= %d",
+              UtilFunctions.getPossibleStructures(configurations).size()));
 
-    Log.info("GPDMain", "Possible design structures:");
-    for (Structure s : UtilFunctions.getPossibleStructures(configurations)) {
-      System.out.println("\t" + s.getQueryString());
+      Log.info("GPDMain", "Possible design structures:");
+      for (Structure s : UtilFunctions.getPossibleStructures(configurations)) {
+        System.out.println("\t" + s.getQueryString());
+      }
+    } else if (structures != null) {
+      Log.info(
+          "GPDMain",
+          String.format(
+              "Total number of physical design structures " + "= %d",
+              structures.size()));
+      Log.info("GPDMain", "Possible design structures:");
+      for (Structure s : structures) {
+        System.out.println("\t" + s.getQueryString());
+      }
     }
 
     Setting setting = userInput.getSetting();
