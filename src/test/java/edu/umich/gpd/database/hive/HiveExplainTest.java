@@ -69,6 +69,7 @@ public class HiveExplainTest {
                   + "limit 20");
       Map<String, Long> operatorRowMap = new HashMap<>();
       while (res.next()) {
+        System.out.println("RES");
         String explainText = res.getString(1);
         StringTokenizer tokenizer = new StringTokenizer(explainText, "\n");
         String lastOperator = "";
