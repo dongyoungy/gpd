@@ -24,7 +24,7 @@ import java.util.Set;
  */
 public class HiveEnumeratorTest {
   public static void main(String[] args) {
-    File file = new File("/Users/dyoon/work/gpd/examples/tpch-schema.sql");
+    File file = new File("/Users/dyoon/work/gpd/examples/tpch-schema-hive.sql");
     SchemaParser parser = new SchemaParser("@@@");
     Schema s = parser.parse(file);
     file = new File("/Users/dyoon/work/gpd/examples/tpch-workload.sql");
