@@ -38,7 +38,11 @@ public abstract class AbstractSolver {
     this.conn = conn;
     this.workload = workload;
     this.schema = schema;
-    this.configurations = new ArrayList<>(configurations);
+    if (configurations != null) {
+      this.configurations = new ArrayList<>(configurations);
+    } else {
+      this.configurations = null;
+    }
     this.structures = structures;
     this.sampleDBs = sampleDBs;
     this.numSampleDBs = sampleDBs.size();
