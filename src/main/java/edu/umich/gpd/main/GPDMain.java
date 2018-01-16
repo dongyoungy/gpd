@@ -201,16 +201,18 @@ public class GPDMain {
     Setting setting = userInput.getSetting();
     String targetDBName = userInput.getDatabaseInfo().getTargetDBName();
     List<SampleInfo> samples = null;
+    List<SampleInfo> inputSamples = null;
     if (setting != null) {
       // create sample DBs
-      samples = setting.getSamples();
+      inputSamples = setting.getSamples();
       int minRowForSample = setting.getMinRowForSample();
       boolean useSampling = setting.useSampling();
       boolean useRegression = setting.useRegression();
 
       if (useSampling) {
         Log.info("GPDMain", "Generating sample databases...");
-        if (sampler.sample(conn, schema, minRowForSample, samples) != null) {
+        samples = sampler.sample(conn, schema, minRowForSample, inputSamples);
+        if (samples != null && !samples.isEmpty()) {
           Log.info("GPDMain", "Sampling databases done.");
         } else {
           Log.error("GPDMain", "Sampling databases failed.");
