@@ -123,6 +123,8 @@ public class GPDMain {
       }
       String hdfsURI = dbInfo.getHdfsURI();
       hadoopConf.set("fs.defaultFS", dbInfo.getHdfsURI());
+      hadoopConf.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
+      hadoopConf.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName());
       try {
         hadoopFS = FileSystem.get(URI.create(hdfsURI), hadoopConf);
       } catch (IOException e) {
