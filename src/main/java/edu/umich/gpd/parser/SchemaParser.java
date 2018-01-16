@@ -47,7 +47,7 @@ public class SchemaParser {
       TableSchemaExtractor extractor = new TableSchemaExtractor();
       for (String createStatement : createStatements) {
         if (!createStatement.isEmpty()) {
-          String statement = createStatement.replaceAll(";+$", "");
+          String statement = createStatement.replaceAll(";", "");
           Statement stmt = CCJSqlParserUtil.parse(statement);
           Table table = extractor.extractTable(stmt);
           table.setCreateStatement(statement);
