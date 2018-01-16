@@ -75,6 +75,7 @@ public class HiveSampler extends Sampler {
             // drop table if exists
             stmt.execute(String.format("DROP TABLE IF EXISTS %s", tableName));
             // create table
+            GPDLogger.debug(this, "Executing: " + t.getCreateStatement());
             stmt.execute(t.getCreateStatement());
 
             long rowCount = tableRowCounts.get(t);
