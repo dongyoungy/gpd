@@ -110,7 +110,7 @@ public class HiveFeatureExtractor extends FeatureExtractor {
     try {
       Statement stmt = conn.createStatement();
       stmt.execute("USE " + dbName);
-      ResultSet res = stmt.executeQuery(String.format("EXPLAIN %s", q.getContent()));
+      ResultSet res = stmt.executeQuery(String.format("EXPLAIN EXTENDED %s", q.getContent()));
 
       String lastOperator = "";
       Map<String, Long> operatorRowMap = new HashMap<>();
@@ -223,7 +223,7 @@ public class HiveFeatureExtractor extends FeatureExtractor {
     try {
       Statement stmt = conn.createStatement();
       stmt.execute("USE " + dbName);
-      ResultSet res = stmt.executeQuery(String.format("EXPLAIN %s", q.getContent()));
+      ResultSet res = stmt.executeQuery(String.format("EXPLAIN EXTENDED %s", q.getContent()));
 
       String lastOperator = "";
       Map<String, Long> operatorRowMap = new HashMap<>();
@@ -360,7 +360,7 @@ public class HiveFeatureExtractor extends FeatureExtractor {
     try {
       Statement stmt = conn.createStatement();
       stmt.execute("USE " + dbName);
-      ResultSet res = stmt.executeQuery(String.format("EXPLAIN %s", q.getContent()));
+      ResultSet res = stmt.executeQuery(String.format("EXPLAIN EXTENDED %s", q.getContent()));
 
       String lastOperator = "";
       Map<String, Long> operatorRowMap = new HashMap<>();
@@ -476,7 +476,7 @@ public class HiveFeatureExtractor extends FeatureExtractor {
     try {
       Statement stmt = conn.createStatement();
       stmt.execute("USE " + dbName);
-      ResultSet res = stmt.executeQuery(String.format("EXPLAIN %s", q.getContent()));
+      ResultSet res = stmt.executeQuery(String.format("EXPLAIN EXTENDED %s", q.getContent()));
 
       String lastOperator = "";
       Map<String, Long> operatorRowMap = new HashMap<>();
