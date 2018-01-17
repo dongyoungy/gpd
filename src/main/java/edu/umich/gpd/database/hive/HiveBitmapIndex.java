@@ -107,8 +107,8 @@ public class HiveBitmapIndex extends Structure {
                       String.format(
                           "/%s/%s.db/%s__%s_%s__",
                           dbInfo.getHiveHDFSPath(),
-                          dbInfo.getTargetDBName(),
-                          dbInfo.getTargetDBName(),
+                          dbName,
+                          dbName,
                           table.getName(),
                           this.name)))
               .getLen();
