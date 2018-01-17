@@ -86,11 +86,12 @@ public class HiveBitmapIndex extends Structure {
           this,
           "Executed: "
               + String.format(
-                  "CREATE INDEX %s ON %s (%s) AS 'BITMAP' WITH DEFERRED REBUILD STORED AS %s @ %s",
+                  "CREATE INDEX %s ON TABLE %s (%s) AS "
+                      + "'BITMAP' WITH DEFERRED REBUILD STORED AS %s @ %s",
                   this.name, table.getName(), columnStr, fileType.getString(), dbName));
       stmt.execute(
           String.format(
-              "CREATE INDEX %s ON %s (%s) AS 'BITMAP' WITH DEFERRED REBUILD STORED AS %s",
+              "CREATE INDEX %s ON TABLE %s (%s) AS 'BITMAP' WITH DEFERRED REBUILD STORED AS %s",
               this.name, table.getName(), columnStr, fileType.getString()));
       GPDLogger.debug(
           this,
@@ -129,8 +130,7 @@ public class HiveBitmapIndex extends Structure {
       GPDLogger.debug(
           this,
           "Executed: "
-              + String.format(
-                  "DROP INDEX %s ON %s @ %s", this.name, table.getName(), dbName));
+              + String.format("DROP INDEX %s ON %s @ %s", this.name, table.getName(), dbName));
     } catch (Exception e) {
       e.printStackTrace();
       return false;
@@ -140,9 +140,9 @@ public class HiveBitmapIndex extends Structure {
 
   @Override
   public boolean isCovering(Structure other) {
-//    if (!(other instanceof HiveBitmapIndex)) {
-//      return false;
-//    }
+    //    if (!(other instanceof HiveBitmapIndex)) {
+    //      return false;
+    //    }
     List<ColumnDefinition> otherColumns = other.getColumns();
     int i = 0, j = 0;
     while (i < columns.size() && j < otherColumns.size()) {
@@ -171,7 +171,7 @@ public class HiveBitmapIndex extends Structure {
       ++i;
     }
     return String.format(
-        "CREATE INDEX %s ON %s (%s) AS 'BITMAP' STORED AS %s;",
+        "CREATE INDEX %s ON TABLE %s (%s) AS 'BITMAP' STORED AS %s;",
         this.name, table.getName(), columnStr, fileType.getString());
   }
 
@@ -192,7 +192,7 @@ public class HiveBitmapIndex extends Structure {
       ++i;
     }
     return String.format(
-        "CREATE INDEX ON %s (%s) AS 'BITMAP' STORED AS %s;",
+        "CREATE INDEX ON TABLE %s (%s) AS 'BITMAP' STORED AS %s;",
         table.getName(), columnStr, fileType.getString());
   }
 }

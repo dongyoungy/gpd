@@ -86,11 +86,12 @@ public class HiveCompactIndex extends Structure {
           this,
           "Executed: "
               + String.format(
-                  "CREATE INDEX %s ON %s (%s) AS 'COMPACT' WITH DEFERRED REBUILD STORED AS %s @ %s",
+                  "CREATE INDEX %s ON TABLE %s (%s) AS "
+                      + "'COMPACT' WITH DEFERRED REBUILD STORED AS %s @ %s",
                   this.name, table.getName(), columnStr, fileType.getString(), dbName));
       stmt.execute(
           String.format(
-              "CREATE INDEX %s ON %s (%s) AS 'COMPACT' WITH DEFERRED REBUILD STORED AS %s",
+              "CREATE INDEX %s ON TABLE %s (%s) AS 'COMPACT' WITH DEFERRED REBUILD STORED AS %s",
               this.name, table.getName(), columnStr, fileType.getString()));
       GPDLogger.debug(
           this,
@@ -170,7 +171,7 @@ public class HiveCompactIndex extends Structure {
       ++i;
     }
     return String.format(
-        "CREATE INDEX %s ON %s (%s) AS 'COMPACT' STORED AS %s;",
+        "CREATE INDEX %s ON TABLE %s (%s) AS 'COMPACT' STORED AS %s;",
         this.name, table.getName(), columnStr, fileType.getString());
   }
 
@@ -187,7 +188,7 @@ public class HiveCompactIndex extends Structure {
       ++i;
     }
     return String.format(
-        "CREATE INDEX ON %s (%s) AS 'COMPACT' STORED AS %s;",
+        "CREATE INDEX ON TABLE %s (%s) AS 'COMPACT' STORED AS %s;",
         table.getName(), columnStr, fileType.getString());
   }
 
