@@ -14,19 +14,19 @@ public enum HiveFileType {
   public String getString() {
     switch (this) {
       case TEXTFILE:
-        return "TEXTFILE";
+        return "textfile";
 //      case SEQUENCEFILE:
 //        return "SEQUENCEFILE";
       case AVRO:
-        return "AVRO";
+        return "avro";
 //      case RCFILE:
 //        return "RCFILE";
       case PARQUET:
-        return "PARQUET";
+        return "pacquet";
       case ORC:
-        return "ORC";
+        return "orc";
       default:
-        return "TEXTFILE";
+        return "textfile";
     }
   }
 }
