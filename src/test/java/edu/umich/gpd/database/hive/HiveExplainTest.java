@@ -35,7 +35,7 @@ public class HiveExplainTest {
       stmt.execute("USE " + dbName);
       ResultSet res =
           stmt.executeQuery(
-              "EXPLAIN select\n"
+              "EXPLAIN EXTENDED select\n"
                   + "\tc_custkey,\n"
                   + "\tc_name,\n"
                   + "\tsum(l_extendedprice * (1 - l_discount)) as revenue,\n"
