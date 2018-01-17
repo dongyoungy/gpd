@@ -71,17 +71,15 @@ public class HiveExplainTest {
       Map<String, Long> operatorRowMap = new HashMap<>();
       while (res.next()) {
         String explainText = res.getString(1);
+        System.out.println(explainText);
         StringTokenizer tokenizer = new StringTokenizer(explainText, "\n");
         while (tokenizer.hasMoreTokens()) {
           String line = tokenizer.nextToken().trim();
           String[] words = line.split("\\s+");
           if (line.contains("Operator") || line.contains("TableScan")) {
             lastOperator = line;
-            System.out.println("OP: " + lastOperator);
           }
-          System.out.println(line + " => " + words[0]);
           if (words[0].equals("Statistics:")) {
-            System.out.println("HERE: " + lastOperator);
             long currentRow = 0;
             if (!operatorRowMap.containsKey(lastOperator)) {
               operatorRowMap.put(lastOperator, 0L);
