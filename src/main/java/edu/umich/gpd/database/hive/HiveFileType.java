@@ -22,7 +22,7 @@ public enum HiveFileType {
 //      case RCFILE:
 //        return "RCFILE";
       case PARQUET:
-        return "pacquet";
+        return "parquet";
       case ORC:
         return "orc";
       default:
