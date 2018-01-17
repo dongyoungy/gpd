@@ -102,16 +102,16 @@ public class HiveCompactIndex extends Structure {
       DatabaseInfo dbInfo = GPDMain.userInput.getDatabaseInfo();
       long size =
           GPDMain.hadoopFS
-              .getFileStatus(
+              .getContentSummary(
                   new Path(
                       String.format(
-                          "/%s/%s.db/%s__%s_%s__",
+                          "%s/%s.db/%s__%s_%s__",
                           dbInfo.getHiveHDFSPath(),
                           dbName,
                           dbName,
                           table.getName(),
                           this.name)))
-              .getLen();
+              .getLength();
 
       this.sizeMap.put(dbName, size);
     } catch (Exception e) {
