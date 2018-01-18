@@ -200,6 +200,9 @@ public class SASolver extends AbstractSolver {
           boolean timeout = false;
           Stopwatch stopwatch = Stopwatch.createStarted();
           try {
+            if (GPDMain.userInput.getDatabaseInfo().getType().equalsIgnoreCase("hive")) {
+              stmt.execute("USE " + actualDBName);
+            }
             stmt.setQueryTimeout(GPDMain.userInput.getSetting().getQueryTimeout());
             stmt.execute(q.getContent());
           } catch (SQLException e) {
@@ -248,6 +251,9 @@ public class SASolver extends AbstractSolver {
             boolean timeout = false;
             Stopwatch stopwatch = Stopwatch.createStarted();
             try {
+              if (GPDMain.userInput.getDatabaseInfo().getType().equalsIgnoreCase("hive")) {
+                stmt.execute("USE " + dbName);
+              }
               stmt.setQueryTimeout(GPDMain.userInput.getSetting().getQueryTimeout());
               stmt.execute(q.getContent());
             } catch (SQLException e) {
