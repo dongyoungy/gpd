@@ -4,17 +4,17 @@ package edu.umich.gpd.database.hive;
  * Created by Dong Young Yoon on 1/15/18.
  */
 public enum HiveFileType {
-  TEXTFILE;
+//  TEXTFILE;
 //  SEQUENCEFILE,
 //  AVRO,
 //  RCFILE,
 //  PARQUET,
-//  ORC;
+  ORC;
 
   public String getString() {
     switch (this) {
-      case TEXTFILE:
-        return "textfile";
+//      case TEXTFILE:
+//        return "textfile";
 //      case SEQUENCEFILE:
 //        return "SEQUENCEFILE";
 //      case AVRO:
@@ -23,8 +23,8 @@ public enum HiveFileType {
 //        return "RCFILE";
 //      case PARQUET:
 //        return "parquet";
-//      case ORC:
-//        return "orc";
+      case ORC:
+        return "orc";
       default:
         return "textfile";
     }
