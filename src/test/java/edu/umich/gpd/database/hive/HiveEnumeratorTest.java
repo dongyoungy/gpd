@@ -27,7 +27,7 @@ public class HiveEnumeratorTest {
     File file = new File("/Users/dyoon/work/gpd/examples/tpch-schema-hive.sql");
     SchemaParser parser = new SchemaParser("@@@");
     Schema s = parser.parse(file);
-    file = new File("/Users/dyoon/work/gpd/examples/tpch-workload.sql");
+    file = new File("/Users/dyoon/work/gpd/examples/tpch-workload-hive.sql");
     WorkloadParser parser2 = new WorkloadParser("@@@");
     Workload w = parser2.parse(file);
 
