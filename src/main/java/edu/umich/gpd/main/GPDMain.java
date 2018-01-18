@@ -152,7 +152,8 @@ public class GPDMain {
     if (dbInfo.getType().equalsIgnoreCase("mysql")) {
       configurations = enumerator.enumerateStructures(schema, workload);
     } else if (dbInfo.getType().equalsIgnoreCase("hive")) {
-      structures = enumerator.getStructures(schema, workload);
+      configurations = enumerator.enumerateStructures(schema, workload);
+//      structures = enumerator.getStructures(schema, workload);
     }
     while (configurations == null
         && structures == null

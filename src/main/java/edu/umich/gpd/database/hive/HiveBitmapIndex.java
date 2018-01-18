@@ -95,7 +95,7 @@ public class HiveBitmapIndex extends Structure {
               this.name, table.getName(), columnStr, fileType.getString()));
       GPDLogger.debug(
           this,
-          "Executed :" + String.format("ALTER INDEX %s ON %s REBUILD", this.name, table.getName()));
+          "Executed: " + String.format("ALTER INDEX %s ON %s REBUILD", this.name, table.getName()));
       stmt.execute(String.format("ALTER INDEX %s ON %s REBUILD", this.name, table.getName()));
 
       // Get Size

@@ -44,18 +44,21 @@ public class HiveEnumeratorTest {
 //    GPDMain.userInput.getDatabaseInfo().getAvailableStructures().add(
 //        new StructureInfo("unique_index", "customer" ,"c_custkey")
 //    );
-//    Set<Configuration> configurations = enumerator.enumerateStructures(s,w);
-//    while (configurations == null) {
-//      int prevMaxNumColumn = GPDMain.userInput.getSetting().getMaxNumColumn();
-//
-//      Log.info("MySQLEnumeratorTest",
-//          "Reducing the number of columns to consider to: " +
-//          (prevMaxNumColumn-1));
-//      configurations = enumerator.enumerateStructures(s,w);
-//    }
+
+    Set<Configuration> configurations = enumerator.enumerateStructures(s,w);
+    while (configurations == null) {
+      int prevMaxNumColumn = GPDMain.userInput.getSetting().getMaxNumColumn();
+
+      Log.info("MySQLEnumeratorTest",
+          "Reducing the number of columns to consider to: " +
+          (prevMaxNumColumn-1));
+      configurations = enumerator.enumerateStructures(s,w);
+    }
+    System.out.println("# of configurations = " + configurations.size());
 
     int count = 1;
-    Set<Structure> possibleStructure = enumerator.getStructures(s,w);
+    List<Structure> possibleStructure = getPossibleStructures(configurations);
+//    Set<Structure> possibleStructure = enumerator.getStructures(s,w);
     System.out.println("Possible Structures:");
     for (Structure st : possibleStructure) {
       if (st instanceof HiveBitmapIndex) {
