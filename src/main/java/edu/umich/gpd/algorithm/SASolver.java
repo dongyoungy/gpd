@@ -79,7 +79,7 @@ public class SASolver extends AbstractSolver {
     sizeSample = GPDMain.userInput.getSetting().getSampleForSizeCheck();
     useActualSize = GPDMain.userInput.getSetting().useActualSize();
     useActualQueryTime = GPDMain.userInput.getSetting().useActualQueryTime();
-    actualDBName = dbInfo.getTargetDBName() + "_gpd_actual_orc"; // TODO: temp fix
+    actualDBName = dbInfo.getTargetDBName(); // TODO: temp fix
   }
 
   private boolean buildInitialFullStructure(Set<Structure> structureSet) {
