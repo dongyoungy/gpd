@@ -21,6 +21,8 @@ public class Setting {
   private boolean incrementalRun;
   private boolean useActualSize;
   private boolean useActualQueryTime;
+  private boolean performParameterTuning;
+  private int maxParameterTuningTime;
   private int ilpTimeLimit;
   private List<SampleInfo> samples;
   private SampleInfo sampleForSizeCheck;
@@ -41,6 +43,8 @@ public class Setting {
     this.useActualSize = false;
     this.useActualQueryTime = false;
     this.incrementalRunTime = 0;
+    this.performParameterTuning = false;
+    this.maxParameterTuningTime = 300;
     this.ilpTimeLimit = 1800;
     this.debug = false;
     this.algorithm = "ilp";
@@ -71,12 +75,22 @@ public class Setting {
         ", useActualQueryTime=" + useActualQueryTime +
         ", incrementalRun=" + incrementalRun +
         ", incrementalRunTime=" + incrementalRunTime +
+        ", performParameterTuning=" + performParameterTuning +
+        ", maxParameterTuningTime=" + maxParameterTuningTime +
         ", tolerableLatencyMultipler=" + tolerableLatencyMultiplier +
         ", ilpTimeLimit=" + ilpTimeLimit +
         ", debug=" + debug +
         ", samples=" + samples +
         ", algorithm='" + algorithm + '\'' +
         '}';
+  }
+
+  public boolean performParameterTuning() {
+    return performParameterTuning;
+  }
+
+  public int getMaxParameterTuningTime() {
+    return maxParameterTuningTime;
   }
 
   public void setMaxNumColumnPerStructure(int maxNumColumnPerStructure) {

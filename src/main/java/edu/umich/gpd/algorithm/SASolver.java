@@ -5,6 +5,9 @@ import edu.umich.gpd.classifier.GPDClassifier;
 import edu.umich.gpd.database.common.Configuration;
 import edu.umich.gpd.database.common.FeatureExtractor;
 import edu.umich.gpd.database.common.Structure;
+import edu.umich.gpd.database.hive.HiveBooleanParameter;
+import edu.umich.gpd.database.hive.HiveNumericParameter;
+import edu.umich.gpd.database.hive.HiveParameter;
 import edu.umich.gpd.database.mysql.MySQLFeatureExtractor;
 import edu.umich.gpd.main.GPDMain;
 import edu.umich.gpd.schema.Schema;
@@ -41,6 +44,9 @@ public class SASolver extends AbstractSolver {
   Map<String, Long> structureToQueryTimeMap;
   Map<String, Boolean> structureToUseCacheMap;
 
+  Map<String, Long> parameterToQueryTimeMap;
+  Map<String, Boolean> parameterToUseCacheMap;
+
   Map<Query, FeatureExtractor> queryToExtractorMap;
   Set<Structure> possibleStructures;
   List<String> structureStrList;
@@ -67,6 +73,8 @@ public class SASolver extends AbstractSolver {
         useRegression);
     structureToQueryTimeMap = new HashMap<>();
     structureToUseCacheMap = new HashMap<>();
+    parameterToUseCacheMap = new HashMap<>();
+    parameterToQueryTimeMap = new HashMap<>();
     queryToExtractorMap = new HashMap<>();
     sizeSample = GPDMain.userInput.getSetting().getSampleForSizeCheck();
     useActualSize = GPDMain.userInput.getSetting().useActualSize();
@@ -136,6 +144,103 @@ public class SASolver extends AbstractSolver {
       sizeEstimates[i] = (long) estimator.regress(testInstance);
     }
     return sizeEstimates;
+  }
+
+  private void applyHiveParameters(Statement stmt, List<HiveParameter> params) throws SQLException {
+    for (HiveParameter param : params) {
+      param.apply(stmt);
+    }
+  }
+
+  private long getTotalQueryTime(List<HiveParameter> parameters) {
+    String code = getParameterCode(parameters);
+    if (parameterToUseCacheMap.containsKey(code) && parameterToUseCacheMap.get(code)) {
+      long cachedQueryTime = getParameterQueryTime(parameters);
+      if (cachedQueryTime != -1) {
+        GPDLogger.debug(
+            this,
+            String.format(
+                "Estimated query time (from cache) = %d (%s)",
+                cachedQueryTime, getParameterCode(parameters)));
+        return cachedQueryTime;
+      }
+    }
+    List<Query> queries = workload.getQueries();
+    long totalQueryTime = 0;
+    if (useActualQueryTime) {
+      Statement stmt;
+      try {
+        conn.setCatalog(actualDBName);
+        stmt = conn.createStatement();
+
+        for (Query q : queries) {
+          long queryTime = 0;
+          boolean timeout = false;
+          Stopwatch stopwatch = Stopwatch.createStarted();
+          try {
+            if (GPDMain.userInput.getDatabaseInfo().getType().equalsIgnoreCase("hive")) {
+              stmt.execute("USE " + actualDBName);
+              applyHiveParameters(stmt, parameters);
+            }
+            stmt.setQueryTimeout(GPDMain.userInput.getSetting().getQueryTimeout());
+            stmt.execute(q.getContent());
+          } catch (SQLException e) {
+            GPDLogger.debug(this, String.format("Query #%d has been timed out.", q.getId()));
+            timeout = true;
+          }
+          if (timeout) {
+            queryTime = GPDMain.userInput.getSetting().getQueryTimeout() * 1000;
+          } else {
+            queryTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+          }
+          totalQueryTime += queryTime;
+        }
+
+      } catch (SQLException e) {
+        e.printStackTrace();
+      }
+    } else {
+      for (SampleInfo s : sampleDBs) {
+        String dbName = s.getDbName();
+        Statement stmt;
+        try {
+          conn.setCatalog(dbName);
+          stmt = conn.createStatement();
+
+          for (Query q : queries) {
+            long queryTime = 0;
+            boolean timeout = false;
+            Stopwatch stopwatch = Stopwatch.createStarted();
+            try {
+              if (GPDMain.userInput.getDatabaseInfo().getType().equalsIgnoreCase("hive")) {
+                stmt.execute("USE " + dbName);
+                applyHiveParameters(stmt, parameters);
+              }
+              stmt.setQueryTimeout(GPDMain.userInput.getSetting().getQueryTimeout());
+              stmt.execute(q.getContent());
+            } catch (SQLException e) {
+              GPDLogger.debug(this, String.format("Query #%d has been timed out.", q.getId()));
+              timeout = true;
+            }
+            if (timeout) {
+              queryTime = GPDMain.userInput.getSetting().getQueryTimeout() * 1000;
+            } else {
+              queryTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+            }
+            totalQueryTime += queryTime;
+          }
+
+        } catch (SQLException e) {
+          e.printStackTrace();
+        }
+      }
+    }
+    GPDLogger.debug(
+        this,
+        String.format(
+            "Estimated query time = %d (%s)", totalQueryTime, getParameterCode(parameters)));
+    addParameterQueryTime(parameters, totalQueryTime);
+    return totalQueryTime;
   }
 
   private long getTotalQueryTime(Structure[] structureArray, boolean[] isBuilt) {
@@ -319,6 +424,14 @@ public class SASolver extends AbstractSolver {
     return code;
   }
 
+  private String getParameterCode(List<HiveParameter> params) {
+    String code = "";
+    for (HiveParameter param : params) {
+      code += param.getCode();
+    }
+    return code;
+  }
+
   private void AddStructureQueryTime(boolean[] isBuilt, long time) {
     String code = getStructureCode(isBuilt);
     Long previousTime = structureToQueryTimeMap.put(code, time);
@@ -337,12 +450,49 @@ public class SASolver extends AbstractSolver {
     }
   }
 
+  private long getParameterQueryTime(List<HiveParameter> params) {
+    String code = getParameterCode(params);
+    if (parameterToQueryTimeMap.containsKey(code)) {
+      return parameterToQueryTimeMap.get(code);
+    }
+    return -1;
+  }
+
+  private void addParameterQueryTime(List<HiveParameter> params, long time) {
+    String code = getParameterCode(params);
+    Long previousTime = parameterToQueryTimeMap.put(code, time);
+    if (previousTime == null) {
+      parameterToUseCacheMap.put(code, false);
+    } else {
+      GPDLogger.debug(
+          this,
+          String.format(
+              "Previous time = %d, current time = %d (%s)", previousTime.longValue(), time, code));
+      if (Math.abs((double) (previousTime.longValue() - time) / (double) previousTime.longValue())
+          < 0.001) {
+        GPDLogger.debug(this, String.format("Using cache for %s", code));
+        parameterToUseCacheMap.put(code, true);
+      }
+    }
+  }
+
   private long getStructureQueryTime(boolean[] isBuilt) {
     String code = getStructureCode(isBuilt);
     if (structureToQueryTimeMap.containsKey(code)) {
       return structureToQueryTimeMap.get(code);
     }
     return -1;
+  }
+
+  private double getAcceptanceProbability(
+      double timeDiff, double currentTemp, double targetTemp) {
+    double tempRatio = currentTemp / targetTemp;
+    GPDLogger.debug(
+        this, String.format("Temp. Ratio = %f (%f, %f)", tempRatio, currentTemp, targetTemp));
+    if (timeDiff <= 0) return 1.0;
+    else {
+      return Math.exp(Math.abs(timeDiff) * -1 / (tempRatio));
+    }
   }
 
   private double getAcceptanceProbability(
@@ -428,8 +578,147 @@ public class SASolver extends AbstractSolver {
     return 0;
   }
 
+  private void performParameterTuningForHive() {
+    List<HiveParameter> hiveParameters = new ArrayList<>();
+    // add hive params
+    hiveParameters.add(new HiveBooleanParameter("hive.optimize.skewjoin", true));
+    hiveParameters.add(new HiveBooleanParameter("hive.optimize.bucketmapjoin", true));
+    hiveParameters.add(new HiveBooleanParameter("hive.optimize.bucketmapjoin.sortedmerge", true));
+    hiveParameters.add(new HiveBooleanParameter("hive.optimize.bucketmapjoin.sortedmerge", true));
+    hiveParameters.add(new HiveBooleanParameter("hive.auto.convert.join", true));
+    hiveParameters.add(new HiveBooleanParameter("hive.auto.convert.join.noconditionaltask", true));
+    hiveParameters.add(new HiveBooleanParameter("hive.exec.compress.output", true));
+    hiveParameters.add(new HiveBooleanParameter("hive.exec.compress.intermediate", true));
+    hiveParameters.add(new HiveBooleanParameter("hive.vectorized.execution.enabled", true));
+    hiveParameters.add(new HiveBooleanParameter("hive.mapjoin.lazy.hashtable", true));
+    hiveParameters.add(new HiveBooleanParameter("hive.optimize.index.filter", true));
+    hiveParameters.add(new HiveBooleanParameter("hive.optimize.ppd", true));
+    hiveParameters.add(new HiveBooleanParameter("hive.optimize.ppd.windowing", true));
+    hiveParameters.add(new HiveBooleanParameter("hive.optimize.partition.columns.separate", true));
+    hiveParameters.add(new HiveBooleanParameter("hive.optimize.constant.propagation", true));
+    hiveParameters.add(new HiveBooleanParameter("hive.optimize.null.scan", true));
+    hiveParameters.add(new HiveBooleanParameter("hive.optimize.groupby", true));
+    hiveParameters.add(new HiveBooleanParameter("hive.optimize.reducededuplication", true));
+    hiveParameters.add(new HiveBooleanParameter("hive.optimize.sort.dynamic.partition", true));
+    hiveParameters.add(new HiveBooleanParameter("hive.optimize.sort.dynamic.partition", true));
+    hiveParameters.add(new HiveBooleanParameter("hive.optimize.sampling.orderby", true));
+    hiveParameters.add(new HiveBooleanParameter("hive.optimize.distinct.rewrite", true));
+    hiveParameters.add(new HiveBooleanParameter("hive.optimize.union.remove", true));
+    hiveParameters.add(new HiveBooleanParameter("hive.optimize.correlation", true));
+    hiveParameters.add(new HiveBooleanParameter("hive.optimize.limittranspose", true));
+    hiveParameters.add(new HiveBooleanParameter("hive.optimize.filter.stats.reduction", true));
+    hiveParameters.add(new HiveBooleanParameter("hive.optimize.skewjoin.compiletime", true));
+
+    hiveParameters.add(
+        new HiveNumericParameter(
+            "hive.skewjoin.key", 100000, new Integer[] {100, 1000, 10000, 100000}));
+    hiveParameters.add(
+        new HiveNumericParameter(
+            "hive.auto.convert.join.noconditionaltask.size",
+            10000,
+            new Integer[] {100, 1000, 10000, 100000}));
+    hiveParameters.add(
+        new HiveNumericParameter(
+            "hive.optimize.sampling.orderby.number",
+            1000,
+            new Integer[] {100, 1000, 10000, 100000}));
+
+    long temperature = GPDMain.userInput.getSetting().getMaxParameterTuningTime();
+    long targetTemperature = 1;
+    int paramSize = hiveParameters.size();
+
+    GPDLogger.info(this, "Initial temperature = " + temperature);
+    GPDLogger.info(this, "Target temperature = " + targetTemperature);
+    Random rng = new Random();
+    GPDLogger.debug(this, "Initial solution = " + getParameterCode(hiveParameters));
+    int oldNumericValue = 0;
+    boolean oldBooleanValue = false;
+    long currentTime = -1;
+    int numIteration = 1;
+    long bestTime = Long.MAX_VALUE;
+
+    while (temperature > targetTemperature) {
+      int indexOfParamToChange = rng.nextInt(paramSize);
+      HiveParameter paramToChange = hiveParameters.get(indexOfParamToChange);
+      if (paramToChange instanceof HiveBooleanParameter) {
+        oldBooleanValue = ((HiveBooleanParameter) paramToChange).getValue();
+      } else if (paramToChange instanceof HiveNumericParameter) {
+        oldNumericValue = ((HiveNumericParameter) paramToChange).getValue();
+      } else {
+        GPDLogger.error(this, "Unknown Hive parameter.");
+        return;
+      }
+
+      GPDLogger.debug(
+          this,
+          String.format("(Iter #%d) Getting total query time for current solution.", numIteration));
+      if (currentTime == -1) {
+        currentTime = getTotalQueryTime(hiveParameters);
+      }
+      paramToChange.changeValueRandom();
+      GPDLogger.debug(
+          this,
+          String.format(
+              "(Iter #%d) Getting total query time for neighbor solution.", numIteration));
+      long newTime = getTotalQueryTime(hiveParameters);
+
+      double normalizedTimeDiff = (double) (newTime - currentTime) / (double) currentTime;
+
+      double acceptanceProb =
+          getAcceptanceProbability(
+              normalizedTimeDiff, temperature, targetTemperature);
+      double prob = rng.nextDouble();
+      GPDLogger.debug(
+          this,
+          String.format(
+              "(Iter #%d) (Normalized) Time diff. = %f",
+              numIteration, normalizedTimeDiff));
+      GPDLogger.debug(
+          this,
+          String.format("(Iter #%d) Acceptance probability = %f", numIteration, acceptanceProb));
+      GPDLogger.debug(this, String.format("(Iter #%d) Random value = %f", numIteration, prob));
+      if (acceptanceProb > prob) {
+        GPDLogger.debug(this, String.format("(Iter #%d) New solution accepted.", numIteration));
+        currentTime = newTime;
+      } else {
+        // Revert param if new solution is not accepted.
+        if (paramToChange instanceof HiveBooleanParameter) {
+         ((HiveBooleanParameter) paramToChange).setValue(oldBooleanValue);
+        } else if (paramToChange instanceof HiveNumericParameter) {
+          ((HiveNumericParameter) paramToChange).setValue(oldNumericValue);
+        } else {
+          GPDLogger.error(this, "Unknown Hive parameter.");
+          return;
+        }
+      }
+      if (currentTime < bestTime) bestTime = currentTime;
+      GPDLogger.debug(
+          this,
+          String.format(
+              "(Iter #%d) Current solution = %s", numIteration, getParameterCode(hiveParameters)));
+      GPDLogger.debug(
+          this,
+          String.format(
+              "(Iter #%d) Current temp = %d, target temp = %d",
+              numIteration, temperature, targetTemperature));
+      --temperature;
+      ++numIteration;
+    }
+    GPDLogger.info(this, "Optimal parameters found:");
+    for (HiveParameter param : hiveParameters) {
+      GPDLogger.info(this, "\t" + param.toString());
+    }
+  }
+
   @Override
   public boolean solve() {
+
+    if (GPDMain.userInput.getSetting().performParameterTuning()
+        && GPDMain.userInput.getDatabaseInfo().getType().equalsIgnoreCase("hive")) {
+      performParameterTuningForHive();
+      return true;
+    }
+
     List<Structure> allStructures = null;
     if (structures == null) {
       allStructures = getAllStructures(configurations);
@@ -497,7 +786,7 @@ public class SASolver extends AbstractSolver {
       }
     }
     List<SampleInfo> samples = new ArrayList<>(sampleDBs);
-//    samples.add(sizeSample);
+    //    samples.add(sizeSample);
     extractor.initialize(
         samples, dbInfo.getTargetDBName(), schema, possibleStructures, structureStrList);
 

@@ -1,12 +1,14 @@
 package edu.umich.gpd.database.hive;
 
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Arrays;
 import java.util.Random;
 
 /**
  * Created by Dong Young Yoon on 1/18/18.
  */
-public class HiveParameter<T> {
+public abstract class HiveParameter<T> {
 
   protected Type type;
   protected String key;
@@ -20,6 +22,12 @@ public class HiveParameter<T> {
     this.range = Arrays.copyOf(range, range.length);
     Arrays.sort(this.range);
   }
+
+  public abstract String getCode();
+
+  public abstract String toString();
+
+  public abstract void apply(Statement stmt) throws SQLException;
 
   public Type getType() {
     return type;
