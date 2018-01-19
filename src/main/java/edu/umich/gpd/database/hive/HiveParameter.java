@@ -58,7 +58,7 @@ public abstract class HiveParameter<T> {
     int currentIndex = Arrays.asList(range).indexOf(value);
 
     int newIndex = rng.nextInt(range.length);
-    while (newIndex != currentIndex) {
+    while (newIndex == currentIndex) {
       newIndex = rng.nextInt(range.length);
     }
     value = range[newIndex];
