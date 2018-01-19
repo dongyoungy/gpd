@@ -29,7 +29,7 @@ public class HiveBooleanParameter extends HiveParameter<Boolean> {
   @Override
   public void apply(Statement stmt) throws SQLException {
     String statement = String.format("set %s=%s", key, (value ? "true" : "false"));
-    GPDLogger.debug(this, "Executing: " + statement);
+//    GPDLogger.debug(this, "Executing: " + statement);
     stmt.execute(statement);
   }
 }

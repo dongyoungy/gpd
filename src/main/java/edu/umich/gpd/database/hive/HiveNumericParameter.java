@@ -27,7 +27,7 @@ public class HiveNumericParameter extends HiveParameter<Integer> {
   @Override
   public void apply(Statement stmt) throws SQLException {
     String statement = String.format("set %s=%d", key, value);
-    GPDLogger.debug(this, "Executing: " + statement);
+//    GPDLogger.debug(this, "Executing: " + statement);
     stmt.execute(statement);
   }
 }
