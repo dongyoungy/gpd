@@ -126,7 +126,7 @@ public class HiveSampler extends Sampler {
             // drop table if exists
             stmt.execute(String.format("DROP TABLE IF EXISTS %s", tableName));
             // create table
-            stmt.execute(t.getCreateStatement());
+            stmt.execute(t.getCreateStatement() + " STORED AS ORC");
             stmt.execute(
                 String.format(
                     "INSERT INTO %s SELECT * FROM %s.%s", tableName, originalDBName, tableName));
