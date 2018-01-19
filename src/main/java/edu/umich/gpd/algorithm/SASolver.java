@@ -484,14 +484,14 @@ public class SASolver extends AbstractSolver {
     return -1;
   }
 
-  private double getAcceptanceProbability(
-      double timeDiff, double currentTemp, double targetTemp) {
-    double tempRatio = currentTemp / targetTemp;
+  private double getAcceptanceProbabilityForParam(
+      double timeDiff, double startTemp, double currentTemp, double targetTemp) {
+    double tempRatio = currentTemp / startTemp;
     GPDLogger.debug(
-        this, String.format("Temp. Ratio = %f (%f, %f)", tempRatio, currentTemp, targetTemp));
+        this, String.format("Temp. Ratio = %f (%f, %f)", tempRatio, currentTemp, startTemp));
     if (timeDiff <= 0) return 1.0;
     else {
-      return Math.exp(Math.abs(timeDiff) * -1 / (tempRatio));
+      return Math.exp(Math.abs(timeDiff) * -1 / (tempRatio / 10));
     }
   }
 
@@ -584,7 +584,6 @@ public class SASolver extends AbstractSolver {
     hiveParameters.add(new HiveBooleanParameter("hive.optimize.skewjoin", true));
     hiveParameters.add(new HiveBooleanParameter("hive.optimize.bucketmapjoin", true));
     hiveParameters.add(new HiveBooleanParameter("hive.optimize.bucketmapjoin.sortedmerge", true));
-    hiveParameters.add(new HiveBooleanParameter("hive.optimize.bucketmapjoin.sortedmerge", true));
     hiveParameters.add(new HiveBooleanParameter("hive.auto.convert.join", true));
     hiveParameters.add(new HiveBooleanParameter("hive.auto.convert.join.noconditionaltask", true));
     hiveParameters.add(new HiveBooleanParameter("hive.exec.compress.output", true));
@@ -598,7 +597,6 @@ public class SASolver extends AbstractSolver {
     hiveParameters.add(new HiveBooleanParameter("hive.optimize.null.scan", true));
     hiveParameters.add(new HiveBooleanParameter("hive.optimize.groupby", true));
     hiveParameters.add(new HiveBooleanParameter("hive.optimize.reducededuplication", true));
-    hiveParameters.add(new HiveBooleanParameter("hive.optimize.sort.dynamic.partition", true));
     hiveParameters.add(new HiveBooleanParameter("hive.optimize.sort.dynamic.partition", true));
     hiveParameters.add(new HiveBooleanParameter("hive.optimize.sampling.orderby", true));
     hiveParameters.add(new HiveBooleanParameter("hive.optimize.distinct.rewrite", true));
@@ -623,6 +621,7 @@ public class SASolver extends AbstractSolver {
             new Integer[] {100, 1000, 10000, 100000}));
 
     long temperature = GPDMain.userInput.getSetting().getMaxParameterTuningTime();
+    long startTemp = temperature;
     long targetTemperature = 1;
     int paramSize = hiveParameters.size();
 
@@ -637,7 +636,7 @@ public class SASolver extends AbstractSolver {
     int numIteration = 1;
     long bestTime = Long.MAX_VALUE;
 
-    while (temperature > targetTemperature) {
+    while (temperature >= targetTemperature) {
       int indexOfParamToChange = rng.nextInt(paramSize);
       HiveParameter paramToChange = hiveParameters.get(indexOfParamToChange);
       if (paramToChange instanceof HiveBooleanParameter) {
@@ -665,8 +664,8 @@ public class SASolver extends AbstractSolver {
       double normalizedTimeDiff = (double) (newTime - currentTime) / (double) currentTime;
 
       double acceptanceProb =
-          getAcceptanceProbability(
-              normalizedTimeDiff, temperature, targetTemperature);
+          getAcceptanceProbabilityForParam(
+              normalizedTimeDiff, startTemp, temperature, targetTemperature);
       double prob = rng.nextDouble();
       GPDLogger.debug(
           this,
@@ -706,7 +705,7 @@ public class SASolver extends AbstractSolver {
     }
     GPDLogger.info(this, "Optimal parameters found:");
     for (HiveParameter param : hiveParameters) {
-      GPDLogger.info(this, "\t" + param.toString());
+      System.out.println("\t" + param.toString());
     }
   }
 
