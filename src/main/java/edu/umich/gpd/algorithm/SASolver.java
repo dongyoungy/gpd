@@ -627,6 +627,7 @@ public class SASolver extends AbstractSolver {
     long targetTemperature = 1;
     int paramSize = hiveParameters.size();
 
+    GPDLogger.info(this, "Starting parameter tuning for Hive...");
     GPDLogger.info(this, "Initial temperature = " + temperature);
     GPDLogger.info(this, "Target temperature = " + targetTemperature);
     Random rng = new Random();
