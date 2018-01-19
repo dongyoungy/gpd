@@ -590,7 +590,6 @@ public class SASolver extends AbstractSolver {
     hiveParameters.add(new HiveBooleanParameter("hive.exec.compress.output", true));
     hiveParameters.add(new HiveBooleanParameter("hive.exec.compress.intermediate", true));
     hiveParameters.add(new HiveBooleanParameter("hive.vectorized.execution.enabled", true));
-    hiveParameters.add(new HiveBooleanParameter("hive.mapjoin.lazy.hashtable", true));
     hiveParameters.add(new HiveBooleanParameter("hive.optimize.index.filter", true));
     hiveParameters.add(new HiveBooleanParameter("hive.optimize.ppd", true));
     hiveParameters.add(new HiveBooleanParameter("hive.optimize.ppd.windowing", true));
