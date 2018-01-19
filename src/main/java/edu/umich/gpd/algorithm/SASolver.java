@@ -79,7 +79,7 @@ public class SASolver extends AbstractSolver {
     sizeSample = GPDMain.userInput.getSetting().getSampleForSizeCheck();
     useActualSize = GPDMain.userInput.getSetting().useActualSize();
     useActualQueryTime = GPDMain.userInput.getSetting().useActualQueryTime();
-    actualDBName = dbInfo.getTargetDBName() + "_gpd_actual";
+    actualDBName = dbInfo.getTargetDBName() + "_gpd_actual_orc"; // TODO: temp fix
   }
 
   private boolean buildInitialFullStructure(Set<Structure> structureSet) {
@@ -182,7 +182,6 @@ public class SASolver extends AbstractSolver {
               stmt.execute("USE " + actualDBName);
               applyHiveParameters(stmt, parameters);
             }
-            stmt.setQueryTimeout(GPDMain.userInput.getSetting().getQueryTimeout());
             stmt.execute(q.getContent());
           } catch (SQLException e) {
             GPDLogger.debug(this, String.format("Query #%d has been timed out.", q.getId()));
@@ -216,7 +215,6 @@ public class SASolver extends AbstractSolver {
                 stmt.execute("USE " + dbName);
                 applyHiveParameters(stmt, parameters);
               }
-              stmt.setQueryTimeout(GPDMain.userInput.getSetting().getQueryTimeout());
               stmt.execute(q.getContent());
             } catch (SQLException e) {
               GPDLogger.debug(this, String.format("Query #%d has been timed out.", q.getId()));
