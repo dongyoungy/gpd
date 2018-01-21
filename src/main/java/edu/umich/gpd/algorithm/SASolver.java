@@ -632,10 +632,14 @@ public class SASolver extends AbstractSolver {
     boolean oldBooleanValue = false;
     long currentTime = -1;
     int numIteration = 1;
+    int lastIndex = -1;
     long bestTime = Long.MAX_VALUE;
 
     while (temperature >= targetTemperature) {
       int indexOfParamToChange = rng.nextInt(paramSize);
+      while (lastIndex != -1 && lastIndex == indexOfParamToChange) {
+        indexOfParamToChange = rng.nextInt(paramSize);
+      }
       HiveParameter paramToChange = hiveParameters.get(indexOfParamToChange);
       if (paramToChange instanceof HiveBooleanParameter) {
         oldBooleanValue = ((HiveBooleanParameter) paramToChange).getValue();
@@ -700,6 +704,7 @@ public class SASolver extends AbstractSolver {
               numIteration, temperature, targetTemperature));
       --temperature;
       ++numIteration;
+      lastIndex = indexOfParamToChange;
     }
     GPDLogger.info(this, "Optimal parameters found:");
     for (HiveParameter param : hiveParameters) {
